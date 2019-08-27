@@ -2,7 +2,7 @@
 
 cp src/devops/.travis.settings.xml $HOME/.m2/settings.xml
 
-openssl aes-256-cbc -K $encrypted_8b6a4661ac23_key -iv $encrypted_8b6a4661ac23_iv -in src/devops/keys.gpg.enc -out keys.gpg -d
+openssl aes-256-cbc -K $encrypted_f352a86a3408_key -iv $encrypted_f352a86a3408_iv -in src/devops/keys.gpg.enc -out keys.gpg -d
 
 gpg --fast-import keys.gpg
 
