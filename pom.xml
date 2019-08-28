@@ -60,7 +60,7 @@
         <repository.name>api-audit</repository.name>
         <java.version>1.8</java.version>
         <jackson.version>2.5.0</jackson.version>
-        <guava.version>16.0.1</guava.version>
+        <guava.version>18.0</guava.version>
         <com.capitalone.dashboard.core.version>3.1.3</com.capitalone.dashboard.core.version>
         <bc.version>3.0.2</bc.version>
         <application.version.number>${version}</application.version.number>
