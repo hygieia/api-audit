@@ -90,9 +90,23 @@ public class DeployEvaluator extends Evaluator<DeployAuditResponse> {
         return deployAuditResponse;
     }
 
+    /**
+     * Iterates through a list of different build stage regular expressions to find a match
+     *
+     * @param stages
+     * @param status
+     * @param settings
+     * @return True if there is a match, otherwise False
+     */
     public boolean matchStage(List<BuildStage> stages, String status, ApiSettings settings) {
-        if (StringUtils.isEmpty(settings.getBuildStageRegEx())) return false;
-        return stages.stream().filter(s -> Pattern.compile(settings.getBuildStageRegEx()).matcher(s.getName()).find() && s.getStatus().equalsIgnoreCase(status)).findAny().isPresent();
+        boolean isMatch = false;
+        if (CollectionUtils.isEmpty(settings.getBuildStageRegEx()) || CollectionUtils.isEmpty(stages)) return false;
+        for (String pattern : settings.getBuildStageRegEx()) {
+            if (stages.stream().filter(s -> Pattern.compile(pattern).matcher(s.getName()).find() && s.getStatus().equalsIgnoreCase(status)).findAny().isPresent()) {
+                isMatch = true;
+            }
+        }
+        return isMatch;
     }
 
 }
