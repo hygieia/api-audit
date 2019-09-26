@@ -91,7 +91,7 @@ public class DeployEvaluator extends Evaluator<DeployAuditResponse> {
     }
 
     /**
-     * Iterates through a list of different build stage regular expressions to find a match
+     * Iterates through a list of different build stage regular expressions to find a match or not
      *
      * @param stages
      * @param status
