@@ -12,6 +12,7 @@ public class PerformanceTestAuditResponse extends AuditReviewResponse<Performanc
 
     private Collection<PerfTest> result = new ArrayList<>();
     private Object buildArtifact;
+    private String perfRisk;
 
     public Collection<PerfTest> getResult() {
         return result;
@@ -43,5 +44,13 @@ public class PerformanceTestAuditResponse extends AuditReviewResponse<Performanc
 
     public void setBuildArtifact(Object buildArtifact) {
         this.buildArtifact = buildArtifact;
+    }
+
+    public String getPerfRisk() {
+        return perfRisk;
+    }
+
+    public void setPerfRisk(String perfRisk) {
+        this.perfRisk = perfRisk;
     }
 }
