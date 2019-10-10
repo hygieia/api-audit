@@ -1,0 +1,9 @@
+[{
+  "id": "5ad626cfc23b392c8f61ea1b",
+  "_class": "com.capitalone.dashboard.model.LibraryPolicyResult",
+  "collectorItemId": "5ad5f605c23b391cfa1c01a4",
+  "timestamp": 1523984079768,
+  "evaluationTimestamp": 1522879797193,
+  "scanState": "Invalid",
+  "threats": {}
+}]
