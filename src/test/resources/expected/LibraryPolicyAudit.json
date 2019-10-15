@@ -255,8 +255,8 @@
           "id": "5ad626cfc23b392c8f61ea1b"
         },
         "auditStatuses": [
-          "LIBRARY_POLICY_FOUND_HIGH_SECURITY",
-          "LIBRARY_POLICY_FOUND_HIGH_LICENSE"
+          "LIBRARY_POLICY_FOUND_HIGH_LICENSE",
+          "LIBRARY_POLICY_FOUND_HIGH_SECURITY"
         ],
         "lastUpdated": 0.0
       }

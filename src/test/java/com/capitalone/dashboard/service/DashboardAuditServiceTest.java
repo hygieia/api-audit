@@ -177,7 +177,7 @@ public class DashboardAuditServiceTest {
         Map<AuditType, Collection<LibraryPolicyAuditResponse>> expectedReviewMap = expected.getReview();
         Collection<LibraryPolicyAuditResponse> expectedReview = expectedReviewMap.get(AuditType.LIBRARY_POLICY);
         assertThat(actualReview.size()).isEqualTo(1);
-        assertThat(actualReview.toArray()[0]).isEqualToComparingFieldByFieldRecursively(expectedReview.toArray()[0]);
+        assertThat(actualReview.toArray()[0]).isEqualToComparingFieldByField(expectedReview.toArray()[0]);
     }
 
 
@@ -201,7 +201,7 @@ public class DashboardAuditServiceTest {
         Map<AuditType, Collection<LibraryPolicyAuditResponse>> expectedReviewMap = expected.getReview();
         Collection<LibraryPolicyAuditResponse> expectedReview = expectedReviewMap.get(AuditType.LIBRARY_POLICY);
         assertThat(actualReview.size()).isEqualTo(1);
-        assertThat(actualReview.toArray()[0]).isEqualToComparingFieldByFieldRecursively(expectedReview.toArray()[0]);
+        assertThat(actualReview.toArray()[0]).isEqualToComparingFieldByField(expectedReview.toArray()[0]);
     }
 
     @Test
@@ -224,7 +224,7 @@ public class DashboardAuditServiceTest {
         Map<AuditType, Collection<LibraryPolicyAuditResponse>> expectedReviewMap = expected.getReview();
         Collection<LibraryPolicyAuditResponse> expectedReview = expectedReviewMap.get(AuditType.LIBRARY_POLICY);
         assertThat(actualReview.size()).isEqualTo(1);
-        assertThat(actualReview.toArray()[0]).isEqualToComparingFieldByFieldRecursively(expectedReview.toArray()[0]);
+        assertThat(actualReview.toArray()[0]).isEqualToComparingFieldByField(expectedReview.toArray()[0]);
     }
 
     @Test
@@ -247,7 +247,7 @@ public class DashboardAuditServiceTest {
         Map<AuditType, Collection<LibraryPolicyAuditResponse>> expectedReviewMap = expected.getReview();
         Collection<LibraryPolicyAuditResponse> expectedReview = expectedReviewMap.get(AuditType.LIBRARY_POLICY);
         assertThat(actualReview.size()).isEqualTo(1);
-        assertThat(actualReview.toArray()[0]).isEqualToComparingFieldByFieldRecursively(expectedReview.toArray()[0]);
+        assertThat(actualReview.toArray()[0]).isEqualToComparingFieldByField(expectedReview.toArray()[0]);
     }
 
     @Test
@@ -270,7 +270,7 @@ public class DashboardAuditServiceTest {
         Map<AuditType, Collection<LibraryPolicyAuditResponse>> expectedReviewMap = expected.getReview();
         Collection<LibraryPolicyAuditResponse> expectedReview = expectedReviewMap.get(AuditType.LIBRARY_POLICY);
         assertThat(actualReview.size()).isEqualTo(1);
-        assertThat(actualReview.toArray()[0]).isEqualToComparingFieldByFieldRecursively(expectedReview.toArray()[0]);
+        assertThat(actualReview.toArray()[0]).isEqualToComparingFieldByField(expectedReview.toArray()[0]);
     }
 
     @Test
