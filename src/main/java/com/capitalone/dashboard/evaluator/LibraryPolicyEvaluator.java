@@ -8,6 +8,7 @@ import com.capitalone.dashboard.model.LibraryPolicyResult;
 import com.capitalone.dashboard.model.LibraryPolicyThreatDisposition;
 import com.capitalone.dashboard.model.LibraryPolicyThreatLevel;
 import com.capitalone.dashboard.model.LibraryPolicyType;
+import com.capitalone.dashboard.model.ScanState;
 import com.capitalone.dashboard.repository.LibraryPolicyResultsRepository;
 import com.capitalone.dashboard.response.LibraryPolicyAuditResponse;
 import com.capitalone.dashboard.status.LibraryPolicyAuditStatus;
@@ -73,9 +74,9 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
         libraryPolicyAuditResponse.setLibraryPolicyResult(returnPolicyResult);
         libraryPolicyAuditResponse.setLastExecutionTime(returnPolicyResult.getEvaluationTimestamp());
 
-        if(returnPolicyResult.getScanState().equalsIgnoreCase("Invalid")) {
+        if(returnPolicyResult.getScanState().equalsIgnoreCase(ScanState.INVALID.getState())) {
             libraryPolicyAuditResponse.addAuditStatus(LibraryPolicyAuditStatus.LIBRARY_POLICY_INVALID_SCAN);
-        } else if(returnPolicyResult.getScanState().equalsIgnoreCase("No Findings")) {
+        } else if(returnPolicyResult.getScanState().equalsIgnoreCase(ScanState.NO_FINDINGS.getState())) {
             libraryPolicyAuditResponse.addAuditStatus(LibraryPolicyAuditStatus.LIBRARY_POLICY_AUDIT_OK);
         } else {
             //threats by type
