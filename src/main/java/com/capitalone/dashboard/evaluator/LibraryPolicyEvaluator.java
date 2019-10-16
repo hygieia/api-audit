@@ -15,6 +15,7 @@ import com.capitalone.dashboard.status.LibraryPolicyAuditStatus;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.collections.SetUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -74,15 +75,14 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
         libraryPolicyAuditResponse.setLibraryPolicyResult(returnPolicyResult);
         libraryPolicyAuditResponse.setLastExecutionTime(returnPolicyResult.getEvaluationTimestamp());
 
-        if(returnPolicyResult.getScanState().equalsIgnoreCase(ScanState.INVALID.getState())) {
+        if (StringUtils.equalsIgnoreCase(returnPolicyResult.getScanState(), ScanState.INVALID.getState())) {
             libraryPolicyAuditResponse.addAuditStatus(LibraryPolicyAuditStatus.LIBRARY_POLICY_INVALID_SCAN);
-        } else if(returnPolicyResult.getScanState().equalsIgnoreCase(ScanState.NO_FINDINGS.getState())) {
+        } else if (StringUtils.equalsIgnoreCase(returnPolicyResult.getScanState(), ScanState.NO_FINDINGS.getState())) {
             libraryPolicyAuditResponse.addAuditStatus(LibraryPolicyAuditStatus.LIBRARY_POLICY_AUDIT_OK);
         } else {
             //threats by type
             Set<LibraryPolicyResult.Threat> securityThreats = !MapUtils.isEmpty(returnPolicyResult.getThreats()) ? returnPolicyResult.getThreats().get(LibraryPolicyType.Security) : SetUtils.EMPTY_SET;
             Set<LibraryPolicyResult.Threat> licenseThreats = !MapUtils.isEmpty(returnPolicyResult.getThreats()) ? returnPolicyResult.getThreats().get(LibraryPolicyType.License) : SetUtils.EMPTY_SET;
-
 
             boolean isOk = true;
             //License Threats
