@@ -228,6 +228,52 @@ public class DashboardAuditServiceTest {
     }
 
     @Test
+    public void runLibraryPolicyAuditTestsNoFindings() throws AuditException, IOException {
+        libraryPolicyResultsRepository.deleteAll();
+        TestUtils.loadLibraryPolicy(libraryPolicyResultsRepository, "./librarypolicy/librarypolicy-no-findings.json");
+        DashboardReviewResponse actual = getActualReviewResponse(dashboardAuditService.getDashboardReviewResponse("TestSSA",
+                DashboardType.Team,
+                "TestBusServ",
+                "confItem",
+                1522623841000L, 1526505798000L,
+                 Sets.newHashSet(AuditType.LIBRARY_POLICY)), LibraryPolicyAuditResponse.class);
+        DashboardReviewResponse expected = getExpectedReviewResponse("LibraryPolicyAuditNoFindings.json", LibraryPolicyAuditResponse.class);
+
+        assertDashboardAudit(actual, expected);
+        assertThat(actual.getReview()).isNotEmpty();
+        assertThat(actual.getReview().get(AuditType.LIBRARY_POLICY)).isNotNull();
+        Map<AuditType, Collection<LibraryPolicyAuditResponse>> actualReviewMap = actual.getReview();
+        Collection<LibraryPolicyAuditResponse> actualReview = actualReviewMap.get(AuditType.LIBRARY_POLICY);
+        Map<AuditType, Collection<LibraryPolicyAuditResponse>> expectedReviewMap = expected.getReview();
+        Collection<LibraryPolicyAuditResponse> expectedReview = expectedReviewMap.get(AuditType.LIBRARY_POLICY);
+        assertThat(actualReview.size()).isEqualTo(1);
+        assertThat(actualReview.toArray()[0]).isEqualToComparingFieldByField(expectedReview.toArray()[0]);
+    }
+
+    @Test
+    public void runLibraryPolicyAuditTestsInvalidScan() throws AuditException, IOException {
+        libraryPolicyResultsRepository.deleteAll();
+        TestUtils.loadLibraryPolicy(libraryPolicyResultsRepository, "./librarypolicy/librarypolicy-invalid-scan.json");
+        DashboardReviewResponse actual = getActualReviewResponse(dashboardAuditService.getDashboardReviewResponse("TestSSA",
+                DashboardType.Team,
+                "TestBusServ",
+                "confItem",
+                1522623841000L, 1526505798000L,
+                Sets.newHashSet(AuditType.LIBRARY_POLICY)), LibraryPolicyAuditResponse.class);
+        DashboardReviewResponse expected = getExpectedReviewResponse("LibraryPolicyInvalidScan.json", LibraryPolicyAuditResponse.class);
+
+        assertDashboardAudit(actual, expected);
+        assertThat(actual.getReview()).isNotEmpty();
+        assertThat(actual.getReview().get(AuditType.LIBRARY_POLICY)).isNotNull();
+        Map<AuditType, Collection<LibraryPolicyAuditResponse>> actualReviewMap = actual.getReview();
+        Collection<LibraryPolicyAuditResponse> actualReview = actualReviewMap.get(AuditType.LIBRARY_POLICY);
+        Map<AuditType, Collection<LibraryPolicyAuditResponse>> expectedReviewMap = expected.getReview();
+        Collection<LibraryPolicyAuditResponse> expectedReview = expectedReviewMap.get(AuditType.LIBRARY_POLICY);
+        assertThat(actualReview.size()).isEqualTo(1);
+        assertThat(actualReview.toArray()[0]).isEqualToComparingFieldByField(expectedReview.toArray()[0]);
+    }
+
+    @Test
     public void runPerformanceAuditTests() throws AuditException, IOException {
         DashboardReviewResponse actual = getActualReviewResponse(dashboardAuditService.getDashboardReviewResponse("TestSSA",
                 DashboardType.Team,

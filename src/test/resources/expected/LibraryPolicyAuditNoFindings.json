@@ -1,0 +1,35 @@
+{
+  "dashboardTitle": "TestSSA",
+  "businessService": "TestBusServ",
+  "businessApplication": "confItem",
+  "review": {
+    "LIBRARY_POLICY": [
+      {
+        "auditEntity": {
+          "applicationID": ["SOMEAPPLICATION"],
+          "applicationName": "account-my-information",
+          "componentName": "mycomponent",
+          "instanceUrl": "https://scan.com"
+        },
+        "lastExecutionTime": 1.522879797193E12,
+        "libraryPolicyResult": {
+          "collectorItemId": "5ad5f605c23b391cfa1c01a4",
+          "timestamp": 1.523984079768E12,
+          "evaluationTimestamp": 1.522879797193E12,
+          "threats": {},
+          "scanState": "No Findings",
+          "policyAlert": [],
+          "id": "5ad626cfc23b392c8f61ea1b"
+        },
+        "auditStatuses": [
+          "LIBRARY_POLICY_AUDIT_OK"
+        ],
+        "lastUpdated": 0.0
+      }
+    ]
+  },
+  "auditStatuses": [
+    "DASHBOARD_LIBRARY_POLICY_ANALYSIS_CONFIGURED"
+  ],
+  "lastUpdated": 0
+}

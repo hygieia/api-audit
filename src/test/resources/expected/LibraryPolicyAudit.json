@@ -5,7 +5,12 @@
   "review": {
     "LIBRARY_POLICY": [
       {
-        "auditEntity": "",
+        "auditEntity": {
+          "applicationID": ["SOMEAPPLICATION"],
+          "applicationName": "account-my-information",
+          "componentName": "mycomponent",
+          "instanceUrl": "https://scan.com"
+        },
         "lastExecutionTime": 1.522879797193E12,
         "libraryPolicyResult": {
           "collectorItemId": "5ad5f605c23b391cfa1c01a4",
@@ -15,6 +20,7 @@
             "License": [
               {
                 "level": "Medium",
+                "maxAge": 0.0,
                 "components": [
                   "com.amazonaws:aws-java-sdk-sqs-1.11.28.jar",
                   "ch.qos.logback:logback-classic-1.1.11.jar",
@@ -29,6 +35,7 @@
               },
               {
                 "level": "None",
+                "maxAge": 0.0,
                 "components": [
                   "org.springframework:spring-test-4.3.10.RELEASE.jar",
                   "org.jsoup:jsoup-1.8.3.jar",
@@ -117,6 +124,7 @@
               },
               {
                 "level": "High",
+                "maxAge": 0.0,
                 "components": [
                   "xpp3:xpp3_min-1.1.4c.jar",
                   "xmlpull:xmlpull-1.1.3.1.jar"
@@ -128,6 +136,7 @@
             "Security": [
               {
                 "level": "High",
+                "maxAge": 0.0,
                 "components": [
                   "ch.qos.logback:logback-classic-1.1.11.jar",
                   "ch.qos.logback:logback-core-1.1.11.jar",
@@ -139,6 +148,7 @@
               },
               {
                 "level": "None",
+                "maxAge": 0.0,
                 "components": [
                   "com.amazonaws:aws-java-sdk-sqs-1.11.28.jar",
                   "org.springframework:spring-test-4.3.10.RELEASE.jar",
@@ -230,6 +240,7 @@
               },
               {
                 "level": "Medium",
+                "maxAge": 0.0,
                 "components": [
                   "jquery:jquery-1.12.1.min.js",
                   "com.thoughtworks.xstream:xstream-1.4.7.jar"
@@ -240,6 +251,7 @@
             ]
           },
           "policyAlert": [],
+          "scanState": "completed",
           "id": "5ad626cfc23b392c8f61ea1b"
         },
         "auditStatuses": [

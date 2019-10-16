@@ -5,16 +5,23 @@
   "review": {
     "LIBRARY_POLICY": [
       {
-        "auditEntity": {},
+        "auditEntity": {
+          "applicationID": ["SOMEAPPLICATION"],
+          "applicationName": "account-my-information",
+          "componentName": "mycomponent",
+          "instanceUrl": "https://scan.com"
+        },
         "lastExecutionTime": 1.522879797193E12,
         "libraryPolicyResult": {
           "collectorItemId": "5ad5f605c23b391cfa1c01a4",
           "timestamp": 1.523984079768E12,
           "evaluationTimestamp": 1.522879797193E12,
+          "scanState": "completed",
           "threats": {
             "License": [
               {
                 "level": "Medium",
+                "maxAge": 0.0,
                 "components": [
                   "com.amazonaws:aws-java-sdk-sqs-1.11.28.jar##Open",
                   "ch.qos.logback:logback-classic-1.1.11.jar##Closed",
@@ -32,6 +39,7 @@
               },
               {
                 "level": "None",
+                "maxAge": 0.0,
                 "components": [
                   "org.springframework:spring-test-4.3.10.RELEASE.jar##Closed",
                   "org.jsoup:jsoup-1.8.3.jar##Closed",
@@ -123,6 +131,7 @@
               },
               {
                 "level": "High",
+                "maxAge": 0.0,
                 "components": [
                   "xpp3:xpp3_min-1.1.4c.jar##Closed",
                   "xmlpull:xmlpull-1.1.3.1.jar##Closed"
@@ -136,6 +145,7 @@
             "Security": [
               {
                 "level": "High",
+                "maxAge": 1.0,
                 "components": [
                   "ch.qos.logback:logback-classic-1.1.11.jar##Open",
                   "ch.qos.logback:logback-core-1.1.11.jar##Closed",
@@ -150,6 +160,7 @@
               },
               {
                 "level": "None",
+                "maxAge": 1.0,
                 "components": [
                   "com.amazonaws:aws-java-sdk-sqs-1.11.28.jar##Closed",
                   "org.springframework:spring-test-4.3.10.RELEASE.jar##Closed",
@@ -244,6 +255,7 @@
               },
               {
                 "level": "Medium",
+                "maxAge": 1.0,
                 "components": [
                   "jquery:jquery-1.12.1.min.js#Closed",
                   "com.thoughtworks.xstream:xstream-1.4.7.jar##Closed"
