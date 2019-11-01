@@ -4,13 +4,13 @@ VOLUME ["/hygieia/logs"]
 
 RUN mkdir /hygieia/config
 
-EXPOSE 8080
+EXPOSE 8081
 
 ENV PROP_FILE /hygieia/config/application.properties
 
 WORKDIR /hygieia
 
-COPY target/*.jar /hygieia
+COPY target/*.jar /hygieia/
 COPY docker/properties-builder.sh /hygieia/
 
 CMD ./properties-builder.sh &&\
