@@ -5,7 +5,7 @@
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <version>3.1.2-SNAPSHOT</version>
-    <description>Hygieia Audit Rest API Layer</description>
+    <description>Hygieia Audit Rest API Layer Analysis Engine </description>
     <url>https://github.com/Hygieia/${repository.name}</url>
 
     <scm>
