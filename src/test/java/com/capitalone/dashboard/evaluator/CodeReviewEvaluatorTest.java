@@ -161,6 +161,23 @@ public class CodeReviewEvaluatorTest {
     }
 
     @Test
+    public void evaluate_COMMITS_AFTER_PR_REVIEWS() {
+        List<CollectorItem> collectorItemList = new ArrayList<>();
+        collectorItemList.add(makeCollectorItem(1, "master"));
+        List<GitRequest> pullRequestList = makePullRequestsWithCommitsAfterReviews();
+        List<Commit> commitsList = makeCommitsAfterPrReviews();
+        when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(pullRequestList);
+        when(commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(commitsList);
+        when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
+        when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
+        when(apiSettings.getCommitLogIgnoreAuditRegEx()).thenReturn("(.)*(Increment_Version_Tag)(.)*");
+        when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
+        CodeReviewAuditResponseV2 responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1,"master"), collectorItemList,1L, 99999999L, null);
+        Assert.assertTrue(responseV2.getAuditStatuses().contains(CodeReviewAuditStatus.COMMITS_AFTER_PR_REVIEWS));
+        Assert.assertEquals(1,responseV2.getCommitsAfterPrReviews().size());
+    }
+
+    @Test
     public void existsApprovedPRForCollectorItemTest() {
         List<GitRequest> pullRequestList = makePullRequests(true);
         List<Commit> commitsList = makeCommits();
@@ -307,8 +324,38 @@ public class CodeReviewEvaluatorTest {
         commitsList.add(makeCommit("Merge branch master into branch", "CommitOid1", "Author1", "Author1",12345678L));
         commitsList.add(makeCommit("Commit 21", "CommitOid21", "Author12", "Author12",12345678L));
         commitsList.add(makeCommit("Commit 3", "CommitOid3", "Author3", "Author3",12345678L));
-
         return commitsList;
+    }
+
+    private List<Commit> makeCommitsAfterPrReviews() {
+        List<Commit> commitsList = new ArrayList<>();
+        commitsList.add(makeCommit("Merge branch master into branch", "CommitOid1", "Author1", "Author1",10000000L, "1"));
+        commitsList.add(makeCommit("Commit 21", "CommitOid21", "Author12", "Author12",10000001L, "1"));
+        commitsList.add(makeCommit("Commit after review", "CommitOid3", "Author3", "Author3",30000000L, "1"));
+        return commitsList;
+    }
+
+    private List<GitRequest> makePullRequestsWithCommitsAfterReviews() {
+        // Create pull request
+        List<GitRequest> pullRequestList = new ArrayList<>();
+        GitRequest pr1 = new GitRequest();
+        pullRequestList.add(pr1);
+        pr1.setUserId("Author1");
+        pr1.setScmBranch("master");
+        pr1.setSourceBranch("branch");
+        pr1.setScmRevisionNumber("CommitOid1");
+        pr1.setState("merged");
+
+        // Add commits
+        List<Commit> commitsList = new ArrayList<>();
+        pr1.setCommits(makeCommitsAfterPrReviews());
+
+        // Add reviews
+        List<Review> reviewList = new ArrayList<>();
+        pr1.setReviews(reviewList);
+        reviewList.add(makeReview("lgtm", "approved", "reviewer1", 20000000L, 20000000L));
+
+        return pullRequestList;
     }
 
     private Commit makeCommit(String message, String scmRevisionNumber, String author, String committer, long timeStamp) {
@@ -327,6 +374,36 @@ public class CodeReviewEvaluatorTest {
         c.setScmCommitTimestamp(timeStamp);
         c.setNumberOfChanges(1);
         return c;
+    }
+
+    private Commit makeCommit(String message, String scmRevisionNumber, String author, String committer, long timeStamp, String pullNumber) {
+        Commit c = new Commit();
+        c.setId(ObjectId.get());
+        c.setScmCommitLog(message);
+        c.setScmAuthorLDAPDN("CN=hygieiaUser,OU=Service Accounts,DC=basic,DC=ds,DC=industry,DC=com");
+        c.setScmRevisionNumber(scmRevisionNumber);
+        c.setType(CommitType.New);
+        c.setScmAuthor(author);
+        c.setScmAuthorLogin(author);
+        c.setFilesModified(Arrays.asList("pom.xml"));
+        c.setFilesRemoved(Arrays.asList("cucumber.xml"));
+        c.setFilesAdded(Arrays.asList("package.json"));
+        c.setScmCommitterLogin(committer);
+        c.setScmCommitTimestamp(timeStamp);
+        c.setNumberOfChanges(1);
+        c.setPullNumber(pullNumber);
+        return c;
+    }
+
+    private Review makeReview(String message, String state, String author, long createdAt, long updatedAt) {
+        Review r = new Review();
+        r.setBody(message);
+        r.setState(state);
+        r.setAuthor(author);
+        r.setAuthorLDAPDN("CN=hygieiaUser,OU=Service Accounts,DC=basic,DC=ds,DC=industry,DC=com");
+        r.setCreatedAt(createdAt);
+        r.setUpdatedAt(updatedAt);
+        return r;
     }
 
     private Commit makeCommitWithNoLDAP(String message) {
