@@ -46,11 +46,23 @@ public class PerformanceTestResultEvaluator extends Evaluator<PerformanceTestAud
     public Collection<PerformanceTestAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> dummy) throws AuditException {
         List<CollectorItem> testItems = getCollectorItems(dashboard, "codeanalysis", CollectorType.Test);
         Collection<TestResultsAuditResponse> responses = new ArrayList<>();
-        if (CollectionUtils.isEmpty(testItems)) {
+
+        List<CollectorItem> perfItems = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(testItems)) {
+            testItems.forEach(item -> {
+                TestResult testResult = testResultRepository.findByCollectorItemId(item.getId());
+                if (testResult != null) {
+                    if ((TestSuiteType.Performance).equals(testResultRepository.findByCollectorItemId(item.getId()).getType())) {
+                        perfItems.add(item);
+                    }
+                }
+            });
+        }
+        if (CollectionUtils.isEmpty(perfItems)) {
             throw new AuditException("No tests configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
         }
 
-        return testItems.stream().map(item -> evaluate(item, beginDate, endDate, null)).collect(Collectors.toList());
+        return perfItems.stream().map(item -> evaluate(item, beginDate, endDate, null)).collect(Collectors.toList());
     }
 
     @Override
@@ -67,21 +79,20 @@ public class PerformanceTestResultEvaluator extends Evaluator<PerformanceTestAud
         }
         perfReviewResponse.setAuditEntity(perfItem.getOptions());
         List<TestResult> testResults = testResultRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(perfItem.getId(), beginDate-1, endDate+1);
-        List<PerfTest> testlist = new ArrayList<>();
-
-        if (!CollectionUtils.isEmpty(testResults)){
+        if (CollectionUtils.isNotEmpty(testResults)){
             testResults.sort(Comparator.comparing(TestResult::getTimestamp).reversed());
             TestResult testResult = testResults.iterator().next();
             perfReviewResponse.setBuildArtifact(testResult.getBuildArtifact());
             perfReviewResponse.setPerfRisk(testResult.getPerfRisk());
             if (TestSuiteType.Performance.toString().equalsIgnoreCase(testResult.getType().name())) {
                 Collection<TestCapability> testCapabilities = testResult.getTestCapabilities();
+                List<PerfTest> testlist = new ArrayList<>();
 
-                if(!CollectionUtils.isEmpty(testCapabilities)){
+                if(CollectionUtils.isNotEmpty(testCapabilities)) {
                     Comparator<TestCapability> testCapabilityComparator = Comparator.comparing(TestCapability::getTimestamp);
                     List<TestCapability> tc = new ArrayList<>(testCapabilities);
-                    Collections.sort(tc,testCapabilityComparator.reversed());
-                    TestCapability testCapability =  tc.get(0);
+                    Collections.sort(tc, testCapabilityComparator.reversed());
+                    TestCapability testCapability = tc.get(0);
                     PerfTest test = new PerfTest();
                     List<PerfIndicators> kpilist = new ArrayList<>();
                     Collection<TestSuite> testSuites = testCapability.getTestSuites();
@@ -97,11 +108,11 @@ public class PerformanceTestResultEvaluator extends Evaluator<PerformanceTestAud
                                 String value = testCaseStep.getDescription();
                                 if (j == 0) {
                                     kpi.setTarget(Double.parseDouble(value));
-                                    if(StringUtils.equalsIgnoreCase(testCase.getDescription(),"KPI : Avg response times") && !value.isEmpty()){
+                                    if (StringUtils.equalsIgnoreCase(testCase.getDescription(), "KPI : Avg response times") && !value.isEmpty()) {
                                         perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERFORMANCE_THRESHOLDS_RESPONSE_TIME_FOUND);
-                                    }else if((StringUtils.equalsIgnoreCase(testCase.getDescription(),"KPI : Transaction Per Second") && !value.isEmpty())) {
+                                    } else if ((StringUtils.equalsIgnoreCase(testCase.getDescription(), "KPI : Transaction Per Second") && !value.isEmpty())) {
                                         perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERFORMANCE_THRESHOLDS_TRANSACTIONS_PER_SECOND_FOUND);
-                                    }else if(StringUtils.equalsIgnoreCase(testCase.getDescription(),"KPI : Error Rate Threshold") && !value.isEmpty() ){
+                                    } else if (StringUtils.equalsIgnoreCase(testCase.getDescription(), "KPI : Error Rate Threshold") && !value.isEmpty()) {
                                         perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERFORMANCE_THRESHOLDS_ERROR_RATE_FOUND);
                                     }
                                 }
@@ -109,17 +120,16 @@ public class PerformanceTestResultEvaluator extends Evaluator<PerformanceTestAud
                                 j++;
                             }
                             kpilist.add(kpi);
-                            if(StringUtils.equalsIgnoreCase(kpi.getType(),"KPI : Avg response times")&& (kpi.getTarget() > kpi.getAchieved()))
-                            {
+                            if (StringUtils.equalsIgnoreCase(kpi.getType(), "KPI : Avg response times") && (kpi.getTarget() > kpi.getAchieved())) {
                                 perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERFORMANCE_THRESHOLD_RESPONSE_TIME_MET);
-                            }else if(StringUtils.equalsIgnoreCase(kpi.getType(),"KPI : Transaction Per Second")&& (kpi.getTarget() <= kpi.getAchieved())){
+                            } else if (StringUtils.equalsIgnoreCase(kpi.getType(), "KPI : Transaction Per Second") && (kpi.getTarget() <= kpi.getAchieved())) {
                                 perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERFORMANCE_THRESHOLD_TRANSACTIONS_PER_SECOND_MET);
-                            }else if(StringUtils.equalsIgnoreCase(kpi.getType(),"KPI : Error Rate Threshold")&& (kpi.getTarget() >= kpi.getAchieved())){
+                            } else if (StringUtils.equalsIgnoreCase(kpi.getType(), "KPI : Error Rate Threshold") && (kpi.getTarget() >= kpi.getAchieved())) {
                                 perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERFORMANCE_THRESHOLD_ERROR_RATE_MET);
                             }
 
                         }
-                        if(StringUtils.equalsIgnoreCase(testResult.getDescription(),"Success")){
+                        if (StringUtils.equalsIgnoreCase(testResult.getDescription(), "Success")) {
                             perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERFORMANCE_MET);
 
                         }
@@ -132,19 +142,28 @@ public class PerformanceTestResultEvaluator extends Evaluator<PerformanceTestAud
                         test.setTimeStamp(testResult.getTimestamp());
                         testlist.add(test);
                     }
+                    testlist.sort(Comparator.comparing(PerfTest::getStartTime).reversed());
+                    perfReviewResponse.setResult(testlist);
+                    perfReviewResponse.setLastExecutionTime(CollectionUtils.isEmpty(testlist)?0L:testlist.get(0).getStartTime());
+                    perfReviewResponse.addAuditStatus((int) testlist.stream().filter(list -> Optional.ofNullable(list).isPresent() && Optional.ofNullable(list.getResultStatus()).isPresent() && list.getResultStatus().matches("Success")).count() > 0 ?
+                            PerformanceTestAuditStatus.PERF_RESULT_AUDIT_OK : PerformanceTestAuditStatus.PERF_RESULT_AUDIT_FAIL);
+                }else{
+                    if(testResult.getPerfRisk().equalsIgnoreCase("High") ){
+                        perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_NO_RESULT_RISK_HIGH);
+                        perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_RESULT_AUDIT_FAIL);
+                    }else if(testResult.getPerfRisk().equalsIgnoreCase("Medium")){
+                        perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_NO_RESULT_RISK_LOW);
+                        perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_RESULT_AUDIT_FAIL);
+                    }if(testResult.getPerfRisk().equalsIgnoreCase("Low")){
+                        perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_NO_RESULT_RISK_LOW);
+                        perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_RESULT_AUDIT_OK);
+                    }
                 }
-
-                testlist.sort(Comparator.comparing(PerfTest::getStartTime).reversed());
-                perfReviewResponse.setResult(testlist);
-                perfReviewResponse.setLastExecutionTime(CollectionUtils.isEmpty(testlist)?0L:testlist.get(0).getStartTime());
-                perfReviewResponse.addAuditStatus((int) testlist.stream().filter(list -> Optional.ofNullable(list).isPresent() && Optional.ofNullable(list.getResultStatus()).isPresent() && list.getResultStatus().matches("Success")).count() > 0 ?
-                        PerformanceTestAuditStatus.PERF_RESULT_AUDIT_OK : PerformanceTestAuditStatus.PERF_RESULT_AUDIT_FAIL);
             }
-        }
-        if (CollectionUtils.isEmpty(testlist)) {
-            perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_RESULT_AUDIT_MISSING);
-        }else {
             perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERFORMANCE_COMMIT_IS_CURRENT);
+        }
+        if(CollectionUtils.isEmpty(testResults)) {
+            perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_RESULT_AUDIT_MISSING);
         }
         return perfReviewResponse;
     }
