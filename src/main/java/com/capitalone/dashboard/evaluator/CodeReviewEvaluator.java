@@ -2,9 +2,18 @@ package com.capitalone.dashboard.evaluator;
 
 import com.capitalone.dashboard.ApiSettings;
 import com.capitalone.dashboard.common.CommonCodeReview;
-import com.capitalone.dashboard.model.*;
-import com.capitalone.dashboard.model.AuditException;
+import com.capitalone.dashboard.model.Collector;
+import com.capitalone.dashboard.model.CollectorItem;
+import com.capitalone.dashboard.model.CollectorType;
+import com.capitalone.dashboard.model.Commit;
+import com.capitalone.dashboard.model.CommitType;
+import com.capitalone.dashboard.model.Dashboard;
+import com.capitalone.dashboard.model.GitRequest;
+import com.capitalone.dashboard.model.Review;
+import com.capitalone.dashboard.model.SCM;
 import com.capitalone.dashboard.repository.CollectorRepository;
+import com.capitalone.dashboard.model.ServiceAccount;
+import com.capitalone.dashboard.model.AuditException;
 import com.capitalone.dashboard.repository.CommitRepository;
 import com.capitalone.dashboard.repository.GitRequestRepository;
 import com.capitalone.dashboard.response.CodeReviewAuditResponseV2;
@@ -206,8 +215,10 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
     }
 
     private boolean checkPrCommitsAndCommitType(List<String> allPrCommitShas, Commit commit) {
-        return (!allPrCommitShas.contains(commit.getScmRevisionNumber()))
-                && (commit.getType() == CommitType.New);
+        return CollectionUtils.isNotEmpty(allPrCommitShas) &&
+                commit != null &&
+                commit.getType() == CommitType.New &&
+                !allPrCommitShas.contains(commit.getScmRevisionNumber());
     }
 
     private boolean isCommitEligibleForDirectCommitsForPushedRepo(CollectorItem repoItem, Commit commit,
@@ -268,7 +279,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         List<Review> reviewsRelatedToPr = pr.getReviews().stream().sorted(Comparator.comparing(Review::getUpdatedAt)).collect(Collectors.toList());
         long lastReviewTimestamp = reviewsRelatedToPr.get(reviewsRelatedToPr.size()-1).getUpdatedAt();
         List<Commit> commitsAfterPrReviews = commitsRelatedToPr.stream().filter(commit -> commit.getScmCommitTimestamp() > lastReviewTimestamp).collect(Collectors.toList());
-        if (commitsAfterPrReviews.size() > 0) {
+        if (CollectionUtils.size(commitsAfterPrReviews) > 0) {
             reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.COMMITS_AFTER_PR_REVIEWS);
             pullRequestAudit.addAuditStatus(CodeReviewAuditStatus.COMMITS_AFTER_PR_REVIEWS);
             commitsAfterPrReviews.forEach(reviewAuditResponseV2::addCommitAfterPrReviews);
