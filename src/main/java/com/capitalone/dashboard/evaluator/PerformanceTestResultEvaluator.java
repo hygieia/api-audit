@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 public class PerformanceTestResultEvaluator extends Evaluator<PerformanceTestAuditResponse> {
 
     private final TestResultRepository testResultRepository;
-
+    private enum PerfRiskStatus { High, Medium, Low }
 
     @Autowired
     public PerformanceTestResultEvaluator(TestResultRepository testResultRepository) {
@@ -76,8 +76,8 @@ public class PerformanceTestResultEvaluator extends Evaluator<PerformanceTestAud
                 if(CollectionUtils.isNotEmpty(testCapabilities)) {
                     Comparator<TestCapability> testCapabilityComparator = Comparator.comparing(TestCapability::getTimestamp);
                     List<TestCapability> tc = new ArrayList<>(testCapabilities);
-                    Collections.sort(tc, testCapabilityComparator.reversed());
-                    TestCapability testCapability = tc.get(0);
+                    Collections.sort(tc,testCapabilityComparator.reversed());
+                    TestCapability testCapability =  tc.get(0);
                     PerfTest test = new PerfTest();
                     List<PerfIndicators> kpilist = new ArrayList<>();
                     Collection<TestSuite> testSuites = testCapability.getTestSuites();
@@ -93,11 +93,11 @@ public class PerformanceTestResultEvaluator extends Evaluator<PerformanceTestAud
                                 String value = testCaseStep.getDescription();
                                 if (j == 0) {
                                     kpi.setTarget(Double.parseDouble(value));
-                                    if (StringUtils.equalsIgnoreCase(testCase.getDescription(), "KPI : Avg response times") && !value.isEmpty()) {
+                                    if(StringUtils.equalsIgnoreCase(testCase.getDescription(),"KPI : Avg response times") && !value.isEmpty()){
                                         perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERFORMANCE_THRESHOLDS_RESPONSE_TIME_FOUND);
-                                    } else if ((StringUtils.equalsIgnoreCase(testCase.getDescription(), "KPI : Transaction Per Second") && !value.isEmpty())) {
+                                    }else if((StringUtils.equalsIgnoreCase(testCase.getDescription(),"KPI : Transaction Per Second") && !value.isEmpty())) {
                                         perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERFORMANCE_THRESHOLDS_TRANSACTIONS_PER_SECOND_FOUND);
-                                    } else if (StringUtils.equalsIgnoreCase(testCase.getDescription(), "KPI : Error Rate Threshold") && !value.isEmpty()) {
+                                    }else if(StringUtils.equalsIgnoreCase(testCase.getDescription(),"KPI : Error Rate Threshold") && !value.isEmpty() ){
                                         perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERFORMANCE_THRESHOLDS_ERROR_RATE_FOUND);
                                     }
                                 }
@@ -105,16 +105,16 @@ public class PerformanceTestResultEvaluator extends Evaluator<PerformanceTestAud
                                 j++;
                             }
                             kpilist.add(kpi);
-                            if (StringUtils.equalsIgnoreCase(kpi.getType(), "KPI : Avg response times") && (kpi.getTarget() > kpi.getAchieved())) {
+                            if(StringUtils.equalsIgnoreCase(kpi.getType(),"KPI : Avg response times")&& (kpi.getTarget() > kpi.getAchieved())) {
                                 perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERFORMANCE_THRESHOLD_RESPONSE_TIME_MET);
-                            } else if (StringUtils.equalsIgnoreCase(kpi.getType(), "KPI : Transaction Per Second") && (kpi.getTarget() <= kpi.getAchieved())) {
+                            }else if(StringUtils.equalsIgnoreCase(kpi.getType(),"KPI : Transaction Per Second")&& (kpi.getTarget() <= kpi.getAchieved())){
                                 perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERFORMANCE_THRESHOLD_TRANSACTIONS_PER_SECOND_MET);
-                            } else if (StringUtils.equalsIgnoreCase(kpi.getType(), "KPI : Error Rate Threshold") && (kpi.getTarget() >= kpi.getAchieved())) {
+                            }else if(StringUtils.equalsIgnoreCase(kpi.getType(),"KPI : Error Rate Threshold")&& (kpi.getTarget() >= kpi.getAchieved())){
                                 perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERFORMANCE_THRESHOLD_ERROR_RATE_MET);
                             }
 
                         }
-                        if (StringUtils.equalsIgnoreCase(testResult.getDescription(), "Success")) {
+                        if(StringUtils.equalsIgnoreCase(testResult.getDescription(),"Success")){
                             perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERFORMANCE_MET);
 
                         }
@@ -133,13 +133,13 @@ public class PerformanceTestResultEvaluator extends Evaluator<PerformanceTestAud
                     perfReviewResponse.addAuditStatus((int) testlist.stream().filter(list -> Optional.ofNullable(list).isPresent() && Optional.ofNullable(list.getResultStatus()).isPresent() && list.getResultStatus().matches("Success")).count() > 0 ?
                             PerformanceTestAuditStatus.PERF_RESULT_AUDIT_OK : PerformanceTestAuditStatus.PERF_RESULT_AUDIT_FAIL);
                 }else{
-                    if("High".equalsIgnoreCase(testResult.getPerfRisk())){
+                    if(PerfRiskStatus.High.name().equalsIgnoreCase(testResult.getPerfRisk())){
                         perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_NO_RESULT_RISK_HIGH);
                         perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_RESULT_AUDIT_FAIL);
-                    }else if("Medium".equalsIgnoreCase(testResult.getPerfRisk())){
+                    }else if(PerfRiskStatus.Medium.name().equalsIgnoreCase(testResult.getPerfRisk())){
                         perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_NO_RESULT_RISK_MEDIUM);
                         perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_RESULT_AUDIT_FAIL);
-                    }else if("Low".equalsIgnoreCase(testResult.getPerfRisk())){
+                    }else if(PerfRiskStatus.Low.name().equalsIgnoreCase(testResult.getPerfRisk())){
                         perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_NO_RESULT_RISK_LOW);
                         perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_RESULT_AUDIT_OK);
                     }else{
