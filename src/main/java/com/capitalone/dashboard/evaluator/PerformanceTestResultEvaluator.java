@@ -14,7 +14,6 @@ import com.capitalone.dashboard.model.TestSuite;
 import com.capitalone.dashboard.model.TestSuiteType;
 import com.capitalone.dashboard.repository.TestResultRepository;
 import com.capitalone.dashboard.response.PerformanceTestAuditResponse;
-import com.capitalone.dashboard.response.TestResultsAuditResponse;
 import com.capitalone.dashboard.status.PerformanceTestAuditStatus;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -44,25 +43,11 @@ public class PerformanceTestResultEvaluator extends Evaluator<PerformanceTestAud
 
     @Override
     public Collection<PerformanceTestAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> dummy) throws AuditException {
-        List<CollectorItem> testItems = getCollectorItems(dashboard, "codeanalysis", CollectorType.Test);
-        Collection<TestResultsAuditResponse> responses = new ArrayList<>();
-
-        List<CollectorItem> perfItems = new ArrayList<>();
-        if(CollectionUtils.isNotEmpty(testItems)) {
-            testItems.forEach(item -> {
-                TestResult testResult = testResultRepository.findByCollectorItemId(item.getId());
-                if (testResult != null) {
-                    if ((TestSuiteType.Performance).equals(testResultRepository.findByCollectorItemId(item.getId()).getType())) {
-                        perfItems.add(item);
-                    }
-                }
-            });
-        }
-        if (CollectionUtils.isEmpty(perfItems)) {
+        List<CollectorItem> testItems = Optional.ofNullable(getCollectorItems(dashboard, "codeanalysis", CollectorType.Test)).orElse(Collections.EMPTY_LIST);
+        if (CollectionUtils.isEmpty(testItems)) {
             throw new AuditException("No tests configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
         }
-
-        return perfItems.stream().map(item -> evaluate(item, beginDate, endDate, null)).collect(Collectors.toList());
+        return testItems.stream().map(item -> evaluate(item, beginDate, endDate, null)).collect(Collectors.toList());
     }
 
     @Override
@@ -101,7 +86,7 @@ public class PerformanceTestResultEvaluator extends Evaluator<PerformanceTestAud
                         for (TestCase testCase : testCases) {
                             PerfIndicators kpi = new PerfIndicators();
                             kpi.setStatus(testCase.getStatus().toString());
-                            kpi.setType(testCase.getDescription().toString());
+                            kpi.setType(testCase.getDescription());
                             Collection<TestCaseStep> testSteps = testCase.getTestSteps();
                             int j = 0;
                             for (TestCaseStep testCaseStep : testSteps) {
@@ -148,15 +133,17 @@ public class PerformanceTestResultEvaluator extends Evaluator<PerformanceTestAud
                     perfReviewResponse.addAuditStatus((int) testlist.stream().filter(list -> Optional.ofNullable(list).isPresent() && Optional.ofNullable(list.getResultStatus()).isPresent() && list.getResultStatus().matches("Success")).count() > 0 ?
                             PerformanceTestAuditStatus.PERF_RESULT_AUDIT_OK : PerformanceTestAuditStatus.PERF_RESULT_AUDIT_FAIL);
                 }else{
-                    if(testResult.getPerfRisk().equalsIgnoreCase("High") ){
+                    if("High".equalsIgnoreCase(testResult.getPerfRisk())){
                         perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_NO_RESULT_RISK_HIGH);
                         perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_RESULT_AUDIT_FAIL);
-                    }else if(testResult.getPerfRisk().equalsIgnoreCase("Medium")){
-                        perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_NO_RESULT_RISK_LOW);
+                    }else if("Medium".equalsIgnoreCase(testResult.getPerfRisk())){
+                        perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_NO_RESULT_RISK_MEDIUM);
                         perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_RESULT_AUDIT_FAIL);
-                    }if(testResult.getPerfRisk().equalsIgnoreCase("Low")){
+                    }else if("Low".equalsIgnoreCase(testResult.getPerfRisk())){
                         perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_NO_RESULT_RISK_LOW);
                         perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_RESULT_AUDIT_OK);
+                    }else{
+                        perfReviewResponse.addAuditStatus(PerformanceTestAuditStatus.PERF_RESULT_AUDIT_MISSING);
                     }
                 }
             }
