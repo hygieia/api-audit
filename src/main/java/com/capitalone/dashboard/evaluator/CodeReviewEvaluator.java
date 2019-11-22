@@ -215,10 +215,10 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
     }
 
     private boolean checkPrCommitsAndCommitType(List<String> allPrCommitShas, Commit commit) {
-        return CollectionUtils.isNotEmpty(allPrCommitShas) &&
-                commit != null &&
+        return commit != null &&
                 commit.getType() == CommitType.New &&
-                !allPrCommitShas.contains(commit.getScmRevisionNumber());
+                (CollectionUtils.isNotEmpty(allPrCommitShas) ||
+                !allPrCommitShas.contains(commit.getScmRevisionNumber()));
     }
 
     private boolean isCommitEligibleForDirectCommitsForPushedRepo(CollectorItem repoItem, Commit commit,
