@@ -268,21 +268,23 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         String targetRepo = pr.getTargetRepo();
         pullRequestAudit.addAuditStatus(sourceRepo == null ? CodeReviewAuditStatus.GIT_FORK_STRATEGY : sourceRepo.equalsIgnoreCase(targetRepo) ? CodeReviewAuditStatus.GIT_BRANCH_STRATEGY : CodeReviewAuditStatus.GIT_FORK_STRATEGY);
         auditCommitsAfterReviews(reviewAuditResponseV2, pullRequestAudit, pr);
-
         reviewAuditResponseV2.addPullRequest(pullRequestAudit);
     }
 
     protected void auditCommitsAfterReviews(CodeReviewAuditResponseV2 reviewAuditResponseV2, CodeReviewAuditResponseV2.PullRequestAudit pullRequestAudit, GitRequest pr) {
-        List<Commit> allCommitsRelatedToPr = pr.getCommits();
-        List<Commit> commitsRelatedToPr = allCommitsRelatedToPr.stream().filter(commit -> commit.getNumberOfChanges()>0).collect(Collectors.toList());
         List<Review> reviewsRelatedToPr = pr.getReviews().stream().sorted(Comparator.comparing(Review::getUpdatedAt)).collect(Collectors.toList());
-        long lastReviewTimestamp = reviewsRelatedToPr.get(reviewsRelatedToPr.size()-1).getUpdatedAt();
+        if(CollectionUtils.isEmpty(reviewsRelatedToPr)) { return; }
+
+        List<Commit> commitsRelatedToPr = pr.getCommits().stream().filter(commit -> commit.getNumberOfChanges()>0).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(commitsRelatedToPr)) { return; }
+
+        long lastReviewTimestamp = reviewsRelatedToPr.get(reviewsRelatedToPr.size() - 1).getUpdatedAt();
         List<Commit> commitsAfterPrReviews = commitsRelatedToPr.stream().filter(commit -> commit.getScmCommitTimestamp() > lastReviewTimestamp).collect(Collectors.toList());
-        if (CollectionUtils.size(commitsAfterPrReviews) > 0) {
-            reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.COMMITS_AFTER_PR_REVIEWS);
-            pullRequestAudit.addAuditStatus(CodeReviewAuditStatus.COMMITS_AFTER_PR_REVIEWS);
-            commitsAfterPrReviews.forEach(reviewAuditResponseV2::addCommitAfterPrReviews);
-        }
+
+        if(CollectionUtils.isEmpty(commitsAfterPrReviews)) { return; }
+        reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.COMMITS_AFTER_PR_REVIEWS);
+        pullRequestAudit.addAuditStatus(CodeReviewAuditStatus.COMMITS_AFTER_PR_REVIEWS);
+        commitsAfterPrReviews.forEach(reviewAuditResponseV2::addCommitAfterPrReviews);
     }
 
 
