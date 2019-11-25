@@ -164,7 +164,7 @@ public class CodeReviewEvaluatorTest {
     public void evaluate_COMMITS_AFTER_PR_REVIEWS() {
         List<CollectorItem> collectorItemList = new ArrayList<>();
         collectorItemList.add(makeCollectorItem(1, "master"));
-        List<GitRequest> pullRequestList = makePullRequestsWithCommitsAfterReviews();
+        List<GitRequest> pullRequestList = makePullRequestsWithCommitsAfterReviews(true);
         List<Commit> commitsList = makeCommitsAfterPrReviews();
         when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(pullRequestList);
         when(commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(commitsList);
@@ -175,6 +175,22 @@ public class CodeReviewEvaluatorTest {
         CodeReviewAuditResponseV2 responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1,"master"), collectorItemList,1L, 99999999L, null);
         Assert.assertTrue(responseV2.getAuditStatuses().contains(CodeReviewAuditStatus.COMMITS_AFTER_PR_REVIEWS));
         Assert.assertEquals(1,responseV2.getCommitsAfterPrReviews().size());
+    }
+
+    @Test
+    public void evaluate_COMMITS_AFTER_PR_REVIEWS_No_Reviews() {
+        List<CollectorItem> collectorItemList = new ArrayList<>();
+        collectorItemList.add(makeCollectorItem(1, "master"));
+        List<GitRequest> pullRequestList = makePullRequestsWithCommitsAfterReviews(false);
+        List<Commit> commitsList = makeCommitsAfterPrReviews();
+        when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(pullRequestList);
+        when(commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(commitsList);
+        when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
+        when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
+        when(apiSettings.getCommitLogIgnoreAuditRegEx()).thenReturn("(.)*(Increment_Version_Tag)(.)*");
+        when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
+        CodeReviewAuditResponseV2 responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1,"master"), collectorItemList,1L, 99999999L, null);
+        Assert.assertEquals(0,responseV2.getCommitsAfterPrReviews().size());
     }
 
     @Test
@@ -335,7 +351,7 @@ public class CodeReviewEvaluatorTest {
         return commitsList;
     }
 
-    private List<GitRequest> makePullRequestsWithCommitsAfterReviews() {
+    private List<GitRequest> makePullRequestsWithCommitsAfterReviews(boolean withApprovedReview) {
         // Create pull request
         List<GitRequest> pullRequestList = new ArrayList<>();
         GitRequest pr1 = new GitRequest();
@@ -349,11 +365,11 @@ public class CodeReviewEvaluatorTest {
         // Add commits
         List<Commit> commitsList = new ArrayList<>();
         pr1.setCommits(makeCommitsAfterPrReviews());
-
-        // Add reviews
         List<Review> reviewList = new ArrayList<>();
         pr1.setReviews(reviewList);
-        reviewList.add(makeReview("lgtm", "approved", "reviewer1", 20000000L, 20000000L));
+        if(withApprovedReview) {
+            reviewList.add(makeReview("lgtm", "approved", "reviewer1", 20000000L, 20000000L));
+        }
 
         return pullRequestList;
     }

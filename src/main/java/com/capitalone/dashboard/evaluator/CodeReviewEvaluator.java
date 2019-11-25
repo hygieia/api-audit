@@ -276,12 +276,14 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         List<Commit> allCommitsRelatedToPr = pr.getCommits();
         List<Commit> commitsRelatedToPr = allCommitsRelatedToPr.stream().filter(commit -> commit.getNumberOfChanges()>0).collect(Collectors.toList());
         List<Review> reviewsRelatedToPr = pr.getReviews().stream().sorted(Comparator.comparing(Review::getUpdatedAt)).collect(Collectors.toList());
-        long lastReviewTimestamp = reviewsRelatedToPr.get(reviewsRelatedToPr.size()-1).getUpdatedAt();
-        List<Commit> commitsAfterPrReviews = commitsRelatedToPr.stream().filter(commit -> commit.getScmCommitTimestamp() > lastReviewTimestamp).collect(Collectors.toList());
-        if (CollectionUtils.size(commitsAfterPrReviews) > 0) {
-            reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.COMMITS_AFTER_PR_REVIEWS);
-            pullRequestAudit.addAuditStatus(CodeReviewAuditStatus.COMMITS_AFTER_PR_REVIEWS);
-            commitsAfterPrReviews.forEach(reviewAuditResponseV2::addCommitAfterPrReviews);
+        if(CollectionUtils.isNotEmpty(reviewsRelatedToPr)) {
+            long lastReviewTimestamp = reviewsRelatedToPr.get(reviewsRelatedToPr.size() - 1).getUpdatedAt();
+            List<Commit> commitsAfterPrReviews = commitsRelatedToPr.stream().filter(commit -> commit.getScmCommitTimestamp() > lastReviewTimestamp).collect(Collectors.toList());
+            if (CollectionUtils.size(commitsAfterPrReviews) > 0) {
+                reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.COMMITS_AFTER_PR_REVIEWS);
+                pullRequestAudit.addAuditStatus(CodeReviewAuditStatus.COMMITS_AFTER_PR_REVIEWS);
+                commitsAfterPrReviews.forEach(reviewAuditResponseV2::addCommitAfterPrReviews);
+            }
         }
     }
 
