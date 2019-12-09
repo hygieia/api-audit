@@ -285,7 +285,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         if(CollectionUtils.isEmpty(commitsRelatedToPr)) { return; }
 
         long lastReviewTimestamp = reviewsRelatedToPr.get(reviewsRelatedToPr.size() - 1).getUpdatedAt();
-        List<Commit> commitsAfterPrReviews = commitsRelatedToPr.stream().filter(commit -> (
+        List<Commit> commitsAfterPrReviews = commitsRelatedToPr.stream().filter(Objects::nonNull).filter(commit -> (
                 commit.getScmCommitTimestamp() > lastReviewTimestamp
                 && !isMergeCommitFromTargetBranch(commit, pr))
         ).collect(Collectors.toList());
