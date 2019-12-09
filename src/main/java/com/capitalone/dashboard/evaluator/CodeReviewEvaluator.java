@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -272,6 +274,9 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         reviewAuditResponseV2.addPullRequest(pullRequestAudit);
     }
 
+    /**
+     * Flag commits made after peer reviews as violations, exclude commits that are merge commits from target branches
+     */
     protected void auditCommitsAfterReviews(CodeReviewAuditResponseV2 reviewAuditResponseV2, CodeReviewAuditResponseV2.PullRequestAudit pullRequestAudit, GitRequest pr) {
         List<Review> reviewsRelatedToPr = pr.getReviews().stream().sorted(Comparator.comparing(Review::getUpdatedAt)).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(reviewsRelatedToPr)) { return; }
@@ -280,7 +285,10 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         if(CollectionUtils.isEmpty(commitsRelatedToPr)) { return; }
 
         long lastReviewTimestamp = reviewsRelatedToPr.get(reviewsRelatedToPr.size() - 1).getUpdatedAt();
-        List<Commit> commitsAfterPrReviews = commitsRelatedToPr.stream().filter(commit -> commit.getScmCommitTimestamp() > lastReviewTimestamp).collect(Collectors.toList());
+        List<Commit> commitsAfterPrReviews = commitsRelatedToPr.stream().filter(commit -> (
+                commit.getScmCommitTimestamp() > lastReviewTimestamp
+                && !isMergeCommitFromTargetBranch(commit, pr))
+        ).collect(Collectors.toList());
 
         if(CollectionUtils.isEmpty(commitsAfterPrReviews)) { return; }
         reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.COMMITS_AFTER_PR_REVIEWS);
@@ -288,6 +296,19 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         commitsAfterPrReviews.forEach(reviewAuditResponseV2::addCommitAfterPrReviews);
     }
 
+    /**
+     * Check if a commit is a merge commit from target branches
+     * this type of commits has default commit logs that look like "merge branch 'target_branch' into ..."
+     * Note that this ins't the ideal way to check this as commit logs can be modified by users
+     */
+    private boolean isMergeCommitFromTargetBranch(Commit commit, GitRequest pr) {
+        if(commit == null || pr == null) return false;
+        String commitLog = commit.getScmCommitLog();
+        Pattern pattern = Pattern.compile("(.*merge branch.*\')(.*)(\'.*into.*)", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(commitLog);
+        if(!matcher.matches()) return false;
+        return StringUtils.equalsIgnoreCase(pr.getScmBranch(), matcher.group(2));
+    }
 
     protected boolean existsApprovedPROnAnotherBranch(CollectorItem repoItem, Commit commit, List<CollectorItem> collectorItemList,
                                                       long beginDt, long endDt) {

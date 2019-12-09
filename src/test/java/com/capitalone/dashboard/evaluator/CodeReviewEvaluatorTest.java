@@ -164,8 +164,8 @@ public class CodeReviewEvaluatorTest {
     public void evaluate_COMMITS_AFTER_PR_REVIEWS() {
         List<CollectorItem> collectorItemList = new ArrayList<>();
         collectorItemList.add(makeCollectorItem(1, "master"));
-        List<GitRequest> pullRequestList = makePullRequestsWithCommitsAfterReviews(true);
         List<Commit> commitsList = makeCommitsAfterPrReviews();
+        List<GitRequest> pullRequestList = makePullRequestsWithCommitsAfterReviews(commitsList, true);
         when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(pullRequestList);
         when(commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(commitsList);
         when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
@@ -181,8 +181,8 @@ public class CodeReviewEvaluatorTest {
     public void evaluate_COMMITS_AFTER_PR_REVIEWS_No_Reviews() {
         List<CollectorItem> collectorItemList = new ArrayList<>();
         collectorItemList.add(makeCollectorItem(1, "master"));
-        List<GitRequest> pullRequestList = makePullRequestsWithCommitsAfterReviews(false);
         List<Commit> commitsList = makeCommitsAfterPrReviews();
+        List<GitRequest> pullRequestList = makePullRequestsWithCommitsAfterReviews(commitsList, false);
         when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(pullRequestList);
         when(commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(commitsList);
         when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
@@ -191,6 +191,40 @@ public class CodeReviewEvaluatorTest {
         when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
         CodeReviewAuditResponseV2 responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1,"master"), collectorItemList,1L, 99999999L, null);
         Assert.assertEquals(0,responseV2.getCommitsAfterPrReviews().size());
+    }
+
+    @Test
+    public void evaluate_COMMITS_AFTER_PR_REVIEWS_exclude_merge_commits_from_target_branches() {
+        List<CollectorItem> collectorItemList = new ArrayList<>();
+        collectorItemList.add(makeCollectorItem(1, "master"));
+        List<Commit> commitsList = makeCommitsAfterPrReviewsWithMergeCommitsFromTargetBranches();
+        List<GitRequest> pullRequestList = makePullRequestsWithCommitsAfterReviews(commitsList, true);
+        when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(pullRequestList);
+        when(commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(commitsList);
+        when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
+        when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
+        when(apiSettings.getCommitLogIgnoreAuditRegEx()).thenReturn("(.)*(Increment_Version_Tag)(.)*");
+        when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
+        CodeReviewAuditResponseV2 responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1,"master"), collectorItemList,1L, 99999999L, null);
+        Assert.assertFalse(responseV2.getAuditStatuses().contains(CodeReviewAuditStatus.COMMITS_AFTER_PR_REVIEWS));
+        Assert.assertEquals(0,responseV2.getCommitsAfterPrReviews().size());
+    }
+
+    @Test
+    public void evaluate_COMMITS_AFTER_PR_REVIEWS_include_merge_commits_from_non_target_branches() {
+        List<CollectorItem> collectorItemList = new ArrayList<>();
+        collectorItemList.add(makeCollectorItem(1, "master"));
+        List<Commit> commitsList = makeCommitsAfterPrReviewsWithMergeCommitsFromNonTargetBranches();
+        List<GitRequest> pullRequestList = makePullRequestsWithCommitsAfterReviews(commitsList, true);
+        when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(pullRequestList);
+        when(commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(commitsList);
+        when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
+        when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
+        when(apiSettings.getCommitLogIgnoreAuditRegEx()).thenReturn("(.)*(Increment_Version_Tag)(.)*");
+        when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
+        CodeReviewAuditResponseV2 responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1,"master"), collectorItemList,1L, 99999999L, null);
+        Assert.assertTrue(responseV2.getAuditStatuses().contains(CodeReviewAuditStatus.COMMITS_AFTER_PR_REVIEWS));
+        Assert.assertEquals(1,responseV2.getCommitsAfterPrReviews().size());
     }
 
     @Test
@@ -316,6 +350,24 @@ public class CodeReviewEvaluatorTest {
         return pullRequestList;
     }
 
+    private List<GitRequest> makePullRequestsWithCommitsAfterReviews(List<Commit> commits, boolean withApprovedReview) {
+        List<GitRequest> pullRequestList = new ArrayList<>();
+        GitRequest pr1 = new GitRequest();
+        pullRequestList.add(pr1);
+        pr1.setUserId("Author1");
+        pr1.setScmBranch("master");
+        pr1.setSourceBranch("branch");
+        pr1.setScmRevisionNumber("CommitOid1");
+        pr1.setState("merged");
+        pr1.setCommits(commits);
+        List<Review> reviewList = new ArrayList<>();
+        pr1.setReviews(reviewList);
+        if(withApprovedReview) {
+            reviewList.add(makeReview("lgtm", "approved", "reviewer1", 20000000L, 20000000L));
+        }
+        return pullRequestList;
+    }
+
     private List<Review> makeReviews() {
         List<Review> reviewList = new ArrayList<>();
         Review review = new Review();
@@ -344,34 +396,24 @@ public class CodeReviewEvaluatorTest {
     }
 
     private List<Commit> makeCommitsAfterPrReviews() {
-        List<Commit> commitsList = new ArrayList<>();
-        commitsList.add(makeCommit("Merge branch master into branch", "CommitOid1", "Author1", "Author1",10000000L, "1"));
-        commitsList.add(makeCommit("Commit 21", "CommitOid21", "Author12", "Author12",10000001L, "1"));
-        commitsList.add(makeCommit("Commit after review", "CommitOid3", "Author3", "Author3",30000000L, "1"));
-        return commitsList;
+        Commit c1 = makeCommit("Merge branch master into branch", "CommitOid1", "Author1", "Author1",10000000L);
+        Commit c2 = makeCommit("Commit 21", "CommitOid21", "Author12", "Author12",10000001L);
+        Commit c3 = makeCommit("Commit after review", "CommitOid3", "Author3", "Author3",30000000L);
+        return new ArrayList<>(Arrays.asList(c1, c2, c3));
     }
 
-    private List<GitRequest> makePullRequestsWithCommitsAfterReviews(boolean withApprovedReview) {
-        // Create pull request
-        List<GitRequest> pullRequestList = new ArrayList<>();
-        GitRequest pr1 = new GitRequest();
-        pullRequestList.add(pr1);
-        pr1.setUserId("Author1");
-        pr1.setScmBranch("master");
-        pr1.setSourceBranch("branch");
-        pr1.setScmRevisionNumber("CommitOid1");
-        pr1.setState("merged");
+    private List<Commit> makeCommitsAfterPrReviewsWithMergeCommitsFromTargetBranches() {
+        Commit c1 = makeCommit("commit 1", "CommitOid1", "Author1", "Author1",10000000L);
+        Commit c2 = makeCommit("Commit 2", "CommitOid1", "Author1", "Author1",10000001L);
+        Commit c3 = makeCommit("Merge branch 'master' into feature branch", "CommitOid1", "Author1", "Author1",30000000L);
+        return new ArrayList<>(Arrays.asList(c1, c2, c3));
+    }
 
-        // Add commits
-        List<Commit> commitsList = new ArrayList<>();
-        pr1.setCommits(makeCommitsAfterPrReviews());
-        List<Review> reviewList = new ArrayList<>();
-        pr1.setReviews(reviewList);
-        if(withApprovedReview) {
-            reviewList.add(makeReview("lgtm", "approved", "reviewer1", 20000000L, 20000000L));
-        }
-
-        return pullRequestList;
+    private List<Commit> makeCommitsAfterPrReviewsWithMergeCommitsFromNonTargetBranches() {
+        Commit c1 = makeCommit("commit 1", "CommitOid1", "Author1", "Author1",10000000L);
+        Commit c2 = makeCommit("Commit 2", "CommitOid1", "Author1", "Author1",10000001L);
+        Commit c3 = makeCommit("Merge branch 'non-target-branch' into feature branch", "CommitOid1", "Author1", "Author1",30000000L);
+        return new ArrayList<>(Arrays.asList(c1, c2, c3));
     }
 
     private Commit makeCommit(String message, String scmRevisionNumber, String author, String committer, long timeStamp) {
@@ -389,25 +431,6 @@ public class CodeReviewEvaluatorTest {
         c.setScmCommitterLogin(committer);
         c.setScmCommitTimestamp(timeStamp);
         c.setNumberOfChanges(1);
-        return c;
-    }
-
-    private Commit makeCommit(String message, String scmRevisionNumber, String author, String committer, long timeStamp, String pullNumber) {
-        Commit c = new Commit();
-        c.setId(ObjectId.get());
-        c.setScmCommitLog(message);
-        c.setScmAuthorLDAPDN("CN=hygieiaUser,OU=Service Accounts,DC=basic,DC=ds,DC=industry,DC=com");
-        c.setScmRevisionNumber(scmRevisionNumber);
-        c.setType(CommitType.New);
-        c.setScmAuthor(author);
-        c.setScmAuthorLogin(author);
-        c.setFilesModified(Arrays.asList("pom.xml"));
-        c.setFilesRemoved(Arrays.asList("cucumber.xml"));
-        c.setFilesAdded(Arrays.asList("package.json"));
-        c.setScmCommitterLogin(committer);
-        c.setScmCommitTimestamp(timeStamp);
-        c.setNumberOfChanges(1);
-        c.setPullNumber(pullNumber);
         return c;
     }
 
