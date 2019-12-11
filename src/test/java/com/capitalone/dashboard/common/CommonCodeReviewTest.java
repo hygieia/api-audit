@@ -88,7 +88,7 @@ public class CommonCodeReviewTest {
         apiSettings.setPeerReviewApprovalText("approved by");
         Mockito.when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
         AuditReviewResponse<CodeReviewAuditStatus> codeReviewAuditRequestAuditReviewResponse = new AuditReviewResponse<>();
-        Assert.assertEquals(false, CommonCodeReview.computePeerReviewStatus(makeGitRequest("Service Accounts"), apiSettings, codeReviewAuditRequestAuditReviewResponse, Stream.of(makeCommit()).collect(Collectors.toList()),commitRepository,serviceAccountRepository));
+        Assert.assertEquals(true, CommonCodeReview.computePeerReviewStatus(makeGitRequest("Service Accounts"), apiSettings, codeReviewAuditRequestAuditReviewResponse, Stream.of(makeCommit()).collect(Collectors.toList()),commitRepository,serviceAccountRepository));
         Assert.assertEquals(true, codeReviewAuditRequestAuditReviewResponse.getAuditStatuses().toString().contains("PEER_REVIEW_BY_SERVICEACCOUNT"));
     }
 
@@ -122,7 +122,10 @@ public class CommonCodeReviewTest {
         Commit c = new Commit();
         c.setId(ObjectId.get());
         c.setScmCommitLog("Merge branch master into branch");
+        c.setScmAuthor("hygieiaUser");
         c.setScmAuthorLDAPDN("CN=hygieiaUser,OU=Service Accounts,DC=basic,DC=ds,DC=industry,DC=com");
+        c.setScmCommitTimestamp(100000000);
+        c.setScmAuthorLogin("hygieiaUser");
         return c;
     }
 
@@ -137,7 +140,10 @@ public class CommonCodeReviewTest {
     private Review makeReview() {
         Review r = new Review();
         r.setState("approved");
+        r.setAuthor("hygieiaUser");
         r.setAuthorLDAPDN("CN=hygieiaUser,OU=Service Accounts,DC=basic,DC=ds,DC=industry,DC=com");
+        r.setCreatedAt(200000000);
+        r.setUpdatedAt(200000000);
         return r;
     }
 
