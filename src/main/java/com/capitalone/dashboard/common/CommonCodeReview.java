@@ -317,7 +317,7 @@ public class CommonCodeReview {
 
     private static List<CodeAction> getReviewedActions(List<CodeAction> codeActionList, CodeAction reviewAction) {
         return codeActionList.stream()
-                .filter(cal -> cal.getTimestamp() < reviewAction.getTimestamp())
+//                .filter(cal -> cal.getTimestamp() < reviewAction.getTimestamp())
                 .filter(cal -> (cal.getType() == CodeActionType.Commit) && !reviewAction.getActor().equalsIgnoreCase(cal.getActor()))
                 .collect(Collectors.toList());
     }
