@@ -16,9 +16,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -76,8 +78,7 @@ public class ArtifactEvaluator extends Evaluator<ArtifactAuditResponse> {
         artifactAuditResponse.setLastUpdated(getLastUpdated(binaryArtifacts));
         boolean isBuild = binaryArtifacts.stream().anyMatch(ba-> CollectionUtils.isNotEmpty(ba.getBuildInfos()));
         boolean isServiceAccount = binaryArtifacts.stream().anyMatch(ba-> isServiceAccount(ba.getCreatedBy()));
-        boolean isDocker = binaryArtifacts.stream().anyMatch(ba-> ba.getVirtualRepos().stream().anyMatch(repo -> repo.contains(DOCKER)));
-        if (isServiceAccount) {
+        boolean isDocker = binaryArtifacts.stream().anyMatch(ba-> Optional.ofNullable(ba.getVirtualRepos()).orElse(Collections.emptyList()).stream().anyMatch(repo -> repo.contains(DOCKER)));        if (isServiceAccount) {
             evaluateArtifactForServiceAccountAndBuild(artifactAuditResponse, isBuild);
         }
         if (isDocker) {
@@ -112,8 +113,10 @@ public class ArtifactEvaluator extends Evaluator<ArtifactAuditResponse> {
     }
 
     private boolean isServiceAccount(String createdBy) {
-        return !Pattern.compile(apiSettings.getServiceAccountRegEx()).matcher(createdBy).matches();
-
+        if(StringUtils.isNotEmpty(createdBy)){
+            return !Pattern.compile(apiSettings.getServiceAccountRegEx()).matcher(createdBy).matches();
+        }
+        return false;
     }
 
     private ArtifactAuditResponse getErrorResponse(CollectorItem collectorItem, ArtifactAuditStatus artifactAuditStatus) {
