@@ -252,6 +252,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         List<Commit> allCommitsRelatedToPr = pr.getCommits();
         List<Commit> commitsRelatedToPr = allCommitsRelatedToPr.stream().filter(commit -> commit.getNumberOfChanges()>0).collect(Collectors.toList());
         commitsRelatedToPr.sort(Comparator.comparing(e -> (e.getScmCommitTimestamp())));
+
         if (mergeCommit == null) {
             pullRequestAudit.addAuditStatus(CodeReviewAuditStatus.MERGECOMMITER_NOT_FOUND);
         } else {
@@ -270,8 +271,29 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         String sourceRepo = pr.getSourceRepo();
         String targetRepo = pr.getTargetRepo();
         pullRequestAudit.addAuditStatus(sourceRepo == null ? CodeReviewAuditStatus.GIT_FORK_STRATEGY : sourceRepo.equalsIgnoreCase(targetRepo) ? CodeReviewAuditStatus.GIT_BRANCH_STRATEGY : CodeReviewAuditStatus.GIT_FORK_STRATEGY);
+        auditCommitAfterPrMerge(reviewAuditResponseV2, pullRequestAudit, pr, commitsRelatedToPr);
         auditCommitsAfterReviews(reviewAuditResponseV2, pullRequestAudit, pr);
         reviewAuditResponseV2.addPullRequest(pullRequestAudit);
+    }
+
+    /**
+     * Flag commit(s) made after pull request merge as violation
+     * Adds COMMIT_AFTER_PR_MERGE status at both PR and Code Review level
+     */
+    protected void auditCommitAfterPrMerge(CodeReviewAuditResponseV2 reviewAuditResponseV2, CodeReviewAuditResponseV2.PullRequestAudit pullRequestAudit, GitRequest pr, List<Commit> commitsRelatedToPr) {
+        if (CollectionUtils.isEmpty(commitsRelatedToPr)) { return; }
+        List <Commit> commitsAfterPrMerge = commitsRelatedToPr.stream().filter(Objects::nonNull).filter(commit -> (
+                commit.getScmCommitTimestamp() > pr.getMergedAt()
+                )).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(commitsAfterPrMerge)) { return; }
+
+        pullRequestAudit.addAuditStatus(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE);
+        // if code review audit status doesn't already contain this status, then add it
+        if (!reviewAuditResponseV2.getAuditStatuses().contains(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE)) {
+            reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE);
+        }
+        // add specific commit(s) made after PR merge to commitAfterPrMerge list
+        commitsAfterPrMerge.forEach(reviewAuditResponseV2::addCommitAfterPrMerge);
     }
 
     /**

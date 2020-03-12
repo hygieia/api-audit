@@ -39,7 +39,7 @@ public class CodeReviewAuditResponseV2 extends AuditReviewResponse<CodeReviewAud
 
     private List<Commit> directCommitsToBase = new ArrayList<>();
     private List<Commit> commitsAfterPrReviews = new ArrayList<>();
-
+    private List<Commit> commitsAfterPrMerge = new ArrayList<>();
 
     public List<PullRequestAudit> getPullRequests() {
         return pullRequests;
@@ -108,6 +108,10 @@ public class CodeReviewAuditResponseV2 extends AuditReviewResponse<CodeReviewAud
     public void addCommitAfterPrReviews(Commit commit) { commitsAfterPrReviews.add(commit); }
 
     public List<Commit> getCommitsAfterPrReviews() { return commitsAfterPrReviews; }
+
+    public void addCommitAfterPrMerge(Commit commit) { commitsAfterPrMerge.add(commit); }
+
+    public List<Commit> getCommitsAfterPrMerge() { return commitsAfterPrMerge; }
 
     public void setDirectCommitsToBase(List<Commit> directCommitsToBase) {
         this.directCommitsToBase = directCommitsToBase;
