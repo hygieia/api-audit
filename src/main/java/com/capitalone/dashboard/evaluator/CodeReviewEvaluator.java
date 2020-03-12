@@ -187,9 +187,6 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         reviewAuditResponseV2.setBranch(scmBranch);
         reviewAuditResponseV2.setLastCommitTime(CollectionUtils.isEmpty(commits)? 0 : commits.get(0).getScmCommitTimestamp());
         reviewAuditResponseV2.setLastPRMergeTime(CollectionUtils.isEmpty(pullRequests)? 0 : pullRequests.get(0).getMergedAt());
-        if (reviewAuditResponseV2.getLastCommitTime() > reviewAuditResponseV2.getLastPRMergeTime()) {
-            reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE);
-        }
         reviewAuditResponseV2.setLastUpdated(repoItem.getLastUpdated());
 
         List<String> allPrCommitShas = new ArrayList<>();
@@ -288,10 +285,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         if (CollectionUtils.isEmpty(commitsAfterPrMerge)) { return; }
 
         pullRequestAudit.addAuditStatus(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE);
-        // if code review audit status doesn't already contain this status, then add it
-        if (!reviewAuditResponseV2.getAuditStatuses().contains(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE)) {
-            reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE);
-        }
+        reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE);
         // add specific commit(s) made after PR merge to commitAfterPrMerge list
         commitsAfterPrMerge.forEach(reviewAuditResponseV2::addCommitAfterPrMerge);
     }
