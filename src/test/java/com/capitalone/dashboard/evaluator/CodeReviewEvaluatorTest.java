@@ -161,6 +161,50 @@ public class CodeReviewEvaluatorTest {
     }
 
     @Test
+    public void evaluate_COMMITS_AFTER_PR_MERGE() {
+        List<CollectorItem> collectorItemList = new ArrayList<>();
+        collectorItemList.add(makeCollectorItem(1, "master"));
+        List<Commit> commitsList = makeCommitBeforePrMerge();
+        List<GitRequest> pullRequestList = makePullRequestsWithCommitsAfterMerge(commitsList, true);
+        when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(pullRequestList);
+        when(commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(commitsList);
+        when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
+        when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
+        when(apiSettings.getCommitLogIgnoreAuditRegEx()).thenReturn("(.)*(Increment_Version_Tag)(.)*");
+        when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
+
+        // test no commits after merge
+        CodeReviewAuditResponseV2 responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1,"master"), collectorItemList,1L, 99999999L, null);
+        Assert.assertFalse(responseV2.getAuditStatuses().contains(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE));
+        Assert.assertFalse(responseV2.getPullRequests().get(0).getAuditStatuses().contains(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE));
+        Assert.assertEquals(0, responseV2.getCommitsAfterPrMerge().size());
+
+        // test only a single commit after merge
+        commitsList = makeCommitAfterPrMerge();
+        pullRequestList = makePullRequestsWithCommitsAfterMerge(commitsList, true);
+
+        when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(pullRequestList);
+        when(commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(commitsList);
+
+        responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1,"master"), collectorItemList,1L, 99999999L, null);
+        Assert.assertTrue(responseV2.getAuditStatuses().contains(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE));
+        Assert.assertTrue(responseV2.getPullRequests().get(0).getAuditStatuses().contains(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE));
+        Assert.assertEquals(1, responseV2.getCommitsAfterPrMerge().size());
+
+        // test multiple commits after merge
+        commitsList.add(makeCommit("Another commit after merge", "CommitOid4", "Author4", "Author4",30000000L));
+        pullRequestList = makePullRequestsWithCommitsAfterMerge(commitsList, true);
+
+        when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(pullRequestList);
+        when(commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(commitsList);
+
+        responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1,"master"), collectorItemList,1L, 99999999L, null);
+        Assert.assertTrue(responseV2.getAuditStatuses().contains(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE));
+        Assert.assertTrue(responseV2.getPullRequests().get(0).getAuditStatuses().contains(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE));
+        Assert.assertEquals(2, responseV2.getCommitsAfterPrMerge().size());
+    }
+
+    @Test
     public void evaluate_COMMITS_AFTER_PR_REVIEWS() {
         List<CollectorItem> collectorItemList = new ArrayList<>();
         collectorItemList.add(makeCollectorItem(1, "master"));
@@ -350,6 +394,29 @@ public class CodeReviewEvaluatorTest {
         return pullRequestList;
     }
 
+    private List<GitRequest> makePullRequestsWithCommitsAfterMerge(List<Commit> commits, boolean withApprovedReview) {
+        List<GitRequest> pullRequestList = new ArrayList<>();
+
+        GitRequest pr1 = new GitRequest();
+        pullRequestList.add(pr1);
+        pr1.setUserId("Author1");
+        pr1.setScmBranch("master");
+        pr1.setSourceBranch("branch");
+        pr1.setScmRevisionNumber("CommitOid1");
+        pr1.setState("merged");
+        pr1.setMergeAuthor("Author 2");
+        pr1.setMergedAt(17000000L);
+        pr1.setCommits(commits);
+
+        List<Review> reviewList = new ArrayList<>();
+        pr1.setReviews(reviewList);
+
+        if(withApprovedReview) {
+            reviewList.add(makeReview("lgtm", "approved", "reviewer1", 15000000L, 15000000L));
+        }
+        return pullRequestList;
+    }
+
     private List<GitRequest> makePullRequestsWithCommitsAfterReviews(List<Commit> commits, boolean withApprovedReview) {
         List<GitRequest> pullRequestList = new ArrayList<>();
         GitRequest pr1 = new GitRequest();
@@ -393,6 +460,21 @@ public class CodeReviewEvaluatorTest {
         commitsList.add(makeCommit("Commit 21", "CommitOid21", "Author12", "Author12",12345678L));
         commitsList.add(makeCommit("Commit 3", "CommitOid3", "Author3", "Author3",12345678L));
         return commitsList;
+    }
+
+    private List<Commit> makeCommitBeforePrMerge() {
+
+        Commit c1 = makeCommit("Commit 1", "CommitOid1", "Author1", "Author1",10000000L);
+        Commit c2 = makeCommit("Merge branch master into branch", "CommitOid2", "Author2", "Author2",17000000L);
+        return new ArrayList<>(Arrays.asList(c1, c2));
+    }
+
+    private List<Commit> makeCommitAfterPrMerge() {
+
+        Commit c1 = makeCommit("Commit 1", "CommitOid1", "Author1", "Author1",10000000L);
+        Commit c2 = makeCommit("Merge branch master into branch", "CommitOid2", "Author2", "Author2",17000000L);
+        Commit c3 = makeCommit("Commit after merge", "CommitOid3", "Author3", "Author3",20000000L);
+        return new ArrayList<>(Arrays.asList(c1, c2, c3));
     }
 
     private List<Commit> makeCommitsAfterPrReviews() {
