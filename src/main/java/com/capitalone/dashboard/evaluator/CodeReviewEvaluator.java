@@ -285,7 +285,10 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         if (CollectionUtils.isEmpty(commitsAfterPrMerge)) { return; }
 
         pullRequestAudit.addAuditStatus(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE);
-        reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE);
+        // if code review audit status doesn't already contain this status, then add it
+        if (!reviewAuditResponseV2.getAuditStatuses().contains(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE)) {
+            reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE);
+        }
         // add specific commit(s) made after PR merge to commitAfterPrMerge list
         commitsAfterPrMerge.forEach(reviewAuditResponseV2::addCommitAfterPrMerge);
     }
