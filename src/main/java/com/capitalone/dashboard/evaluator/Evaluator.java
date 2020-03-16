@@ -46,8 +46,7 @@ public abstract class Evaluator<T> {
      */
     List<CollectorItem> getCollectorItems(Dashboard dashboard, String widgetName, CollectorType collectorType) {
         List<Widget> widgets = dashboard.getWidgets();
-        ObjectId componentId = widgets.stream().filter(widget -> widget.getName().equalsIgnoreCase(widgetName)).findFirst().map(Widget::getComponentId).orElse(null);
-
+        ObjectId componentId = widgets.stream().findFirst().map(Widget::getComponentId).orElse(null);
         if (null == componentId) return null;
 
         com.capitalone.dashboard.model.Component component = componentRepository.findOne(componentId);
