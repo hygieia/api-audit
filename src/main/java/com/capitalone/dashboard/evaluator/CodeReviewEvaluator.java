@@ -65,7 +65,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
     @Override
     public Collection<CodeReviewAuditResponseV2> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data) throws AuditException {
         List<CodeReviewAuditResponseV2> responseV2s = new ArrayList<>();
-        List<CollectorItem> repoItems = getCollectorItems(dashboard, "repo", CollectorType.SCM);
+        List<CollectorItem> repoItems = getCollectorItems(dashboard, CollectorType.SCM);
         if (CollectionUtils.isEmpty(repoItems)) {
             throw new AuditException("No code repository configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
         }

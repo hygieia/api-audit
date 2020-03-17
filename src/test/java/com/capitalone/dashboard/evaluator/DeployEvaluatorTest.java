@@ -6,8 +6,11 @@ import com.capitalone.dashboard.model.BuildStage;
 import com.capitalone.dashboard.model.BuildStatus;
 import com.capitalone.dashboard.model.CollectionError;
 import com.capitalone.dashboard.model.CollectorItem;
+import com.capitalone.dashboard.model.Collector;
+import com.capitalone.dashboard.model.CollectorType;
 import com.capitalone.dashboard.repository.BuildRepository;
 import com.capitalone.dashboard.repository.CollectorItemRepository;
+import com.capitalone.dashboard.repository.CollectorRepository;
 import com.capitalone.dashboard.response.DeployAuditResponse;
 import org.bson.types.ObjectId;
 import org.junit.Assert;
@@ -24,6 +27,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -35,6 +39,8 @@ public class DeployEvaluatorTest {
     private DeployEvaluator deployEvaluator;
     @Mock
     private BuildRepository buildRepository;
+    @Mock
+    private CollectorRepository collectorRepository;
     @Mock
     private CollectorItemRepository collectorItemRepository;
     @Mock
@@ -99,6 +105,7 @@ public class DeployEvaluatorTest {
 
     @Test
     public void testEvaluate_CollectorItemError_Deploy_NULL() {
+        when(collectorRepository.findByName(anyString())).thenReturn(getBuildCollector());
         when(collectorItemRepository.findAllByOptionMapAndCollectorIdsIn(any(Map.class),any(List.class))).thenReturn(null);
         response = deployEvaluator.evaluate(getCollectorItem("testGenericItem", "/test", false), 125634536, 6235263, null);
         Assert.assertEquals(true, response.getAuditStatuses().toString().contains("NO_ACTIVITY"));
@@ -107,6 +114,7 @@ public class DeployEvaluatorTest {
 
     @Test
     public void test_Evaluate_NoActivity() {
+        when(collectorRepository.findByName(anyString())).thenReturn(getBuildCollector());
         when(collectorItemRepository.findAllByOptionMapAndCollectorIdsIn(any(Map.class),any(List.class))).thenReturn(Arrays.asList(getCollectorItem("testGenericItem", "/test", false)));
         when(buildRepository.findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(null);
         response = deployEvaluator.evaluate(getCollectorItem("testGenericItem", "/test", false), 125634536, 125634538, null);
@@ -120,6 +128,7 @@ public class DeployEvaluatorTest {
         CollectorItem c1 = getCollectorItem("testGenericItemPrev", "/test/prev", false);
         CollectorItem c2 = getCollectorItem("testGenericItemLatest", "/test/latest", false);
         c2.setLastUpdated(125634538);
+        when(collectorRepository.findByName(anyString())).thenReturn(getBuildCollector());
         when(collectorItemRepository.findAllByOptionMapAndCollectorIdsIn(any(Map.class),any(List.class))).thenReturn(Arrays.asList(c1, c2));
         when(buildRepository.findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(null);
         response = deployEvaluator.evaluate(getCollectorItem("testGenericItem", "/test", false), 125634536, 125634538, null);
@@ -129,6 +138,7 @@ public class DeployEvaluatorTest {
 
     @Test
     public void test_Evaluate_Deploy_Scripts_Found_Tested() {
+        when(collectorRepository.findByName(anyString())).thenReturn(getBuildCollector());
         when(collectorItemRepository.findAllByOptionMapAndCollectorIdsIn(any(Map.class),any(List.class))).thenReturn(Arrays.asList(getCollectorItem("testGenericItem", "/test", false)));
         when(buildRepository.findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(getBuild(BuildStatus.Success, "success"));
 
@@ -144,6 +154,7 @@ public class DeployEvaluatorTest {
 
     @Test
     public void test_Evaluate_Deploy_Scripts_Found_Tested_Extend() {
+        when(collectorRepository.findByName(anyString())).thenReturn(getBuildCollector());
         when(collectorItemRepository.findAllByOptionMapAndCollectorIdsIn(any(Map.class),any(List.class))).thenReturn(Arrays.asList(getCollectorItem("testGenericItem", "/test", false)));
         when(buildRepository.findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(getBuild(BuildStatus.Success, "success"));
 
@@ -161,6 +172,7 @@ public class DeployEvaluatorTest {
 
     @Test
     public void test_Evaluate_Deploy_Scripts_Found_Non_Tested() {
+        when(collectorRepository.findByName(anyString())).thenReturn(getBuildCollector());
         when(collectorItemRepository.findAllByOptionMapAndCollectorIdsIn(any(Map.class),any(List.class))).thenReturn(Arrays.asList(getCollectorItem("testGenericItem", "/test", false)));
         when(buildRepository.findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(getBuild(BuildStatus.Failure, "failed"));
 
@@ -177,6 +189,7 @@ public class DeployEvaluatorTest {
 
     @Test
     public void test_Evaluate_Deploy_Scripts_Found_Non_Tested_Extend() {
+        when(collectorRepository.findByName(anyString())).thenReturn(getBuildCollector());
         when(collectorItemRepository.findAllByOptionMapAndCollectorIdsIn(any(Map.class),any(List.class))).thenReturn(Arrays.asList(getCollectorItem("testGenericItem", "/test", false)));
         when(buildRepository.findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(getBuild(BuildStatus.Failure, "failed"));
 
@@ -194,6 +207,7 @@ public class DeployEvaluatorTest {
 
     @Test
     public void test_Evaluate_Deploy_Scripts_Tests_Not_Found() {
+        when(collectorRepository.findByName(anyString())).thenReturn(getBuildCollector());
         when(collectorItemRepository.findAllByOptionMapAndCollectorIdsIn(any(Map.class),any(List.class))).thenReturn(Arrays.asList(getCollectorItem("testGenericItem", "/test", false)));
         when(buildRepository.findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(getBuild(BuildStatus.Failure, "failed"));
 
@@ -256,4 +270,7 @@ public class DeployEvaluatorTest {
         return stage;
     }
 
+    private Collector getBuildCollector() {
+        return new Collector("Hudson", CollectorType.Build);
+    }
 }

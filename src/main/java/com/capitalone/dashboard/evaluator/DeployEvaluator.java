@@ -7,8 +7,10 @@ import com.capitalone.dashboard.model.BuildStage;
 import com.capitalone.dashboard.model.CollectorItem;
 import com.capitalone.dashboard.model.CollectorType;
 import com.capitalone.dashboard.model.Dashboard;
+import com.capitalone.dashboard.model.Collector;
 import com.capitalone.dashboard.repository.BuildRepository;
 import com.capitalone.dashboard.repository.CollectorItemRepository;
+import com.capitalone.dashboard.repository.CollectorRepository;
 import com.capitalone.dashboard.response.DeployAuditResponse;
 import com.capitalone.dashboard.status.DeployAuditStatus;
 import com.google.common.collect.Iterables;
@@ -33,14 +35,18 @@ import java.util.stream.Collectors;
 public class DeployEvaluator extends Evaluator<DeployAuditResponse> {
 
     private final BuildRepository buildRepository;
+    private final CollectorRepository collectorRepository;
     private final CollectorItemRepository collectorItemRepository;
     private final ApiSettings apiSettings;
     private static final String SUCCESS = "success";
     private static final String FAILED = "failed";
+    private static final String BUILD_COLLECTOR = "Hudson";
 
     @Autowired
-    public DeployEvaluator(BuildRepository buildRepository, CollectorItemRepository collectorItemRepository, ApiSettings apiSettings) {
+    public DeployEvaluator(BuildRepository buildRepository, CollectorRepository collectorRepository,
+                           CollectorItemRepository collectorItemRepository, ApiSettings apiSettings) {
         this.buildRepository = buildRepository;
+        this.collectorRepository = collectorRepository;
         this.collectorItemRepository = collectorItemRepository;
         this.apiSettings = apiSettings;
     }
@@ -48,7 +54,7 @@ public class DeployEvaluator extends Evaluator<DeployAuditResponse> {
 
     @Override
     public Collection<DeployAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data) throws AuditException {
-        List<CollectorItem> deployItems = getCollectorItems(dashboard, "deploy", CollectorType.Deployment);
+        List<CollectorItem> deployItems = getCollectorItems(dashboard, CollectorType.Deployment);
         if (CollectionUtils.isEmpty(deployItems)) {
             return Arrays.asList(getErrorResponse(DeployAuditStatus.COLLECTOR_ITEM_ERROR, null));
         }
@@ -70,20 +76,17 @@ public class DeployEvaluator extends Evaluator<DeployAuditResponse> {
     private DeployAuditResponse getDeployAuditResponse(CollectorItem deployItem, long beginDate, long endDate, ApiSettings apiSettings) {
         DeployAuditResponse deployAuditResponse = new DeployAuditResponse();
         deployAuditResponse.setAuditEntity(deployItem.getOptions());
-
+        Optional<Collector> buildCollectorOpt = Optional.ofNullable(collectorRepository.findByName(BUILD_COLLECTOR));
+        if (!buildCollectorOpt.isPresent()) {
+            return getErrorResponse(DeployAuditStatus.COLLECTOR_ITEM_ERROR, deployItem);
+        }
         // find deployItem's build
-        Iterable <CollectorItem> deployCollectorItems = Optional.ofNullable(collectorItemRepository.findAllByOptionMapAndCollectorIdsIn(deployItem.getOptions(),
-                Collections.singletonList(deployItem.getCollectorId()))).orElse(Collections.EMPTY_LIST);
-        if (Iterables.isEmpty(deployCollectorItems)) {
+        Iterable <CollectorItem> buildItems = Optional.ofNullable(collectorItemRepository.findAllByOptionMapAndCollectorIdsIn(deployItem.getOptions(),
+                Collections.singletonList(buildCollectorOpt.get().getId()))).orElse(Collections.EMPTY_LIST);
+        if (Iterables.isEmpty(buildItems)) {
             return getErrorResponse(DeployAuditStatus.NO_ACTIVITY, deployItem);
         }
-        List<CollectorItem> deployCollectorItemsFiltered = IterableUtils.toList(deployCollectorItems).stream()
-                .filter(collectorItem -> collectorItem.getLastUpdated() >= beginDate && collectorItem.getLastUpdated() <= endDate)
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(deployCollectorItemsFiltered)) {
-            return getErrorResponse(DeployAuditStatus.NO_ACTIVITY, deployItem);
-        }
-        CollectorItem buildItem = deployCollectorItemsFiltered.stream().sorted(Comparator.comparing(CollectorItem::getLastUpdated).reversed()).findFirst().get();
+        CollectorItem buildItem = IterableUtils.toList(buildItems).stream().sorted(Comparator.comparing(CollectorItem::getLastUpdated).reversed()).findFirst().get();
         Build build = buildRepository.findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(buildItem.getId(), beginDate - 1, endDate + 1);
         if (Objects.isNull(build)) return getErrorResponse(DeployAuditStatus.NO_ACTIVITY, buildItem);
         if (Objects.nonNull(build)) {

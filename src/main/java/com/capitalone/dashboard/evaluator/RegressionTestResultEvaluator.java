@@ -51,7 +51,6 @@ public class RegressionTestResultEvaluator extends Evaluator<TestResultsAuditRes
     private long beginDate;
     private long endDate;
     private Dashboard dashboard;
-    private static final String WIDGET_CODE_ANALYSIS = "codeanalysis";
     private static final String WIDGET_FEATURE = "feature";
     private static final String STR_TEAM_ID = "teamId";
     private static final String STR_UNDERSCORE = "_";
@@ -79,7 +78,7 @@ public class RegressionTestResultEvaluator extends Evaluator<TestResultsAuditRes
         this.beginDate = beginDate-1;
         this.endDate = endDate+1;
         this.dashboard = getDashboard(dashboard.getTitle(), DashboardType.Team);
-        List<CollectorItem> testItems = getCollectorItems(this.dashboard, WIDGET_CODE_ANALYSIS, CollectorType.Test);
+        List<CollectorItem> testItems = getCollectorItems(this.dashboard, CollectorType.Test);
         Collection<TestResultsAuditResponse> testResultsAuditResponse = new ArrayList<>();
         if (CollectionUtils.isEmpty(testItems)) {
             throw new AuditException("No tests configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);

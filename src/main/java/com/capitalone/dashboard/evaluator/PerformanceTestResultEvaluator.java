@@ -43,7 +43,7 @@ public class PerformanceTestResultEvaluator extends Evaluator<PerformanceTestAud
 
     @Override
     public Collection<PerformanceTestAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> dummy) throws AuditException {
-        List<CollectorItem> testItems = Optional.ofNullable(getCollectorItems(dashboard, "codeanalysis", CollectorType.Test)).orElse(Collections.EMPTY_LIST);
+        List<CollectorItem> testItems = Optional.ofNullable(getCollectorItems(dashboard, CollectorType.Test)).orElse(Collections.EMPTY_LIST);
         if (CollectionUtils.isEmpty(testItems)) {
             throw new AuditException("No tests configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
         }
