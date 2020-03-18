@@ -194,6 +194,9 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
             auditPullRequest(repoItem, pr, commits, allPrCommitShas, reviewAuditResponseV2);
         });
 
+        // flag any commits made by an LDAP unauthenticated user
+        checkCommitByLDAPUnauthUser(reviewAuditResponseV2, commits);
+
         //check any commits not directly tied to pr
         commits.stream().filter(commit -> !allPrCommitShas.contains(commit.getScmRevisionNumber()) && StringUtils.isEmpty(commit.getPullNumber()) && commit.getType() == CommitType.New).forEach(reviewAuditResponseV2::addDirectCommit);
 
@@ -206,11 +209,21 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
                     || isCommitEligibleForDirectCommitsForPulledRepo(repoItem, commit) ) {
                 commitsNotDirectlyTiedToPr.add(commit);
                 // auditServiceAccountChecks includes - check for service account and increment version tag for service account on direct commits.
-                auditServiceAccountChecks(reviewAuditResponseV2, commit);
+                auditDirectCommits(reviewAuditResponseV2, commit);
             }
         });
 
         return reviewAuditResponseV2;
+    }
+
+    private void checkCommitByLDAPUnauthUser(CodeReviewAuditResponseV2 reviewAuditResponseV2, List<Commit> commits) {
+        commits.forEach(commit -> {
+            if (StringUtils.isEmpty(commit.getScmAuthorLDAPDN())) {
+                reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.SCM_AUTHOR_LOGIN_INVALID);
+                // add specific commit(s) made after PR merge to commitAfterPrMerge list
+                reviewAuditResponseV2.addCommitByLDAPUnauthUser(commit);
+            }
+        });
     }
 
     private boolean checkPrCommitsAndCommitType(List<String> allPrCommitShas, Commit commit) {
@@ -411,14 +424,6 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
                 && Objects.equals(commit1.getScmAuthor(), commit2.getScmAuthor())
                 && Objects.equals(commit1.getScmCommitTimestamp(), commit2.getScmCommitTimestamp())
                 && Objects.equals(commit1.getScmCommitLog(), commit2.getScmCommitLog());
-    }
-
-    private void auditServiceAccountChecks(CodeReviewAuditResponseV2 reviewAuditResponseV2, Commit commit) {
-        if (StringUtils.isEmpty(commit.getScmAuthorLDAPDN())) {
-            reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.SCM_AUTHOR_LOGIN_INVALID);
-        }
-
-        auditDirectCommits(reviewAuditResponseV2, commit);
     }
 
     protected void auditDirectCommits(CodeReviewAuditResponseV2 reviewAuditResponseV2, Commit commit) {

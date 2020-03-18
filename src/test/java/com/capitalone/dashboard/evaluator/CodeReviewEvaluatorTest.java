@@ -14,6 +14,7 @@ import com.capitalone.dashboard.repository.GitRequestRepository;
 import com.capitalone.dashboard.repository.ServiceAccountRepository;
 import com.capitalone.dashboard.response.CodeReviewAuditResponseV2;
 import com.capitalone.dashboard.status.CodeReviewAuditStatus;
+import org.apache.commons.lang3.StringUtils;
 import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
@@ -336,6 +337,30 @@ public class CodeReviewEvaluatorTest {
     }
 
     @Test
+    public void checkCommitByLDAPUnauthUserTest() {
+        List<CollectorItem> collectorItemList = new ArrayList<>();
+        collectorItemList.add(makeCollectorItem(1, "master"));
+        List<Commit> commitsList = makeCommitsByLDAPUnauthUser();
+        List<GitRequest> pullRequestList = makePullRequestsWithCommitsAfterMerge(commitsList, true);
+        when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(pullRequestList);
+        when(commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(commitsList);
+        when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
+        when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
+        when(apiSettings.getCommitLogIgnoreAuditRegEx()).thenReturn("(.)*(Increment_Version_Tag)(.)*");
+        when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
+
+        CodeReviewAuditResponseV2 responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1,"master"), collectorItemList,1L, 99999999L, null);
+        Assert.assertTrue(responseV2.getAuditStatuses().contains(CodeReviewAuditStatus.SCM_AUTHOR_LOGIN_INVALID));
+        Assert.assertTrue(StringUtils.isEmpty(responseV2.getCommitsByLDAPUnauthUsers().get(0).getScmAuthorLDAPDN()));
+        Assert.assertEquals("unknown", responseV2.getCommitsByLDAPUnauthUsers().get(0).getScmAuthorLogin());
+        Assert.assertTrue(StringUtils.isEmpty(responseV2.getCommitsByLDAPUnauthUsers().get(1).getScmAuthorLDAPDN()));
+        Assert.assertEquals("unknown", responseV2.getCommitsByLDAPUnauthUsers().get(1).getScmAuthorLogin());
+        Assert.assertTrue(StringUtils.isEmpty(responseV2.getCommitsByLDAPUnauthUsers().get(2).getScmAuthorLDAPDN()));
+        Assert.assertEquals("unknown", responseV2.getCommitsByLDAPUnauthUsers().get(2).getScmAuthorLogin());
+        Assert.assertEquals(3, responseV2.getCommitsByLDAPUnauthUsers().size());
+    }
+
+    @Test
     public void auditDirectCommitsTest() {
         CodeReviewEvaluator codeReviewEvaluator = Mockito.spy(this.codeReviewEvaluator);
         Commit commit = makeCommit("Commit 21", "CommitOid21", "Author12", "Committer12",12345678L);
@@ -498,6 +523,14 @@ public class CodeReviewEvaluatorTest {
         return new ArrayList<>(Arrays.asList(c1, c2, c3));
     }
 
+    private List<Commit> makeCommitsByLDAPUnauthUser() {
+        Commit c1 = makeUnauthCommit("Commit 0", "CommitOid0", "LocalUser1", "LocalUser1",12345678L);
+        Commit c2 = makeUnauthCommit("Commit 11", "CommitOid11", "LocalUser2", "LocalUser2",12345678L);
+        Commit c3 = makeUnauthCommit("Commit 12", "CommitOid12", "LocalUser3", "LocalUser3",12345678L);
+        Commit c4 = makeCommit("Commit 3", "CommitOid3", "Author3", "Author3",12345678L);
+        return new ArrayList<>(Arrays.asList(c1, c2, c3, c4));
+    }
+
     private Commit makeCommit(String message, String scmRevisionNumber, String author, String committer, long timeStamp) {
         Commit c = new Commit();
         c.setId(ObjectId.get());
@@ -510,6 +543,20 @@ public class CodeReviewEvaluatorTest {
         c.setFilesModified(Arrays.asList("pom.xml"));
         c.setFilesRemoved(Arrays.asList("cucumber.xml"));
         c.setFilesAdded(Arrays.asList("package.json"));
+        c.setScmCommitterLogin(committer);
+        c.setScmCommitTimestamp(timeStamp);
+        c.setNumberOfChanges(1);
+        return c;
+    }
+
+    private Commit makeUnauthCommit(String message, String scmRevisionNumber, String author, String committer, long timeStamp) {
+        Commit c = new Commit();
+        c.setId(ObjectId.get());
+        c.setScmCommitLog(message);
+        c.setScmRevisionNumber(scmRevisionNumber);
+        c.setType(CommitType.New);
+        c.setScmAuthor(author);
+        c.setScmAuthorLogin("unknown");
         c.setScmCommitterLogin(committer);
         c.setScmCommitTimestamp(timeStamp);
         c.setNumberOfChanges(1);
