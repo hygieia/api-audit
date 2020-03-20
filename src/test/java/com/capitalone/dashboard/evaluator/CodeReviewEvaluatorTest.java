@@ -341,7 +341,7 @@ public class CodeReviewEvaluatorTest {
         List<CollectorItem> collectorItemList = new ArrayList<>();
         collectorItemList.add(makeCollectorItem(1, "master"));
         List<Commit> commitsList = makeCommitsByLDAPUnauthUser();
-        List<GitRequest> pullRequestList = makePullRequestsWithCommitsAfterMerge(commitsList, true);
+        List<GitRequest> pullRequestList = makePullRequests(true);
         when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(pullRequestList);
         when(commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(commitsList);
         when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
