@@ -355,9 +355,7 @@ public class CodeReviewEvaluatorTest {
         Assert.assertEquals("unknown", responseV2.getCommitsByLDAPUnauthUsers().get(0).getScmAuthorLogin());
         Assert.assertTrue(StringUtils.isEmpty(responseV2.getCommitsByLDAPUnauthUsers().get(1).getScmAuthorLDAPDN()));
         Assert.assertEquals("unknown", responseV2.getCommitsByLDAPUnauthUsers().get(1).getScmAuthorLogin());
-        Assert.assertTrue(StringUtils.isEmpty(responseV2.getCommitsByLDAPUnauthUsers().get(2).getScmAuthorLDAPDN()));
-        Assert.assertEquals("unknown", responseV2.getCommitsByLDAPUnauthUsers().get(2).getScmAuthorLogin());
-        Assert.assertEquals(3, responseV2.getCommitsByLDAPUnauthUsers().size());
+        Assert.assertEquals(2, responseV2.getCommitsByLDAPUnauthUsers().size());
     }
 
     @Test
@@ -526,7 +524,7 @@ public class CodeReviewEvaluatorTest {
     private List<Commit> makeCommitsByLDAPUnauthUser() {
         Commit c1 = makeUnauthCommit("Commit 0", "CommitOid0", "LocalUser1", "LocalUser1",12345678L);
         Commit c2 = makeUnauthCommit("Commit 11", "CommitOid11", "LocalUser2", "LocalUser2",12345678L);
-        Commit c3 = makeUnauthCommit("Commit 12", "CommitOid12", "LocalUser3", "LocalUser3",12345678L);
+        Commit c3 = makeUnauthCommit("Increment_Version_Tag: 1.0.0", "CommitOid12", "LocalUser3", "LocalUser3",12345678L);
         Commit c4 = makeCommit("Commit 3", "CommitOid3", "Author3", "Author3",12345678L);
         return new ArrayList<>(Arrays.asList(c1, c2, c3, c4));
     }
