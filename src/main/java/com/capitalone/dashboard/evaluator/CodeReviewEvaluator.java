@@ -194,21 +194,21 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
             auditPullRequest(repoItem, pr, commits, allPrCommitShas, reviewAuditResponseV2);
         });
 
-        // flag any commits made by an LDAP unauthenticated user
-        checkCommitByLDAPUnauthUser(reviewAuditResponseV2, commits);
-
         //check any commits not directly tied to pr
         commits.stream().filter(commit -> !allPrCommitShas.contains(commit.getScmRevisionNumber()) && StringUtils.isEmpty(commit.getPullNumber()) && commit.getType() == CommitType.New).forEach(reviewAuditResponseV2::addDirectCommit);
 
         //check any commits not directly tied to pr
         List<Commit> commitsNotDirectlyTiedToPr = new ArrayList<>();
         commits.forEach(commit -> {
+            // flag any commits made by an LDAP unauthenticated user
+            checkCommitByLDAPUnauthUser(reviewAuditResponseV2, commit);
+
             if (!checkPrCommitsAndCommitType(allPrCommitShas, commit)) { return; }
 
             if ( isCommitEligibleForDirectCommitsForPushedRepo(repoItem, commit, collectorItemList, beginDt, endDt)
                     || isCommitEligibleForDirectCommitsForPulledRepo(repoItem, commit) ) {
                 commitsNotDirectlyTiedToPr.add(commit);
-                // auditServiceAccountChecks includes - check for service account and increment version tag for service account on direct commits.
+                // check for service account and increment version tag for service account on direct commits.
                 auditDirectCommits(reviewAuditResponseV2, commit);
             }
         });
@@ -216,14 +216,16 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         return reviewAuditResponseV2;
     }
 
-    private void checkCommitByLDAPUnauthUser(CodeReviewAuditResponseV2 reviewAuditResponseV2, List<Commit> commits) {
-        commits.forEach(commit -> {
-            if (StringUtils.isEmpty(commit.getScmAuthorLDAPDN())) {
-                reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.SCM_AUTHOR_LOGIN_INVALID);
-                // add specific commit(s) made after PR merge to commitAfterPrMerge list
-                reviewAuditResponseV2.addCommitByLDAPUnauthUser(commit);
-            }
-        });
+    /**
+     * Flag commit made by an unauthenticated user that is not by a service account and has non-code changes with an approved message
+     * Adds SCM_AUTHOR_LOGIN_INVALID status at Code Review level
+     */
+    private void checkCommitByLDAPUnauthUser(CodeReviewAuditResponseV2 reviewAuditResponseV2, Commit commit) {
+        if (StringUtils.isEmpty(commit.getScmAuthorLDAPDN()) && !CommonCodeReview.matchIncrementVersionTag(commit.getScmCommitLog(), settings)) {
+            reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.SCM_AUTHOR_LOGIN_INVALID);
+            // add commit made by unauth user to commitsByLDAPUnauthUsers list
+            reviewAuditResponseV2.addCommitByLDAPUnauthUser(commit);
+        }
     }
 
     private boolean checkPrCommitsAndCommitType(List<String> allPrCommitShas, Commit commit) {
