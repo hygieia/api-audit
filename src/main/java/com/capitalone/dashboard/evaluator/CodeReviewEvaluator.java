@@ -16,7 +16,6 @@ import com.capitalone.dashboard.model.ServiceAccount;
 import com.capitalone.dashboard.model.AuditException;
 import com.capitalone.dashboard.repository.CommitRepository;
 import com.capitalone.dashboard.repository.GitRequestRepository;
-import com.capitalone.dashboard.response.CodeReviewAuditResponse;
 import com.capitalone.dashboard.response.CodeReviewAuditResponseV2;
 import com.capitalone.dashboard.status.CodeReviewAuditStatus;
 import com.capitalone.dashboard.util.GitHubParsedUrl;
