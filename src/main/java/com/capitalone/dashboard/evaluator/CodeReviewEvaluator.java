@@ -452,14 +452,6 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
                 && Objects.equals(commit1.getScmCommitLog(), commit2.getScmCommitLog());
     }
 
-//    private void auditServiceAccountChecks(CodeReviewAuditResponseV2 reviewAuditResponseV2, Commit commit) {
-//        if (StringUtils.isEmpty(commit.getScmAuthorLDAPDN())) {
-//            reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.SCM_AUTHOR_LOGIN_INVALID);
-//        }
-//
-//        auditDirectCommits(reviewAuditResponseV2, commit);
-//    }
-
     protected void auditDirectCommits(CodeReviewAuditResponseV2 reviewAuditResponseV2, Commit commit) {
         Stream<String> combinedStream
                 = Stream.of(commit.getFilesAdded(), commit.getFilesModified(),commit.getFilesRemoved()).filter(Objects::nonNull).flatMap(Collection::stream);
