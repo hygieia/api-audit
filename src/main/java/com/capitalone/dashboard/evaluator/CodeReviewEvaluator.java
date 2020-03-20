@@ -222,9 +222,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
      */
     private void checkCommitByLDAPUnauthUser(CodeReviewAuditResponseV2 reviewAuditResponseV2, Commit commit) {
         if (StringUtils.isEmpty(commit.getScmAuthorLDAPDN()) && !CommonCodeReview.matchIncrementVersionTag(commit.getScmCommitLog(), settings)) {
-            if (!reviewAuditResponseV2.getAuditStatuses().contains(CodeReviewAuditStatus.SCM_AUTHOR_LOGIN_INVALID)) {
-                reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.SCM_AUTHOR_LOGIN_INVALID);
-            }
+            reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.SCM_AUTHOR_LOGIN_INVALID);
             // add commit made by unauth user to commitsByLDAPUnauthUsers list
             reviewAuditResponseV2.addCommitByLDAPUnauthUser(commit);
         }
