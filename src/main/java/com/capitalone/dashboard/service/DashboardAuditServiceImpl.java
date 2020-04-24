@@ -79,7 +79,7 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
         dashboardReviewResponse.setDashboardTitle(dashboard.getTitle());
         dashboardReviewResponse.setBusinessApplication(StringUtils.isEmpty(businessApp) ? dashboard.getConfigurationItemBusAppName() : businessApp);
         dashboardReviewResponse.setBusinessService(StringUtils.isEmpty(businessService) ? dashboard.getConfigurationItemBusServName() : businessService);
-
+        dashboardReviewResponse.setAuditEntity(null);
 
         if (auditTypes.contains(AuditType.ALL)) {
             auditTypes.addAll(Sets.newHashSet(AuditType.values()));

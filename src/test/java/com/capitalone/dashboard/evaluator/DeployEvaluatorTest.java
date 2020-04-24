@@ -6,7 +6,11 @@ import com.capitalone.dashboard.model.BuildStage;
 import com.capitalone.dashboard.model.BuildStatus;
 import com.capitalone.dashboard.model.CollectionError;
 import com.capitalone.dashboard.model.CollectorItem;
+import com.capitalone.dashboard.model.Collector;
+import com.capitalone.dashboard.model.CollectorType;
 import com.capitalone.dashboard.repository.BuildRepository;
+import com.capitalone.dashboard.repository.CollectorItemRepository;
+import com.capitalone.dashboard.repository.CollectorRepository;
 import com.capitalone.dashboard.response.DeployAuditResponse;
 import org.bson.types.ObjectId;
 import org.junit.Assert;
@@ -19,9 +23,11 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -33,6 +39,10 @@ public class DeployEvaluatorTest {
     private DeployEvaluator deployEvaluator;
     @Mock
     private BuildRepository buildRepository;
+    @Mock
+    private CollectorRepository collectorRepository;
+    @Mock
+    private CollectorItemRepository collectorItemRepository;
     @Mock
     private ApiSettings apiSettings;
 
@@ -94,7 +104,9 @@ public class DeployEvaluatorTest {
     }
 
     @Test
-    public void testEvaluate_CollectorItemError_Artifact_NULL() {
+    public void testEvaluate_CollectorItemError_Deploy_NULL() {
+        when(collectorRepository.findByName(anyString())).thenReturn(getBuildCollector());
+        when(collectorItemRepository.findAllByOptionMapAndCollectorIdsIn(any(Map.class),any(List.class))).thenReturn(null);
         response = deployEvaluator.evaluate(getCollectorItem("testGenericItem", "/test", false), 125634536, 6235263, null);
         Assert.assertEquals(true, response.getAuditStatuses().toString().contains("NO_ACTIVITY"));
         Assert.assertEquals(true,response.getAuditEntity().toString().contains("jobUrl"));
@@ -102,22 +114,39 @@ public class DeployEvaluatorTest {
 
     @Test
     public void test_Evaluate_NoActivity() {
+        when(collectorRepository.findByName(anyString())).thenReturn(getBuildCollector());
+        when(collectorItemRepository.findAllByOptionMapAndCollectorIdsIn(any(Map.class),any(List.class))).thenReturn(Arrays.asList(getCollectorItem("testGenericItem", "/test", false)));
         when(buildRepository.findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(null);
-        response = deployEvaluator.evaluate(getCollectorItem("testGenericItem", "/test", false), 125634536, 6235263, null);
+        response = deployEvaluator.evaluate(getCollectorItem("testGenericItem", "/test", false), 125634536, 125634538, null);
         Assert.assertEquals(true, response.getAuditStatuses().toString().contains("NO_ACTIVITY"));
         verify(buildRepository, times(1)).findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class));
         Assert.assertEquals(true,response.getAuditEntity().toString().contains("jobUrl"));
     }
 
     @Test
+    public void test_Evaluate_CollectorItem_Latest() {
+        CollectorItem c1 = getCollectorItem("testGenericItemPrev", "/test/prev", false);
+        CollectorItem c2 = getCollectorItem("testGenericItemLatest", "/test/latest", false);
+        c2.setLastUpdated(125634538);
+        when(collectorRepository.findByName(anyString())).thenReturn(getBuildCollector());
+        when(collectorItemRepository.findAllByOptionMapAndCollectorIdsIn(any(Map.class),any(List.class))).thenReturn(Arrays.asList(c1, c2));
+        when(buildRepository.findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(null);
+        response = deployEvaluator.evaluate(getCollectorItem("testGenericItem", "/test", false), 125634536, 125634538, null);
+        Assert.assertEquals(true, response.getAuditEntity().get("jobName").equals(c2.getOptions().get("jobName")));
+        Assert.assertEquals(true, response.getAuditEntity().get("jobUrl").equals(c2.getOptions().get("jobUrl")));
+    }
+
+    @Test
     public void test_Evaluate_Deploy_Scripts_Found_Tested() {
+        when(collectorRepository.findByName(anyString())).thenReturn(getBuildCollector());
+        when(collectorItemRepository.findAllByOptionMapAndCollectorIdsIn(any(Map.class),any(List.class))).thenReturn(Arrays.asList(getCollectorItem("testGenericItem", "/test", false)));
         when(buildRepository.findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(getBuild(BuildStatus.Success, "success"));
 
         List<String> patterns = new ArrayList<>();
         patterns.add("(?i:.*any)");
         when(apiSettings.getBuildStageRegEx()).thenReturn(patterns);
 
-        response = deployEvaluator.evaluate(getCollectorItem("testGenericItem", "/test", false), 125634536, 6235263, null);
+        response = deployEvaluator.evaluate(getCollectorItem("testGenericItem", "/test", false), 125634536, 125634538, null);
         Assert.assertEquals(true, response.getAuditStatuses().toString().contains("DEPLOY_SCRIPTS_FOUND_TESTED"));
         verify(buildRepository, times(1)).findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class));
         Assert.assertEquals(true,response.getAuditEntity().toString().contains("jobUrl"));
@@ -125,6 +154,8 @@ public class DeployEvaluatorTest {
 
     @Test
     public void test_Evaluate_Deploy_Scripts_Found_Tested_Extend() {
+        when(collectorRepository.findByName(anyString())).thenReturn(getBuildCollector());
+        when(collectorItemRepository.findAllByOptionMapAndCollectorIdsIn(any(Map.class),any(List.class))).thenReturn(Arrays.asList(getCollectorItem("testGenericItem", "/test", false)));
         when(buildRepository.findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(getBuild(BuildStatus.Success, "success"));
 
         List<String> patterns = new ArrayList<>();
@@ -132,7 +163,7 @@ public class DeployEvaluatorTest {
         patterns.add(("(?i:.*filler)"));
         when(apiSettings.getBuildStageRegEx()).thenReturn(patterns);
 
-        response = deployEvaluator.evaluate(getCollectorItem("testGenericItem", "/test", false), 125634536, 6235263, null);
+        response = deployEvaluator.evaluate(getCollectorItem("testGenericItem", "/test", false), 125634536, 125634538, null);
         Assert.assertEquals(true, response.getAuditStatuses().toString().contains("DEPLOY_SCRIPTS_FOUND_TESTED"));
         verify(buildRepository, times(1)).findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class));
         Assert.assertEquals(true,response.getAuditEntity().toString().contains("jobUrl"));
@@ -141,13 +172,15 @@ public class DeployEvaluatorTest {
 
     @Test
     public void test_Evaluate_Deploy_Scripts_Found_Non_Tested() {
+        when(collectorRepository.findByName(anyString())).thenReturn(getBuildCollector());
+        when(collectorItemRepository.findAllByOptionMapAndCollectorIdsIn(any(Map.class),any(List.class))).thenReturn(Arrays.asList(getCollectorItem("testGenericItem", "/test", false)));
         when(buildRepository.findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(getBuild(BuildStatus.Failure, "failed"));
 
         List<String> patterns = new ArrayList<>();
         patterns.add("(?i:.*any)");
         when(apiSettings.getBuildStageRegEx()).thenReturn(patterns);
 
-        response = deployEvaluator.evaluate(getCollectorItem("testGenericItem", "/test", false), 125634536, 6235263, null);
+        response = deployEvaluator.evaluate(getCollectorItem("testGenericItem", "/test", false), 125634536, 125634538, null);
         Assert.assertEquals(true, response.getAuditStatuses().toString().contains("DEPLOY_SCRIPTS_FOUND_NOT_TESTED"));
         verify(buildRepository, times(1)).findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class));
         Assert.assertEquals(true,response.getAuditEntity().toString().contains("jobUrl"));
@@ -156,6 +189,8 @@ public class DeployEvaluatorTest {
 
     @Test
     public void test_Evaluate_Deploy_Scripts_Found_Non_Tested_Extend() {
+        when(collectorRepository.findByName(anyString())).thenReturn(getBuildCollector());
+        when(collectorItemRepository.findAllByOptionMapAndCollectorIdsIn(any(Map.class),any(List.class))).thenReturn(Arrays.asList(getCollectorItem("testGenericItem", "/test", false)));
         when(buildRepository.findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(getBuild(BuildStatus.Failure, "failed"));
 
         List<String> patterns = new ArrayList<>();
@@ -163,7 +198,7 @@ public class DeployEvaluatorTest {
         patterns.add("(?i:.*filler)");
         when(apiSettings.getBuildStageRegEx()).thenReturn(patterns);
 
-        response = deployEvaluator.evaluate(getCollectorItem("testGenericItem", "/test", false), 125634536, 6235263, null);
+        response = deployEvaluator.evaluate(getCollectorItem("testGenericItem", "/test", false), 125634536, 125634538, null);
         Assert.assertEquals(true, response.getAuditStatuses().toString().contains("DEPLOY_SCRIPTS_FOUND_NOT_TESTED"));
         verify(buildRepository, times(1)).findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class));
         Assert.assertEquals(true,response.getAuditEntity().toString().contains("jobUrl"));
@@ -172,13 +207,15 @@ public class DeployEvaluatorTest {
 
     @Test
     public void test_Evaluate_Deploy_Scripts_Tests_Not_Found() {
+        when(collectorRepository.findByName(anyString())).thenReturn(getBuildCollector());
+        when(collectorItemRepository.findAllByOptionMapAndCollectorIdsIn(any(Map.class),any(List.class))).thenReturn(Arrays.asList(getCollectorItem("testGenericItem", "/test", false)));
         when(buildRepository.findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(getBuild(BuildStatus.Failure, "failed"));
 
         List<String> patterns = new ArrayList<>();
         patterns.add("(?i:.*error)");
         when(apiSettings.getBuildStageRegEx()).thenReturn(patterns);
 
-        response = deployEvaluator.evaluate(getCollectorItem("testGenericItem", "/test", false), 125634536, 6235263, null);
+        response = deployEvaluator.evaluate(getCollectorItem("testGenericItem", "/test", false), 125634536, 125634538, null);
         Assert.assertEquals(true, response.getAuditStatuses().toString().contains("DEPLOYMENT_SCRIPTS_TEST_NOT_FOUND"));
         verify(buildRepository, times(1)).findTop1ByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class));
         Assert.assertEquals(true,response.getAuditEntity().toString().contains("jobUrl"));
@@ -187,6 +224,7 @@ public class DeployEvaluatorTest {
 
     private CollectorItem getCollectorItem(String jobName, String jobUrl, boolean isError) {
         CollectorItem ci = new CollectorItem();
+        ci.setLastUpdated(125634537);
         ci.getOptions().put("jobName", jobName);
         ci.getOptions().put("jobUrl", jobUrl);
         ci.getOptions().put("instanceUrl", "http://jenkins.com/");
@@ -232,4 +270,7 @@ public class DeployEvaluatorTest {
         return stage;
     }
 
+    private Collector getBuildCollector() {
+        return new Collector("Hudson", CollectorType.Build);
+    }
 }

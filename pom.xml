@@ -4,7 +4,7 @@
     <artifactId>api-audit</artifactId>
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
-    <version>3.1.3-SNAPSHOT</version>
+    <version>3.3.1-SNAPSHOT</version>
     <description>Hygieia Audit Rest API Layer</description>
     <url>https://github.com/Hygieia/${repository.name}</url>
 
@@ -59,14 +59,12 @@
     <properties>
         <repository.name>api-audit</repository.name>
         <java.version>1.8</java.version>
-        <jackson.version>2.5.0</jackson.version>
-        <guava.version>18.0</guava.version>
-        <com.capitalone.dashboard.core.version>3.1.10</com.capitalone.dashboard.core.version>
+        <com.capitalone.dashboard.core.version>3.6.3</com.capitalone.dashboard.core.version>
         <bc.version>3.0.2</bc.version>
         <application.version.number>${version}</application.version.number>
         <apache.rat.plugin.version>0.13</apache.rat.plugin.version>
         <coveralls.maven.plugin.version>4.3.0</coveralls.maven.plugin.version>
-        <guava.version>18.0</guava.version>
+        <guava.version>19.0</guava.version>
         <hamcrest.version>1.3</hamcrest.version>
         <jacoco.maven.plugin.version>0.8.3</jacoco.maven.plugin.version>
         <jacoco.coverage.percentage.minimum>0.01</jacoco.coverage.percentage.minimum>
@@ -775,6 +773,19 @@
                         <configuration>
                             <source>1.8</source>
                             <target>1.8</target>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.8</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                            <autoDropAfterRelease>true</autoDropAfterRelease>
+                            <stagingProfileId>26a9600c05a6d3</stagingProfileId>
                         </configuration>
                     </plugin>
                     <plugin>

@@ -8,6 +8,7 @@ import com.capitalone.dashboard.model.TestCaseStep;
 import com.capitalone.dashboard.model.TestResult;
 import com.capitalone.dashboard.model.TestSuite;
 import com.capitalone.dashboard.model.TestSuiteType;
+import com.capitalone.dashboard.status.PerformanceTestAuditStatus;
 import com.capitalone.dashboard.repository.TestResultRepository;
 import com.capitalone.dashboard.response.PerformanceTestAuditResponse;
 
@@ -20,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -99,6 +101,34 @@ public class PerformanceTestResultEvaluatorTest {
         Assert.assertEquals(true, responseV2.getAuditStatuses().toString().contains("PERFORMANCE_THRESHOLD_ERROR_RATE_MET"));
         Assert.assertEquals(true, responseV2.getAuditStatuses().toString().contains("PERF_RESULT_AUDIT_FAIL"));
         Assert.assertEquals(true, responseV2.getAuditEntity().toString().contains("url"));
+    }
+
+    @Test
+    public void evaluate_PerfRiskAssessmentStatuses_High(){
+        CollectorItem dummyCollectorItem = new CollectorItem();
+        TestResult testResult = makeTestResult("KPI : Transaction Per Second","Success").get(0);
+        testResult.setTestCapabilities(null);
+        testResult.setPerfRisk("High");
+        testResult.setCollectorItemId(dummyCollectorItem.getId());
+        when(testResultRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class),any(Long.class),any(Long.class)))
+                .thenReturn(Arrays.asList(testResult));
+        PerformanceTestAuditResponse responseHigh = performanceTestResultEvaluator.evaluate(dummyCollectorItem, Long.MIN_VALUE, Long.MAX_VALUE, null);
+        Assert.assertEquals(true, responseHigh.getAuditStatuses().toString().contains(PerformanceTestAuditStatus.PERF_NO_RESULT_RISK_HIGH.name()));
+        Assert.assertEquals(true, responseHigh.getAuditStatuses().toString().contains(PerformanceTestAuditStatus.PERF_RESULT_AUDIT_FAIL.name()));
+
+        testResult.setPerfRisk("Medium");
+        when(testResultRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class),any(Long.class),any(Long.class)))
+                .thenReturn(Arrays.asList(testResult));
+        PerformanceTestAuditResponse responseMedium = performanceTestResultEvaluator.evaluate(dummyCollectorItem, Long.MIN_VALUE, Long.MAX_VALUE, null);
+        Assert.assertEquals(true, responseMedium.getAuditStatuses().toString().contains(PerformanceTestAuditStatus.PERF_NO_RESULT_RISK_MEDIUM.name()));
+        Assert.assertEquals(true, responseMedium.getAuditStatuses().toString().contains(PerformanceTestAuditStatus.PERF_RESULT_AUDIT_FAIL.name()));
+
+        testResult.setPerfRisk("Low");
+        when(testResultRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class),any(Long.class),any(Long.class)))
+                .thenReturn(Arrays.asList(testResult));
+        PerformanceTestAuditResponse responseLow = performanceTestResultEvaluator.evaluate(dummyCollectorItem, Long.MIN_VALUE, Long.MAX_VALUE, null);
+        Assert.assertEquals(true, responseLow.getAuditStatuses().toString().contains(PerformanceTestAuditStatus.PERF_NO_RESULT_RISK_LOW.name()));
+        Assert.assertEquals(true, responseLow.getAuditStatuses().toString().contains(PerformanceTestAuditStatus.PERF_RESULT_AUDIT_OK.name()));
     }
 
 

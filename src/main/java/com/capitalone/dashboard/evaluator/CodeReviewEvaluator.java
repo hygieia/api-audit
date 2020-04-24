@@ -2,7 +2,6 @@ package com.capitalone.dashboard.evaluator;
 
 import com.capitalone.dashboard.ApiSettings;
 import com.capitalone.dashboard.common.CommonCodeReview;
-import com.capitalone.dashboard.model.AuditException;
 import com.capitalone.dashboard.model.Collector;
 import com.capitalone.dashboard.model.CollectorItem;
 import com.capitalone.dashboard.model.CollectorType;
@@ -10,9 +9,11 @@ import com.capitalone.dashboard.model.Commit;
 import com.capitalone.dashboard.model.CommitType;
 import com.capitalone.dashboard.model.Dashboard;
 import com.capitalone.dashboard.model.GitRequest;
+import com.capitalone.dashboard.model.Review;
 import com.capitalone.dashboard.model.SCM;
 import com.capitalone.dashboard.repository.CollectorRepository;
 import com.capitalone.dashboard.model.ServiceAccount;
+import com.capitalone.dashboard.model.AuditException;
 import com.capitalone.dashboard.repository.CommitRepository;
 import com.capitalone.dashboard.repository.GitRequestRepository;
 import com.capitalone.dashboard.response.CodeReviewAuditResponseV2;
@@ -33,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -62,7 +65,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
     @Override
     public Collection<CodeReviewAuditResponseV2> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data) throws AuditException {
         List<CodeReviewAuditResponseV2> responseV2s = new ArrayList<>();
-        List<CollectorItem> repoItems = getCollectorItems(dashboard, "repo", CollectorType.SCM);
+        List<CollectorItem> repoItems = getCollectorItems(dashboard, CollectorType.SCM);
         if (CollectionUtils.isEmpty(repoItems)) {
             throw new AuditException("No code repository configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
         }
@@ -184,9 +187,6 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         reviewAuditResponseV2.setBranch(scmBranch);
         reviewAuditResponseV2.setLastCommitTime(CollectionUtils.isEmpty(commits)? 0 : commits.get(0).getScmCommitTimestamp());
         reviewAuditResponseV2.setLastPRMergeTime(CollectionUtils.isEmpty(pullRequests)? 0 : pullRequests.get(0).getMergedAt());
-        if (reviewAuditResponseV2.getLastCommitTime() > reviewAuditResponseV2.getLastPRMergeTime()) {
-            reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE);
-        }
         reviewAuditResponseV2.setLastUpdated(repoItem.getLastUpdated());
 
         List<String> allPrCommitShas = new ArrayList<>();
@@ -198,44 +198,51 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         commits.stream().filter(commit -> !allPrCommitShas.contains(commit.getScmRevisionNumber()) && StringUtils.isEmpty(commit.getPullNumber()) && commit.getType() == CommitType.New).forEach(reviewAuditResponseV2::addDirectCommit);
 
         //check any commits not directly tied to pr
-
         List<Commit> commitsNotDirectlyTiedToPr = new ArrayList<>();
         commits.forEach(commit -> {
+            // flag any commits made by an LDAP unauthenticated user
+            checkCommitByLDAPUnauthUser(reviewAuditResponseV2, commit);
+
             if (!checkPrCommitsAndCommitType(allPrCommitShas, commit)) { return; }
 
             if ( isCommitEligibleForDirectCommitsForPushedRepo(repoItem, commit, collectorItemList, beginDt, endDt)
                     || isCommitEligibleForDirectCommitsForPulledRepo(repoItem, commit) ) {
                 commitsNotDirectlyTiedToPr.add(commit);
-                // auditServiceAccountChecks includes - check for service account and increment version tag for service account on direct commits.
-                auditServiceAccountChecks(reviewAuditResponseV2, commit);
+                // check for service account and increment version tag for service account on direct commits.
+                auditDirectCommits(reviewAuditResponseV2, commit);
             }
         });
 
         return reviewAuditResponseV2;
     }
 
-    private boolean checkPrCommitsAndCommitType(List<String> allPrCommitShas, Commit commit) {
-        if ( (!allPrCommitShas.contains(commit.getScmRevisionNumber()))
-                && (commit.getType() == CommitType.New) ) { return true; }
+    /**
+     * Flag commit made by an unauthenticated user that is not by a service account and has non-code changes with an approved message
+     * Adds SCM_AUTHOR_LOGIN_INVALID status at Code Review level
+     */
+    private void checkCommitByLDAPUnauthUser(CodeReviewAuditResponseV2 reviewAuditResponseV2, Commit commit) {
+        if (StringUtils.isEmpty(commit.getScmAuthorLDAPDN()) && !CommonCodeReview.matchIncrementVersionTag(commit.getScmCommitLog(), settings)) {
+            reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.SCM_AUTHOR_LOGIN_INVALID);
+            // add commit made by unauth user to commitsByLDAPUnauthUsers list
+            reviewAuditResponseV2.addCommitByLDAPUnauthUser(commit);
+        }
+    }
 
-        return false;
+    private boolean checkPrCommitsAndCommitType(List<String> allPrCommitShas, Commit commit) {
+        if (Objects.isNull(commit)) return false;
+        if (CollectionUtils.isEmpty(allPrCommitShas)) return true;
+        return (commit.getType() == CommitType.New) && !allPrCommitShas.contains(commit.getScmRevisionNumber());
     }
 
     private boolean isCommitEligibleForDirectCommitsForPushedRepo(CollectorItem repoItem, Commit commit,
                                                                   List<CollectorItem> collectorItemList,
                                                                   long beginDt, long endDt) {
-        if (repoItem.isPushed()
-                && !existsApprovedPROnAnotherBranch(repoItem, commit, collectorItemList, beginDt, endDt)) {
-            return true;
-        }
-        return false;
+        return repoItem.isPushed()
+                && !existsApprovedPROnAnotherBranch(repoItem, commit, collectorItemList, beginDt, endDt);
     }
 
     private boolean isCommitEligibleForDirectCommitsForPulledRepo(CollectorItem repoItem, Commit commit) {
-        if (!repoItem.isPushed() && StringUtils.isEmpty(commit.getPullNumber())) {
-            return true;
-        }
-        return false;
+        return !repoItem.isPushed() && StringUtils.isEmpty(commit.getPullNumber());
     }
 
     protected void auditPullRequest(CollectorItem repoItem, GitRequest pr, List<Commit> commits,
@@ -257,24 +264,84 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         List<Commit> allCommitsRelatedToPr = pr.getCommits();
         List<Commit> commitsRelatedToPr = allCommitsRelatedToPr.stream().filter(commit -> commit.getNumberOfChanges()>0).collect(Collectors.toList());
         commitsRelatedToPr.sort(Comparator.comparing(e -> (e.getScmCommitTimestamp())));
+
         if (mergeCommit == null) {
             pullRequestAudit.addAuditStatus(CodeReviewAuditStatus.MERGECOMMITER_NOT_FOUND);
         } else {
+            commitsRelatedToPr.add(mergeCommit);
             if (repoItem.isPushed()) {
                 pullRequestAudit.addAuditStatus(pr.getUserId().equalsIgnoreCase(mergeCommit.getScmCommitterLogin()) ? CodeReviewAuditStatus.COMMITAUTHOR_EQ_MERGECOMMITER : CodeReviewAuditStatus.COMMITAUTHOR_NE_MERGECOMMITER);
             } else {
                 pullRequestAudit.addAuditStatus(pr.getUserId().equalsIgnoreCase(mergeCommit.getScmAuthorLogin()) ? CodeReviewAuditStatus.COMMITAUTHOR_EQ_MERGECOMMITER : CodeReviewAuditStatus.COMMITAUTHOR_NE_MERGECOMMITER);
             }
         }
-
         allPrCommitShas.addAll(commitsRelatedToPr.stream().map(SCM::getScmRevisionNumber).collect(Collectors.toList()));
 
+        // Check peer reviews
         boolean peerReviewed = CommonCodeReview.computePeerReviewStatus(pr, settings, pullRequestAudit, commits, commitRepository, serviceAccountRepository);
         pullRequestAudit.addAuditStatus(peerReviewed ? CodeReviewAuditStatus.PULLREQ_REVIEWED_BY_PEER : CodeReviewAuditStatus.PULLREQ_NOT_PEER_REVIEWED);
         String sourceRepo = pr.getSourceRepo();
         String targetRepo = pr.getTargetRepo();
         pullRequestAudit.addAuditStatus(sourceRepo == null ? CodeReviewAuditStatus.GIT_FORK_STRATEGY : sourceRepo.equalsIgnoreCase(targetRepo) ? CodeReviewAuditStatus.GIT_BRANCH_STRATEGY : CodeReviewAuditStatus.GIT_FORK_STRATEGY);
+        auditCommitAfterPrMerge(reviewAuditResponseV2, pullRequestAudit, pr, commitsRelatedToPr);
+        auditCommitsAfterReviews(reviewAuditResponseV2, pullRequestAudit, pr);
         reviewAuditResponseV2.addPullRequest(pullRequestAudit);
+    }
+
+    /**
+     * Flag commit(s) made after pull request merge as violation
+     * Adds COMMIT_AFTER_PR_MERGE status at both PR and Code Review level
+     */
+    protected void auditCommitAfterPrMerge(CodeReviewAuditResponseV2 reviewAuditResponseV2, CodeReviewAuditResponseV2.PullRequestAudit pullRequestAudit, GitRequest pr, List<Commit> commitsRelatedToPr) {
+        if (CollectionUtils.isEmpty(commitsRelatedToPr)) { return; }
+        List <Commit> commitsAfterPrMerge = commitsRelatedToPr.stream().filter(Objects::nonNull).filter(commit -> (
+                commit.getScmCommitTimestamp() > pr.getMergedAt()
+                )).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(commitsAfterPrMerge)) { return; }
+
+        pullRequestAudit.addAuditStatus(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE);
+        // if code review audit status doesn't already contain this status, then add it
+        if (!reviewAuditResponseV2.getAuditStatuses().contains(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE)) {
+            reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.COMMIT_AFTER_PR_MERGE);
+        }
+        // add specific commit(s) made after PR merge to commitAfterPrMerge list
+        commitsAfterPrMerge.forEach(reviewAuditResponseV2::addCommitAfterPrMerge);
+    }
+
+    /**
+     * Flag commits made after peer reviews as violations, exclude commits that are merge commits from target branches
+     */
+    protected void auditCommitsAfterReviews(CodeReviewAuditResponseV2 reviewAuditResponseV2, CodeReviewAuditResponseV2.PullRequestAudit pullRequestAudit, GitRequest pr) {
+        List<Review> reviewsRelatedToPr = pr.getReviews().stream().sorted(Comparator.comparing(Review::getUpdatedAt)).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(reviewsRelatedToPr)) { return; }
+
+        List<Commit> commitsRelatedToPr = pr.getCommits().stream().filter(commit -> commit.getNumberOfChanges()>0).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(commitsRelatedToPr)) { return; }
+
+        long lastReviewTimestamp = reviewsRelatedToPr.get(reviewsRelatedToPr.size() - 1).getUpdatedAt();
+        List<Commit> commitsAfterPrReviews = commitsRelatedToPr.stream().filter(Objects::nonNull).filter(commit -> (
+                commit.getScmCommitTimestamp() > lastReviewTimestamp
+                && !isMergeCommitFromTargetBranch(commit, pr))
+        ).collect(Collectors.toList());
+
+        if(CollectionUtils.isEmpty(commitsAfterPrReviews)) { return; }
+        reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.COMMITS_AFTER_PR_REVIEWS);
+        pullRequestAudit.addAuditStatus(CodeReviewAuditStatus.COMMITS_AFTER_PR_REVIEWS);
+        commitsAfterPrReviews.forEach(reviewAuditResponseV2::addCommitAfterPrReviews);
+    }
+
+    /**
+     * Check if a commit is a merge commit from target branches
+     * this type of commits has default commit logs that look like "merge branch 'target_branch' into ..."
+     * Note that this ins't the ideal way to check this as commit logs can be modified by users
+     */
+    private boolean isMergeCommitFromTargetBranch(Commit commit, GitRequest pr) {
+        if(commit == null || pr == null) return false;
+        String commitLog = commit.getScmCommitLog();
+        Pattern pattern = Pattern.compile("(.*merge branch.*\')(.*)(\'.*into.*)", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(commitLog);
+        if(!matcher.matches()) return false;
+        return StringUtils.equalsIgnoreCase(pr.getScmBranch(), matcher.group(2));
     }
 
     protected boolean existsApprovedPROnAnotherBranch(CollectorItem repoItem, Commit commit, List<CollectorItem> collectorItemList,
@@ -315,11 +382,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         auditPullRequest(repoItem, mergedPullRequest, commits, allPrCommitShas, reviewAuditResponseV2);
         CodeReviewAuditResponseV2.PullRequestAudit pullRequestAudit = reviewAuditResponseV2.getPullRequests().get(0);
 
-        if ((pullRequestAudit != null) && codeReviewAuditResponseCheck(pullRequestAudit)) {
-            return true;
-        }
-
-        return false;
+        return (pullRequestAudit != null) && codeReviewAuditResponseCheck(pullRequestAudit);
     }
 
     protected boolean codeReviewAuditResponseCheck(CodeReviewAuditResponseV2.PullRequestAudit pullRequestAudit) {
@@ -359,21 +422,10 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
     }
 
     protected boolean checkIfCommitsMatch(Commit commit1, Commit commit2) {
-        if (Objects.equals(commit1.getScmRevisionNumber(), commit2.getScmRevisionNumber())
+        return Objects.equals(commit1.getScmRevisionNumber(), commit2.getScmRevisionNumber())
                 && Objects.equals(commit1.getScmAuthor(), commit2.getScmAuthor())
                 && Objects.equals(commit1.getScmCommitTimestamp(), commit2.getScmCommitTimestamp())
-                && Objects.equals(commit1.getScmCommitLog(), commit2.getScmCommitLog())) {
-            return true;
-        }
-        return false;
-    }
-
-    private void auditServiceAccountChecks(CodeReviewAuditResponseV2 reviewAuditResponseV2, Commit commit) {
-        if (StringUtils.isEmpty(commit.getScmAuthorLDAPDN())) {
-            reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.SCM_AUTHOR_LOGIN_INVALID);
-        }
-
-        auditDirectCommits(reviewAuditResponseV2, commit);
+                && Objects.equals(commit1.getScmCommitLog(), commit2.getScmCommitLog());
     }
 
     protected void auditDirectCommits(CodeReviewAuditResponseV2 reviewAuditResponseV2, Commit commit) {
@@ -411,4 +463,5 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         List<ServiceAccount> serviceAccounts = (List<ServiceAccount>) serviceAccountRepository.findAll();
         return serviceAccounts.stream().collect(Collectors.toMap(ServiceAccount :: getServiceAccountName, ServiceAccount::getFileNames));
     }
+
 }
