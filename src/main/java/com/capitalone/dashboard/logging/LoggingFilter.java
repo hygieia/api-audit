@@ -129,7 +129,7 @@ public class LoggingFilter implements Filter {
             }
         } finally {
             String requester = httpServletRequest.getHeader("apiUser");
-            requester = (StringUtils.isEmpty(requester) ? "UNKNOWN_RO_USER" : requester);
+            requester = (StringUtils.isEmpty(requester) ? "UNKNOWN_USER" : requester);
             LOGGER.info("requester=" + requester
                     + ", timeTaken=" + (System.currentTimeMillis() - startTime)
                     + ", endPoint=" + httpServletRequest.getRequestURI()
