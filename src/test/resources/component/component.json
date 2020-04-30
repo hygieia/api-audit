@@ -78,7 +78,8 @@
         "options": {
           "jobName": "Functional-SLATE",
           "jobUrl": "https://myjenkins.com/jenkins/job/Functional-SLATE/",
-          "instanceUrl": "https://myjenkins.com/jenkins/"
+          "instanceUrl": "https://myjenkins.com/jenkins/",
+          "testType": "Functional"
         }
       },
       {
@@ -94,7 +95,8 @@
         "options": {
           "jobName": "Performance-SLATE",
           "jobUrl": "",
-          "instanceUrl": ""
+          "instanceUrl": "",
+          "testType": "Performance"
         }
       }
     ],
