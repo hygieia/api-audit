@@ -289,7 +289,7 @@ public class DashboardAuditServiceTest {
         Collection<PerformanceTestAuditResponse> actualReview = actualReviewMap.get(AuditType.PERF_TEST);
         Map<AuditType, Collection<PerformanceTestAuditResponse>> expectedReviewMap = expected.getReview();
         Collection<PerformanceTestAuditResponse> expectedReview = expectedReviewMap.get(AuditType.PERF_TEST);
-        assertThat(actualReview.size()).isEqualTo(2);
+        assertThat(actualReview.size()).isEqualTo(1);
         assertThat(actualReview.toArray()[0]).isEqualToComparingFieldByField(expectedReview.toArray()[0]);
     }
 
@@ -350,7 +350,7 @@ public class DashboardAuditServiceTest {
         Collection<TestResultsAuditResponse> actualReview = actualReviewMap.get(AuditType.TEST_RESULT);
         Map<AuditType, Collection<TestResultsAuditResponse>> expectedReviewMap = expected.getReview();
         Collection<TestResultsAuditResponse> expectedReview = expectedReviewMap.get(AuditType.TEST_RESULT);
-        assertThat(actualReview.size()).isEqualTo(2);
+        assertThat(actualReview.size()).isEqualTo(1);
         //assertThat((actualReview.toArray()[0])).isEqualToComparingFieldByField(expectedReview.toArray()[0]);
     }
 

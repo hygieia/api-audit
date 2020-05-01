@@ -66,6 +66,7 @@ public class RegressionTestResultEvaluator extends Evaluator<TestResultsAuditRes
     private static final String TEST_CASE_SKIPPED_COUNT = "skippedTestCaseCount";
     private static final String TEST_CASE_TOTAL_COUNT = "totalTestCaseCount";
     private static final String PRIORITY_HIGH = "High";
+    public static final String FUNCTIONAL = "Functional";
 
     @Autowired
     public RegressionTestResultEvaluator(TestResultRepository testResultRepository, FeatureRepository featureRepository) {
@@ -78,7 +79,7 @@ public class RegressionTestResultEvaluator extends Evaluator<TestResultsAuditRes
         this.beginDate = beginDate-1;
         this.endDate = endDate+1;
         this.dashboard = getDashboard(dashboard.getTitle(), DashboardType.Team);
-        List<CollectorItem> testItems = getCollectorItems(this.dashboard, CollectorType.Test);
+        List<CollectorItem> testItems = getCollectorItems(this.dashboard, CollectorType.Test, FUNCTIONAL);
         Collection<TestResultsAuditResponse> testResultsAuditResponse = new ArrayList<>();
         if (CollectionUtils.isEmpty(testItems)) {
             throw new AuditException("No tests configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
