@@ -35,55 +35,66 @@
             {
               "name": "blocker_violations",
               "value": "0",
-              "formattedValue": "0"
+              "formattedValue": "0",
+              "instances":[]
             },
             {
               "name": "coverage",
               "value": "93.5",
-              "formattedValue": "93.5%"
+              "formattedValue": "93.5%",
+              "instances":[]
             },
             {
               "name": "alert_status",
               "value": "WARN",
-              "formattedValue": "WARN"
+              "formattedValue": "WARN",
+              "instances":[]
             },
             {
               "name": "major_violations",
               "value": "0",
-              "formattedValue": "0"
+              "formattedValue": "0",
+              "instances":[]
             },
             {
-              "name": "new_vulnerabilities"
+              "name": "new_vulnerabilities",
+              "instances":[]
             },
             {
               "name": "ncloc",
               "value": "1447",
-              "formattedValue": "1,447"
+              "formattedValue": "1,447",
+              "instances":[]
             },
             {
               "name": "violations",
               "value": "65",
-              "formattedValue": "65"
+              "formattedValue": "65",
+              "instances":[]
             },
             {
               "name": "line_coverage",
               "value": "96.3",
-              "formattedValue": "96.3%"
+              "formattedValue": "96.3%",
+              "instances":[]
             },
             {
               "name": "quality_gate_details",
               "value": "{\"level\":\"WARN\",\"conditions\":[{\"metric\":\"blocker_violations\",\"op\":\"GT\",\"warning\":\"\",\"error\":\"0\",\"actual\":\"0\",\"level\":\"OK\"},{\"metric\":\"critical_violations\",\"op\":\"GT\",\"warning\":\"\",\"error\":\"0\",\"actual\":\"0\",\"level\":\"OK\"},{\"metric\":\"major_violations\",\"op\":\"GT\",\"warning\":\"\",\"error\":\"0\",\"actual\":\"0\",\"level\":\"OK\"},{\"metric\":\"minor_violations\",\"op\":\"GT\",\"warning\":\"60\",\"error\":\"70\",\"actual\":\"65\",\"level\":\"WARN\"},{\"metric\":\"coverage\",\"op\":\"LT\",\"warning\":\"95\",\"error\":\"90\",\"actual\":\"93.5\",\"level\":\"WARN\"},{\"metric\":\"line_coverage\",\"op\":\"LT\",\"warning\":\"95\",\"error\":\"90\",\"actual\":\"96.3\",\"level\":\"OK\"}],\"ignoredConditions\":false}",
-              "formattedValue": "{\"level\":\"WARN\",\"conditions\":[{\"metric\":\"blocker_violations\",\"op\":\"GT\",\"warning\":\"\",\"error\":\"0\",\"actual\":\"0\",\"level\":\"OK\"},{\"metric\":\"critical_violations\",\"op\":\"GT\",\"warning\":\"\",\"error\":\"0\",\"actual\":\"0\",\"level\":\"OK\"},{\"metric\":\"major_violations\",\"op\":\"GT\",\"warning\":\"\",\"error\":\"0\",\"actual\":\"0\",\"level\":\"OK\"},{\"metric\":\"minor_violations\",\"op\":\"GT\",\"warning\":\"60\",\"error\":\"70\",\"actual\":\"65\",\"level\":\"WARN\"},{\"metric\":\"coverage\",\"op\":\"LT\",\"warning\":\"95\",\"error\":\"90\",\"actual\":\"93.5\",\"level\":\"WARN\"},{\"metric\":\"line_coverage\",\"op\":\"LT\",\"warning\":\"95\",\"error\":\"90\",\"actual\":\"96.3\",\"level\":\"OK\"}],\"ignoredConditions\":false}%"
+              "formattedValue": "{\"level\":\"WARN\",\"conditions\":[{\"metric\":\"blocker_violations\",\"op\":\"GT\",\"warning\":\"\",\"error\":\"0\",\"actual\":\"0\",\"level\":\"OK\"},{\"metric\":\"critical_violations\",\"op\":\"GT\",\"warning\":\"\",\"error\":\"0\",\"actual\":\"0\",\"level\":\"OK\"},{\"metric\":\"major_violations\",\"op\":\"GT\",\"warning\":\"\",\"error\":\"0\",\"actual\":\"0\",\"level\":\"OK\"},{\"metric\":\"minor_violations\",\"op\":\"GT\",\"warning\":\"60\",\"error\":\"70\",\"actual\":\"65\",\"level\":\"WARN\"},{\"metric\":\"coverage\",\"op\":\"LT\",\"warning\":\"95\",\"error\":\"90\",\"actual\":\"93.5\",\"level\":\"WARN\"},{\"metric\":\"line_coverage\",\"op\":\"LT\",\"warning\":\"95\",\"error\":\"90\",\"actual\":\"96.3\",\"level\":\"OK\"}],\"ignoredConditions\":false}%",
+              "instances":[]
             },
             {
               "name": "sqale_index",
               "value": "298",
-              "formattedValue": "4h 58min"
+              "formattedValue": "4h 58min",
+              "instances":[]
             },
             {
               "name": "critical_violations",
               "value": "0",
-              "formattedValue": "0"
+              "formattedValue": "0",
+              "instances":[]
             }
           ]
         },
