@@ -2,6 +2,7 @@ package com.capitalone.dashboard.evaluator;
 
 import com.capitalone.dashboard.ApiSettings;
 import com.capitalone.dashboard.common.CommonCodeReview;
+import com.capitalone.dashboard.model.AuthorType;
 import com.capitalone.dashboard.model.Collector;
 import com.capitalone.dashboard.model.CollectorItem;
 import com.capitalone.dashboard.model.CollectorType;
@@ -221,7 +222,9 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
      * Adds SCM_AUTHOR_LOGIN_INVALID status at Code Review level
      */
     private void checkCommitByLDAPUnauthUser(CodeReviewAuditResponseV2 reviewAuditResponseV2, Commit commit) {
-        if (StringUtils.isEmpty(commit.getScmAuthorLDAPDN()) && !CommonCodeReview.matchIncrementVersionTag(commit.getScmCommitLog(), settings)) {
+        if (StringUtils.isEmpty(commit.getScmAuthorLDAPDN()) &&
+                !CommonCodeReview.matchIncrementVersionTag(commit.getScmCommitLog(), settings) &&
+                !commit.getScmAuthorType().equals(AuthorType.Bot)) {
             reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.SCM_AUTHOR_LOGIN_INVALID);
             // add commit made by unauth user to commitsByLDAPUnauthUsers list
             reviewAuditResponseV2.addCommitByLDAPUnauthUser(commit);

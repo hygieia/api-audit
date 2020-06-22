@@ -2,6 +2,7 @@ package com.capitalone.dashboard.evaluator;
 
 import com.capitalone.dashboard.ApiSettings;
 import com.capitalone.dashboard.common.TestConstants;
+import com.capitalone.dashboard.model.AuthorType;
 import com.capitalone.dashboard.model.CollectionError;
 import com.capitalone.dashboard.model.CollectorItem;
 import com.capitalone.dashboard.model.Commit;
@@ -359,6 +360,23 @@ public class CodeReviewEvaluatorTest {
     }
 
     @Test
+    public void checkCommitByBotTest() {
+        List<CollectorItem> collectorItemList = new ArrayList<>();
+        collectorItemList.add(makeCollectorItem(1, "master"));
+        List<Commit> commitsList = makeCommitsByBot();
+        List<GitRequest> pullRequestList = makePullRequests(true);
+        when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(pullRequestList);
+        when(commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(commitsList);
+        when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
+        when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
+        when(apiSettings.getCommitLogIgnoreAuditRegEx()).thenReturn("(.)*(Increment_Version_Tag)(.)*");
+        when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
+
+        CodeReviewAuditResponseV2 responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1,"master"), collectorItemList,1L, 99999999L, null);
+        Assert.assertFalse(responseV2.getAuditStatuses().contains(CodeReviewAuditStatus.SCM_AUTHOR_LOGIN_INVALID));
+    }
+
+    @Test
     public void auditDirectCommitsTest() {
         CodeReviewEvaluator codeReviewEvaluator = Mockito.spy(this.codeReviewEvaluator);
         Commit commit = makeCommit("Commit 21", "CommitOid21", "Author12", "Committer12",12345678L);
@@ -522,12 +540,20 @@ public class CodeReviewEvaluatorTest {
     }
 
     private List<Commit> makeCommitsByLDAPUnauthUser() {
-        Commit c1 = makeUnauthCommit("Commit 0", "CommitOid0", "LocalUser1", "LocalUser1",12345678L);
-        Commit c2 = makeUnauthCommit("Commit 11", "CommitOid11", "LocalUser2", "LocalUser2",12345678L);
-        Commit c3 = makeUnauthCommit("Increment_Version_Tag: 1.0.0", "CommitOid12", "LocalUser3", "LocalUser3",12345678L);
+        Commit c1 = makeUnauthCommit("Commit 0", "CommitOid0", "LocalUser1", "User", "LocalUser1",12345678L);
+        Commit c2 = makeUnauthCommit("Commit 11", "CommitOid11", "LocalUser2", "User", "LocalUser2",12345678L);
+        Commit c3 = makeUnauthCommit("Increment_Version_Tag: 1.0.0", "CommitOid12", "LocalUser3", "User","LocalUser3",12345678L);
         Commit c4 = makeCommit("Commit 3", "CommitOid3", "Author3", "Author3",12345678L);
         return new ArrayList<>(Arrays.asList(c1, c2, c3, c4));
     }
+
+    private List<Commit> makeCommitsByBot() {
+        Commit c1 = makeUnauthCommit("Commit 0", "CommitOid0", "Bot1", "Bot", "LocalUser1",12345678L);
+        Commit c2 = makeUnauthCommit("Commit 11", "CommitOid11", "Bot2", "Bot", "LocalUser2",12345678L);
+        Commit c3 = makeCommit("Commit 3", "CommitOid3", "Author3", "Author3",12345678L);
+        return new ArrayList<>(Arrays.asList(c1, c2, c3));
+    }
+
 
     private Commit makeCommit(String message, String scmRevisionNumber, String author, String committer, long timeStamp) {
         Commit c = new Commit();
@@ -547,13 +573,14 @@ public class CodeReviewEvaluatorTest {
         return c;
     }
 
-    private Commit makeUnauthCommit(String message, String scmRevisionNumber, String author, String committer, long timeStamp) {
+    private Commit makeUnauthCommit(String message, String scmRevisionNumber, String author, String authorType, String committer, long timeStamp) {
         Commit c = new Commit();
         c.setId(ObjectId.get());
         c.setScmCommitLog(message);
         c.setScmRevisionNumber(scmRevisionNumber);
         c.setType(CommitType.New);
         c.setScmAuthor(author);
+        c.setScmAuthorType(AuthorType.fromString(authorType));
         c.setScmAuthorLogin("unknown");
         c.setScmCommitterLogin(committer);
         c.setScmCommitTimestamp(timeStamp);
