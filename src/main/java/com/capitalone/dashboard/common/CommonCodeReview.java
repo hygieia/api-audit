@@ -30,6 +30,7 @@ import org.springframework.ldap.support.LdapUtils;
 import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -41,6 +42,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CommonCodeReview {
 
@@ -73,7 +75,7 @@ public class CommonCodeReview {
         if (!CollectionUtils.isEmpty(reviews)) {
             for (Review review : reviews) {
                 if (StringUtils.equalsIgnoreCase("approved", review.getState())) {
-                    if (!StringUtils.isEmpty(review.getAuthorLDAPDN()) && checkForServiceAccount(review.getAuthorLDAPDN(), settings,accounts,review.getAuthor(),null,false,auditReviewResponse)) {
+                    if (!StringUtils.isEmpty(review.getAuthorLDAPDN()) && isServiceAccount(review.getAuthorLDAPDN(), settings)) {
                         auditReviewResponse.addAuditStatus(CodeReviewAuditStatus.PEER_REVIEW_BY_SERVICEACCOUNT);
                     }
                     //review done using GitHub Review workflow
@@ -121,7 +123,7 @@ public class CommonCodeReview {
                             if (!CollectionUtils.isEmpty(settings.getServiceAccountOU()) && !StringUtils.isEmpty(settings.getPeerReviewApprovalText()) && !StringUtils.isEmpty(description) &&
                                     description.startsWith(settings.getPeerReviewApprovalText())) {
                                 String user = description.replace(settings.getPeerReviewApprovalText(), "").trim();
-                                if (!StringUtils.isEmpty(actors.get(user)) && checkForServiceAccount(actors.get(user), settings,accounts,user,null,false,auditReviewResponse)) {
+                                if (!StringUtils.isEmpty(actors.get(user)) && isServiceAccount(actors.get(user), settings)) {
                                     auditReviewResponse.addAuditStatus(CodeReviewAuditStatus.PEER_REVIEW_BY_SERVICEACCOUNT);
                                 }
                             }
@@ -157,16 +159,10 @@ public class CommonCodeReview {
      * @param settings
      * @return
      */
-    public static boolean checkForServiceAccount(String userLdapDN, ApiSettings settings,Map<String,String> allowedUsers,String author,List<String> commitFiles,boolean isCommit,AuditReviewResponse auditReviewResponse) {
+    public static boolean isServiceAccount(String userLdapDN, ApiSettings settings) {
         List<String> serviceAccountOU = settings.getServiceAccountOU();
         boolean isValid = false;
-        if(!MapUtils.isEmpty(allowedUsers) && isCommit){
-            isValid = isValidServiceAccount(author,allowedUsers,commitFiles);
-            if(isValid){
-                auditReviewResponse.addAuditStatus(CodeReviewAuditStatus.DIRECT_COMMIT_CHANGE_WHITELISTED_ACCOUNT);
-            }
-        }
-        if (!CollectionUtils.isEmpty(serviceAccountOU) && StringUtils.isNotBlank(userLdapDN) && !isValid) {
+        if (!CollectionUtils.isEmpty(serviceAccountOU) && StringUtils.isNotBlank(userLdapDN)) {
             try {
                 String userLdapDNParsed = LdapUtils.getStringValue(new LdapName(userLdapDN), "OU");
                 List<String> matches = serviceAccountOU.stream().filter(it -> it.contains(userLdapDNParsed)).collect(Collectors.toList());
@@ -181,19 +177,18 @@ public class CommonCodeReview {
         return isValid;
     }
 
-    private static boolean isValidServiceAccount(String author, Map<String,String> allowedServiceAccounts,List<String> commitFiles) {
-
-        boolean isValidServiceAccount = false;
-        if (MapUtils.isEmpty(allowedServiceAccounts)) return Boolean.FALSE;
-        for (String serviceAccount:allowedServiceAccounts.keySet()) {
-            String fileNames = allowedServiceAccounts.get(serviceAccount);
-            for (String s : fileNames.split(",")) {
-                if (serviceAccount.equalsIgnoreCase(author) && findFileMatch(s, commitFiles)){
-                    isValidServiceAccount = true;
-                }
+    public static boolean isFileTypeWhitelisted(Commit commit, ApiSettings settings) {
+        List<String> whitelistedFiles = settings.getDirectCommitWhitelistedFiles();
+        Stream<String> combinedStream
+                = Stream.of(commit.getFilesAdded(), commit.getFilesModified(),commit.getFilesRemoved()).filter(Objects::nonNull).flatMap(Collection::stream);
+        Collection<String> updatedFiles = combinedStream.collect(Collectors.toList());
+        boolean isValid = true;
+        for (String file : updatedFiles) {
+            if(!findFileMatch(file, whitelistedFiles)) {
+                isValid = false;
             }
         }
-        return isValidServiceAccount;
+        return isValid;
     }
 
     private static boolean findFileMatch(String fileName, List<String> files){

@@ -46,6 +46,7 @@ public class ApiSettings {
     @Value("${criticalLicenseVulnerabilitiesAge:0}")
     private int criticalLicenseVulnerabilitiesAge;
     private List<String> buildStageRegEx;
+    private List<String> directCommitWhitelistedFiles;
 
     public String getKey() {
         return key;
@@ -221,6 +222,14 @@ public class ApiSettings {
 
     public void setBuildStageRegEx(List<String> buildStageRegEx) {
         this.buildStageRegEx = buildStageRegEx;
+    }
+
+    public List<String> getDirectCommitWhitelistedFiles() {
+        return directCommitWhitelistedFiles;
+    }
+
+    public void setDirectCommitWhitelistedFiles(List<String> directCommitWhitelistedFiles) {
+        this.directCommitWhitelistedFiles = directCommitWhitelistedFiles;
     }
 
 
