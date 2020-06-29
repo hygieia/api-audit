@@ -54,6 +54,16 @@ public class CommonCodeReviewTest {
     }
 
     @Test
+    public void testIsFileTypeWhitelistedNoFilesInCommit() {
+        List<String> whitelistedFile = new ArrayList<>();
+        whitelistedFile.add("pom.xml");
+        whitelistedFile.add("readme.md");
+        apiSettings.setDirectCommitWhitelistedFiles(whitelistedFile);
+        Commit commit = makeCommitNoFiles();
+        Assert.assertTrue(CommonCodeReview.isFileTypeWhitelisted(commit, apiSettings));
+    }
+
+    @Test
     public void testIsFileTypeWhitelistedFail() {
         List<String> whitelistedFile = new ArrayList<>();
         whitelistedFile.add("pom.xml");
@@ -120,6 +130,17 @@ public class CommonCodeReviewTest {
         c.setScmCommitTimestamp(100000000);
         c.setScmAuthorLogin("hygieiaUser");
         c.setFilesAdded(Arrays.asList("source1.java", "source2.java"));
+        return c;
+    }
+
+    private Commit makeCommitNoFiles() {
+        Commit c = new Commit();
+        c.setId(ObjectId.get());
+        c.setScmCommitLog("Merge branch master into branch");
+        c.setScmAuthor("hygieiaUser");
+        c.setScmAuthorLDAPDN("CN=hygieiaUser,OU=Service Accounts,DC=basic,DC=ds,DC=industry,DC=com");
+        c.setScmCommitTimestamp(100000000);
+        c.setScmAuthorLogin("hygieiaUser");
         return c;
     }
 
