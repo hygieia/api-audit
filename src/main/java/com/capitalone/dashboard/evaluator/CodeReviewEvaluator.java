@@ -433,16 +433,14 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
     }
 
     protected void auditDirectCommits(CodeReviewAuditResponseV2 reviewAuditResponseV2, Commit commit) {
-        Stream<String> combinedStream
-                = Stream.of(commit.getFilesAdded(), commit.getFilesModified(),commit.getFilesRemoved()).filter(Objects::nonNull).flatMap(Collection::stream);
-        Collection<String> collectionCombined = combinedStream.collect(Collectors.toList());
-       if (CommonCodeReview.checkForServiceAccount(commit.getScmAuthorLDAPDN(), settings,getAllServiceAccounts(),commit.getScmAuthor(),collectionCombined.stream().collect(Collectors.toList()),true,reviewAuditResponseV2)) {
+        if (CommonCodeReview.isServiceAccount(commit.getScmAuthorLDAPDN(), settings) &&
+                CommonCodeReview.isFileTypeWhitelisted(commit, settings) &&
+                CommonCodeReview.matchIncrementVersionTag(commit.getScmCommitLog(), settings)
+        ) {
             reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.COMMITAUTHOR_EQ_SERVICEACCOUNT);
-            auditIncrementVersionTag(reviewAuditResponseV2, commit, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT);
-        } else  if (StringUtils.isBlank(commit.getScmAuthorLDAPDN())) {
-           auditIncrementVersionTag(reviewAuditResponseV2, commit, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE);
-        }else {
-            auditIncrementVersionTag(reviewAuditResponseV2, commit, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_USER_ACCOUNT);
+            reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT);
+        } else  {
+            addDirectCommitsToBase(reviewAuditResponseV2,commit);
         }
     }
 

@@ -35,54 +35,33 @@ public class CommonCodeReviewTest {
     private CommitRepository commitRepository;
     @Mock
     private ServiceAccountRepository serviceAccountRepository;
-    @Test
-    public void testCheckForServiceAccount() {
 
+    @Test
+    public void testIsServiceAccount() {
         apiSettings.setServiceAccountOU(TestConstants.SERVICE_ACCOUNTS);
-        Assert.assertEquals(true, CommonCodeReview.checkForServiceAccount("CN=hygieiaUser,OU=Service Accounts,DC=basic,DC=ds,DC=industry,DC=com", apiSettings,null,null,null,false,new AuditReviewResponse()));
+        Assert.assertFalse(CommonCodeReview.isServiceAccount("CN=hygieiaUser,OU=Developers,OU=All Users,DC=basic,DC=ds,DC=industry,DC=com", apiSettings));
+        Assert.assertTrue(CommonCodeReview.isServiceAccount("CN=hygieiaUser,OU=Service Accounts,DC=basic,DC=ds,DC=industry,DC=com", apiSettings));
     }
 
     @Test
-    public void testCheckForServiceAccountForAllUsers() {
-        apiSettings.setServiceAccountOU(TestConstants.SERVICE_ACCOUNTS);
-        Assert.assertEquals(false, CommonCodeReview.checkForServiceAccount("CN=hygieiaUser,OU=Developers,OU=All Users,DC=basic,DC=ds,DC=industry,DC=com", apiSettings,null,null,null,false,new AuditReviewResponse()));
-    }
-
-
-    @Test
-    public void testCheckForServiceAccountForAllowedServiceAccountsMatch() {
-        apiSettings.setServiceAccountOU(TestConstants.SERVICE_ACCOUNTS);
-        Map<String,String> allowedUsers =  Collections.unmodifiableMap(Stream.of(
-                new AbstractMap.SimpleEntry<>("allowedUser1", "pom.xml,test.json"),
-                new AbstractMap.SimpleEntry<>("allowedUser2", "test.java"))
-                .collect(Collectors.toMap((e) -> e.getKey(), (e) -> e.getValue())));
-        Assert.assertEquals(true, CommonCodeReview.checkForServiceAccount("CN=hygieiaUser,OU=Developers,OU=All Users,DC=basic,DC=ds,DC=industry,DC=com", apiSettings,allowedUsers,"allowedUser1",Stream.of("test.json").collect(Collectors.toList()), true,new AuditReviewResponse()));
+    public void testIsFileTypeWhitelistedPass() {
+        List<String> whitelistedFile = new ArrayList<>();
+        whitelistedFile.add("pom.xml");
+        whitelistedFile.add("readme.md");
+        apiSettings.setDirectCommitWhitelistedFiles(whitelistedFile);
+        Commit commit = makeCommitWhitelistedFiles();
+        Assert.assertTrue(CommonCodeReview.isFileTypeWhitelisted(commit, apiSettings));
     }
 
     @Test
-    public void testCheckForServiceAccountForAllowedServiceAccountsWildcardMatch() {
-        AuditReviewResponse<CodeReviewAuditStatus> auditStatusAuditReviewResponse = new AuditReviewResponse();
-        apiSettings.setServiceAccountOU(TestConstants.SERVICE_ACCOUNTS);
-        Map<String,String> allowedUsers =  Collections.unmodifiableMap(Stream.of(
-                new AbstractMap.SimpleEntry<>("allowedUser1", "pom.xml,test.json"),
-                new AbstractMap.SimpleEntry<>("allowedUser2", "*.java"))
-                .collect(Collectors.toMap((e) -> e.getKey(), (e) -> e.getValue())));
-        Assert.assertEquals(true, CommonCodeReview.checkForServiceAccount("CN=hygieiaUser,OU=Developers,OU=All Users,DC=basic,DC=ds,DC=industry,DC=com", apiSettings,allowedUsers,"allowedUser2",Stream.of("test.java").collect(Collectors.toList()), true,auditStatusAuditReviewResponse));
-        Assert.assertEquals(true, auditStatusAuditReviewResponse.getAuditStatuses().toString().contains("DIRECT_COMMIT_CHANGE_WHITELISTED_ACCOUNT"));
+    public void testIsFileTypeWhitelistedFail() {
+        List<String> whitelistedFile = new ArrayList<>();
+        whitelistedFile.add("pom.xml");
+        whitelistedFile.add("readme.md");
+        apiSettings.setDirectCommitWhitelistedFiles(whitelistedFile);
+        Commit commit = makeCommit();
+        Assert.assertFalse(CommonCodeReview.isFileTypeWhitelisted(commit, apiSettings));
     }
-
-    @Test
-    public void testCheckForServiceAccountForAllowedServiceAccountsNonMatch() {
-        AuditReviewResponse<CodeReviewAuditStatus> auditStatusAuditReviewResponse = new AuditReviewResponse();
-        apiSettings.setServiceAccountOU(TestConstants.SERVICE_ACCOUNTS);
-        Map<String,String> allowedUsers =  Collections.unmodifiableMap(Stream.of(
-                new AbstractMap.SimpleEntry<>("allowedUser1", "pom.xml,test.json"),
-                new AbstractMap.SimpleEntry<>("allowedUser2", "*.java"))
-                .collect(Collectors.toMap((e) -> e.getKey(), (e) -> e.getValue())));
-        Assert.assertEquals(false, auditStatusAuditReviewResponse.getAuditStatuses().toString().contains("DIRECT_COMMIT_CHANGE_WHITELISTED_ACCOUNT"));
-        Assert.assertEquals(false, CommonCodeReview.checkForServiceAccount("CN=hygieiaUser,OU=Developers,OU=All Users,DC=basic,DC=ds,DC=industry,DC=com", apiSettings,allowedUsers,"allowedUser2",Stream.of("test.md").collect(Collectors.toList()), true,auditStatusAuditReviewResponse));
-    }
-
 
     @Test
     public void testComputePeerReviewStatusForServiceAccount() {
@@ -140,6 +119,19 @@ public class CommonCodeReviewTest {
         c.setScmAuthorLDAPDN("CN=hygieiaUser,OU=Service Accounts,DC=basic,DC=ds,DC=industry,DC=com");
         c.setScmCommitTimestamp(100000000);
         c.setScmAuthorLogin("hygieiaUser");
+        c.setFilesAdded(Arrays.asList("source1.java", "source2.java"));
+        return c;
+    }
+
+    private Commit makeCommitWhitelistedFiles() {
+        Commit c = new Commit();
+        c.setId(ObjectId.get());
+        c.setScmCommitLog("Merge branch master into branch");
+        c.setScmAuthor("hygieiaUser");
+        c.setScmAuthorLDAPDN("CN=hygieiaUser,OU=Service Accounts,DC=basic,DC=ds,DC=industry,DC=com");
+        c.setScmCommitTimestamp(100000000);
+        c.setScmAuthorLogin("hygieiaUser");
+        c.setFilesAdded(Arrays.asList("readme.md", "pom.xml"));
         return c;
     }
 
