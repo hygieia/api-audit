@@ -181,22 +181,24 @@ public class CommonCodeReview {
         List<String> whitelistedFiles = settings.getDirectCommitWhitelistedFiles();
         Stream<String> combinedStream
                 = Stream.of(commit.getFilesAdded(), commit.getFilesModified(),commit.getFilesRemoved()).filter(Objects::nonNull).flatMap(Collection::stream);
-        List<String> updatedFiles = combinedStream.collect(Collectors.toList());
-        if(CollectionUtils.isEmpty(updatedFiles)) return true;
+        Collection<String> updatedFiles = combinedStream.collect(Collectors.toList());
+        boolean isValid = true;
         for (String file : updatedFiles) {
             if(!findFileMatch(file, whitelistedFiles)) {
-                return false;
+                isValid = false;
             }
         }
-        return true;
+        return isValid;
     }
 
     private static boolean findFileMatch(String fileName, List<String> files){
-        Optional<String> extension = getExtensionByStringHandling(fileName);
-        String EXT_PATTERN = "([^\\s]+(\\.(?i)("+extension.get()+"))$)";
-        java.util.function.Predicate<String> fileFilter = Pattern.compile(EXT_PATTERN).asPredicate();
-        List<String> filesFound = files.stream().filter(fileFilter).collect(Collectors.toList());
-        return filesFound.size()>0;
+      if(fileName.contains("*")){
+          Optional<String> extension = getExtensionByStringHandling(fileName);
+            String EXT_PATTERN = "([^\\s]+(\\.(?i)("+extension.get()+"))$)";
+            java.util.function.Predicate<String> fileFilter = Pattern.compile(EXT_PATTERN).asPredicate();
+            List<String> filesFound = files.stream().filter(fileFilter).collect(Collectors.toList());
+            return filesFound.size()>0;
+        }else return files.parallelStream().anyMatch(file -> file.contains(fileName));
     }
 
     public static Optional<String> getExtensionByStringHandling(String filename) {

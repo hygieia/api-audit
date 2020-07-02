@@ -46,8 +46,7 @@ public class CommonCodeReviewTest {
     @Test
     public void testIsFileTypeWhitelistedPass() {
         List<String> whitelistedFile = new ArrayList<>();
-        whitelistedFile.add("*.xml");
-        whitelistedFile.add("*.md");
+        whitelistedFile.add("pom.xml");
         whitelistedFile.add("readme.md");
         apiSettings.setDirectCommitWhitelistedFiles(whitelistedFile);
         Commit commit = makeCommitWhitelistedFiles();
@@ -57,8 +56,7 @@ public class CommonCodeReviewTest {
     @Test
     public void testIsFileTypeWhitelistedNoFilesInCommit() {
         List<String> whitelistedFile = new ArrayList<>();
-        whitelistedFile.add("*.xml");
-        whitelistedFile.add("*.md");
+        whitelistedFile.add("pom.xml");
         whitelistedFile.add("readme.md");
         apiSettings.setDirectCommitWhitelistedFiles(whitelistedFile);
         Commit commit = makeCommitNoFiles();
@@ -68,8 +66,7 @@ public class CommonCodeReviewTest {
     @Test
     public void testIsFileTypeWhitelistedFail() {
         List<String> whitelistedFile = new ArrayList<>();
-        whitelistedFile.add("*.xml");
-        whitelistedFile.add("*.md");
+        whitelistedFile.add("pom.xml");
         whitelistedFile.add("readme.md");
         apiSettings.setDirectCommitWhitelistedFiles(whitelistedFile);
         Commit commit = makeCommit();
@@ -132,8 +129,7 @@ public class CommonCodeReviewTest {
         c.setScmAuthorLDAPDN("CN=hygieiaUser,OU=Service Accounts,DC=basic,DC=ds,DC=industry,DC=com");
         c.setScmCommitTimestamp(100000000);
         c.setScmAuthorLogin("hygieiaUser");
-        c.setFilesAdded(Arrays.asList("source1.java", "pom.xml"));
-        c.setFilesRemoved(Arrays.asList());
+        c.setFilesAdded(Arrays.asList("source1.java", "source2.java"));
         return c;
     }
 
