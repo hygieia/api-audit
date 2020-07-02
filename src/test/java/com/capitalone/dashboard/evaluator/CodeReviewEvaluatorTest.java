@@ -85,11 +85,21 @@ public class CodeReviewEvaluatorTest {
     }
 
     @Test
+    public void evaluate_COMMITAUTHOR_EQ_SERVICEACCOUNT_WithAllowedUsers() {
+        when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(new ArrayList<GitRequest>());
+        when(commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(Stream.of(makeCommit("test message","scmRevisionNumber1", "servUserName", null,0L)).collect(Collectors.toList()));
+        when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
+        CodeReviewAuditResponseV2 responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1, "master"), 125634536, 6235263, null);
+        Assert.assertEquals(true, responseV2.getAuditStatuses().toString().contains("COMMITAUTHOR_EQ_SERVICEACCOUNT"));
+        Assert.assertEquals(true,responseV2.getAuditEntity().toString().contains("url"));
+    }
+
+    @Test
     public void evaluate_DIRECT_COMMIT_INCREMENT_VERSION_TAG_SERVICE_ACCOUNT() {
         when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(new ArrayList<GitRequest>());
         when(commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(Stream.of(makeCommit("[Increment_Version_Tag] preparing 1.5.6","scmRevisionNumber1",null, null,0L)).collect(Collectors.toList()));
         when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.SERVICE_ACCOUNTS);
-        when(apiSettings.getDirectCommitWhitelistedFiles()).thenReturn(Arrays.asList("pom.xml", "cucumber.xml", "package.json"));
+        when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.SERVICE_ACCOUNTS);
         when(apiSettings.getCommitLogIgnoreAuditRegEx()).thenReturn("(.)*(Increment_Version_Tag)(.)*");
         when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
         CodeReviewAuditResponseV2 responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1,"master"),125634536, 6235263, null);
@@ -106,7 +116,7 @@ public class CodeReviewEvaluatorTest {
         when(apiSettings.getCommitLogIgnoreAuditRegEx()).thenReturn("(.)*(Increment_Version_Tag)(.)*");
         when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
         CodeReviewAuditResponseV2 responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1,"master"),125634536, 6235263, null);
-        Assert.assertEquals(true, responseV2.getAuditStatuses().toString().contains("DIRECT_COMMITS_TO_BASE"));
+        Assert.assertEquals(true, responseV2.getAuditStatuses().toString().contains("DIRECT_COMMIT_NONCODE_CHANGE_USER_ACCOUNT"));
         Assert.assertEquals(true,responseV2.getAuditEntity().toString().contains("url"));
     }
 
@@ -367,7 +377,7 @@ public class CodeReviewEvaluatorTest {
     }
 
     @Test
-    public void auditDirectCommitsTest1() {
+    public void auditDirectCommitsTest() {
         CodeReviewEvaluator codeReviewEvaluator = Mockito.spy(this.codeReviewEvaluator);
         Commit commit = makeCommit("Commit 21", "CommitOid21", "Author12", "Committer12",12345678L);
         CodeReviewAuditResponseV2 reviewAuditResponseV2 = new CodeReviewAuditResponseV2();
@@ -376,38 +386,23 @@ public class CodeReviewEvaluatorTest {
         when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
 
         codeReviewEvaluator.auditDirectCommits(reviewAuditResponseV2, commit);
-        verify(codeReviewEvaluator).auditDirectCommits(reviewAuditResponseV2, commit);
-    }
+        verify(codeReviewEvaluator).auditIncrementVersionTag(reviewAuditResponseV2, commit, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE);
 
-    @Test
-    public void auditDirectCommitsTest2() {
-        CodeReviewEvaluator codeReviewEvaluator = Mockito.spy(this.codeReviewEvaluator);
-        CodeReviewAuditResponseV2 reviewAuditResponseV2 = new CodeReviewAuditResponseV2();
-        Commit commit = makeCommit("Commit 21", "CommitOid21", "Author12", "Committer12",12345678L);
+        commit = makeCommit("Commit 21", "CommitOid21", "Author12", "Committer12",12345678L);
         List<String> serviceAccountOU = new ArrayList<>();
         serviceAccountOU.add("CN=hygieiaUser,OU=Service Accounts,DC=basic,DC=ds,DC=industry,DC=com");
         when(apiSettings.getServiceAccountOU()).thenReturn(serviceAccountOU);
         when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
 
         codeReviewEvaluator.auditDirectCommits(reviewAuditResponseV2, commit);
-        verify(codeReviewEvaluator).auditDirectCommits(reviewAuditResponseV2, commit);
-    }
+        verify(codeReviewEvaluator).auditIncrementVersionTag(reviewAuditResponseV2, commit, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT);
 
-    @Test
-    public void auditDirectCommitsTest3() {
-        CodeReviewEvaluator codeReviewEvaluator = Mockito.spy(this.codeReviewEvaluator);
-        CodeReviewAuditResponseV2 reviewAuditResponseV2 = new CodeReviewAuditResponseV2();
-        Commit commit = makeCommit("Commit 21", "CommitOid21", "Author12", "Committer12",12345678L);
-        List<String> serviceAccountOU = new ArrayList<>();
+        serviceAccountOU = new ArrayList<>();
         serviceAccountOU.add("some value");
         when(apiSettings.getServiceAccountOU()).thenReturn(serviceAccountOU);
-
-        when(apiSettings.getServiceAccountOU()).thenReturn(serviceAccountOU);
-        when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
         codeReviewEvaluator.auditDirectCommits(reviewAuditResponseV2, commit);
-        verify(codeReviewEvaluator).auditDirectCommits(reviewAuditResponseV2, commit);
+        verify(codeReviewEvaluator).auditIncrementVersionTag(reviewAuditResponseV2, commit, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_USER_ACCOUNT);
     }
-
 
     @Test
     public void getErrorResponseTest() {

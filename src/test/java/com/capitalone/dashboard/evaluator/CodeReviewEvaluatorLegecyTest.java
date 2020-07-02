@@ -79,6 +79,17 @@ public class CodeReviewEvaluatorLegecyTest {
         Assert.assertEquals(true,responseV2.get(0).getAuditEntity().toString().contains("url"));
     }
 
+    @Test
+    public void evaluate_COMMITAUTHOR_EQ_SERVICEACCOUNT_WithAllowedUsers() {
+        when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(new ArrayList<GitRequest>());
+        when(commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(Stream.of(makeCommit("Merge branch master into branch","servUserName",null, null,0L)).collect(Collectors.toList()));
+        when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.SERVICE_ACCOUNTS);
+        when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
+
+        List<CodeReviewAuditResponse> responseV2 =  codeReviewEvaluatorLegacy.evaluate(makeCollectorItem(1, "master"),125634536,6235263,null);
+        Assert.assertEquals(true, responseV2.get(1).getAuditStatuses().toString().contains("COMMITAUTHOR_EQ_SERVICEACCOUNT"));
+        Assert.assertEquals(true,responseV2.get(0).getAuditEntity().toString().contains("url"));
+    }
 
     @Test
     public void evaluate_DIRECT_COMMIT_INCREMENT_VERSION_TAG_SERVICE_ACCOUNT() {
@@ -86,7 +97,6 @@ public class CodeReviewEvaluatorLegecyTest {
         when(commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(Stream.of(makeCommit("[Increment_Version_Tag] preparing 1.5.6", "scmRevisionNumber1", null, null,0L)).collect(Collectors.toList()));
         when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.SERVICE_ACCOUNTS);
         when(apiSettings.getCommitLogIgnoreAuditRegEx()).thenReturn("(.)*(Increment_Version_Tag)(.)*");
-        when(apiSettings.getDirectCommitWhitelistedFiles()).thenReturn(Arrays.asList("pom.xml", "cucumber.xml", "package.json"));
         when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
 
         List<CodeReviewAuditResponse> responseV2 =  codeReviewEvaluatorLegacy.evaluate(makeCollectorItem(1, "master"),125634536,6235263,null);
@@ -103,7 +113,7 @@ public class CodeReviewEvaluatorLegecyTest {
         when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
 
         List<CodeReviewAuditResponse> responseV2 =  codeReviewEvaluatorLegacy.evaluate(makeCollectorItem(1, "master"),125634536,6235263,null);
-        Assert.assertEquals(true, responseV2.get(1).getAuditStatuses().toString().contains("DIRECT_COMMITS_TO_BASE"));
+        Assert.assertEquals(true, responseV2.get(1).getAuditStatuses().toString().contains("DIRECT_COMMIT_NONCODE_CHANGE_USER_ACCOUNT"));
         Assert.assertEquals(true,responseV2.get(0).getAuditEntity().toString().contains("url"));
     }
 
