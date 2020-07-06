@@ -2,7 +2,6 @@ package com.capitalone.dashboard.evaluator;
 
 import com.capitalone.dashboard.ApiSettings;
 import com.capitalone.dashboard.common.TestConstants;
-import com.capitalone.dashboard.model.AuthorType;
 import com.capitalone.dashboard.model.CollectionError;
 import com.capitalone.dashboard.model.CollectorItem;
 import com.capitalone.dashboard.model.Commit;
@@ -368,7 +367,7 @@ public class CodeReviewEvaluatorTest {
         when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(pullRequestList);
         when(commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(any(ObjectId.class),any(Long.class), any(Long.class))).thenReturn(commitsList);
         when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
-        when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
+        when(apiSettings.getLdapdnCheckIgnoredAuthorTypes()).thenReturn(Arrays.asList("Bot"));
         when(apiSettings.getCommitLogIgnoreAuditRegEx()).thenReturn("(.)*(Increment_Version_Tag)(.)*");
         when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
 
@@ -580,7 +579,7 @@ public class CodeReviewEvaluatorTest {
         c.setScmRevisionNumber(scmRevisionNumber);
         c.setType(CommitType.New);
         c.setScmAuthor(author);
-        c.setScmAuthorType(AuthorType.fromString(authorType));
+        c.setScmAuthorType(authorType);
         c.setScmAuthorLogin("unknown");
         c.setScmCommitterLogin(committer);
         c.setScmCommitTimestamp(timeStamp);
