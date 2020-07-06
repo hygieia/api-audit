@@ -46,6 +46,7 @@ public class ApiSettings {
     @Value("${criticalLicenseVulnerabilitiesAge:0}")
     private int criticalLicenseVulnerabilitiesAge;
     private List<String> buildStageRegEx;
+    private String ldapdnCheckIgnoreAuthorType;
 
     public String getKey() {
         return key;
@@ -223,5 +224,12 @@ public class ApiSettings {
         this.buildStageRegEx = buildStageRegEx;
     }
 
+    public String getLdapdnCheckIgnoreAuthorType() {
+        return ldapdnCheckIgnoreAuthorType;
+    }
+
+    public void setLdapdnCheckIgnoreAuthorType(String ldapdnCheckIgnoreAuthorType) {
+        this.ldapdnCheckIgnoreAuthorType = ldapdnCheckIgnoreAuthorType;
+    }
 
 }
