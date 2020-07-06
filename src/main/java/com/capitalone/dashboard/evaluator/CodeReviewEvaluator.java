@@ -221,7 +221,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
      * Adds SCM_AUTHOR_LOGIN_INVALID status at Code Review level
      */
     private void checkCommitByLDAPUnauthUser(CodeReviewAuditResponseV2 reviewAuditResponseV2, Commit commit) {
-        if (StringUtils.isNotEmpty(commit.getScmAuthorType()) && commit.getScmAuthorType().equalsIgnoreCase(settings.getLdapdnCheckIgnoreAuthorType())) {
+        if (StringUtils.isNotEmpty(commit.getScmAuthorType()) && settings.getLdapdnCheckIgnoredAuthorTypes().contains(commit.getScmAuthorType())) {
             return;
         }
         if (StringUtils.isEmpty(commit.getScmAuthorLDAPDN()) &&
