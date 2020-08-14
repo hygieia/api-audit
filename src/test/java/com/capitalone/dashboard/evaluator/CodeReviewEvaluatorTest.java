@@ -452,7 +452,7 @@ public class CodeReviewEvaluatorTest {
         pr1.setReviews(reviewList);
 
         if(withApprovedReview) {
-            reviewList.add(makeReview("lgtm", "approved", "reviewer1", 15000000L, 15000000L));
+            reviewList.add(makeReview("lgtm", "APPROVED", "reviewer1", 15000000L, 15000000L));
         }
         return pullRequestList;
     }
@@ -470,7 +470,7 @@ public class CodeReviewEvaluatorTest {
         List<Review> reviewList = new ArrayList<>();
         pr1.setReviews(reviewList);
         if(withApprovedReview) {
-            reviewList.add(makeReview("lgtm", "approved", "reviewer1", 20000000L, 20000000L));
+            reviewList.add(makeReview("lgtm", "APPROVED", "reviewer1", 20000000L, 20000000L));
         }
         return pullRequestList;
     }
@@ -479,7 +479,7 @@ public class CodeReviewEvaluatorTest {
         List<Review> reviewList = new ArrayList<>();
         Review review = new Review();
         reviewList.add(review);
-        review.setState("approved");
+        review.setState("APPROVED");
         return reviewList;
     }
 

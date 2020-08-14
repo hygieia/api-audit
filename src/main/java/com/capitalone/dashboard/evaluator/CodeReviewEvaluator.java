@@ -316,7 +316,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
      * Flag commits made after peer reviews as violations, exclude commits that are merge commits from target branches
      */
     protected void auditCommitsAfterReviews(CodeReviewAuditResponseV2 reviewAuditResponseV2, CodeReviewAuditResponseV2.PullRequestAudit pullRequestAudit, GitRequest pr) {
-        List<Review> reviewsRelatedToPr = pr.getReviews().stream().sorted(Comparator.comparing(Review::getUpdatedAt)).collect(Collectors.toList());
+        List<Review> reviewsRelatedToPr = pr.getReviews().stream().filter(review -> StringUtils.equals(review.getState(),"APPROVED")).sorted(Comparator.comparing(Review::getUpdatedAt)).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(reviewsRelatedToPr)) { return; }
 
         List<Commit> commitsRelatedToPr = pr.getCommits().stream().filter(commit -> commit.getNumberOfChanges()>0).collect(Collectors.toList());
