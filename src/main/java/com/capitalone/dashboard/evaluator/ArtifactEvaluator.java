@@ -64,23 +64,26 @@ public class ArtifactEvaluator extends Evaluator<ArtifactAuditResponse> {
         String repoName = getValue(collectorItem, REPO_NAME);
         artifactAuditResponse.setAuditEntity(collectorItem.getOptions());
         if (StringUtils.isEmpty(artifactName) || StringUtils.isEmpty(repoName) || StringUtils.isEmpty(path)) {
-            return getErrorResponse(collectorItem, ArtifactAuditStatus.COLLECTOR_ITEM_ERROR);
+            return getErrorResponse(collectorItem, artifactAuditResponse,ArtifactAuditStatus.COLLECTOR_ITEM_ERROR);
         }
         if (!CollectionUtils.isEmpty(collectorItem.getErrors())) {
-            return getErrorResponse(collectorItem, ArtifactAuditStatus.UNAVAILABLE);
+            return getErrorResponse(collectorItem,artifactAuditResponse, ArtifactAuditStatus.UNAVAILABLE);
+        }
+        if(isThirdParty(repoName)){
+            artifactAuditResponse.addAuditStatus(ArtifactAuditStatus.ART_SYS_ACCT_BUILD_THIRD_PARTY);
         }
         List<BinaryArtifact> binaryArtifacts = binaryArtifactRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(collectorItem.getId(), beginDate - 1, endDate + 1);
         if (CollectionUtils.isEmpty(binaryArtifacts)) {
-            return getErrorResponse(collectorItem, ArtifactAuditStatus.NO_ACTIVITY);
+            return getErrorResponse(collectorItem, artifactAuditResponse, ArtifactAuditStatus.NO_ACTIVITY);
         }
         artifactAuditResponse.setBinaryArtifacts(binaryArtifacts);
         binaryArtifacts.sort(Comparator.comparing(BinaryArtifact::getCreatedTimeStamp));
         artifactAuditResponse.setLastUpdated(getLastUpdated(binaryArtifacts));
         boolean isBuild = binaryArtifacts.stream().anyMatch(ba-> CollectionUtils.isNotEmpty(ba.getBuildInfos()));
-        boolean isServiceAccount = binaryArtifacts.stream().anyMatch(ba-> isServiceAccount(ba.getCreatedBy()));
-        boolean isDocker = binaryArtifacts.stream().anyMatch(ba-> Optional.ofNullable(ba.getVirtualRepos()).orElse(Collections.emptyList()).stream().anyMatch(repo -> repo.contains(DOCKER)));        if (isServiceAccount) {
-            evaluateArtifactForServiceAccountAndBuild(artifactAuditResponse, isBuild);
-        }
+        boolean isDocker = binaryArtifacts.stream().anyMatch(ba-> Optional.ofNullable(ba.getVirtualRepos()).orElse(Collections.emptyList()).stream().anyMatch(repo -> repo.contains(DOCKER)));
+        evaluateArtifactForServiceAccountAndBuild(artifactAuditResponse, isBuild);
+
+
         if (isDocker) {
             artifactAuditResponse.addAuditStatus(ArtifactAuditStatus.ART_DOCK_IMG_FOUND);
         }
@@ -112,15 +115,14 @@ public class ArtifactEvaluator extends Evaluator<ArtifactAuditResponse> {
         }
     }
 
-    private boolean isServiceAccount(String createdBy) {
-        if(StringUtils.isNotEmpty(createdBy)){
-            return !Pattern.compile(apiSettings.getServiceAccountRegEx()).matcher(createdBy).matches();
+    private boolean isThirdParty(String repoName) {
+        if(StringUtils.isNotEmpty(repoName)){
+            return Pattern.compile(apiSettings.getThirdPartyRegex()).matcher(repoName).matches();
         }
         return false;
     }
 
-    private ArtifactAuditResponse getErrorResponse(CollectorItem collectorItem, ArtifactAuditStatus artifactAuditStatus) {
-        ArtifactAuditResponse errorAuditResponse = new ArtifactAuditResponse();
+    private ArtifactAuditResponse getErrorResponse(CollectorItem collectorItem, ArtifactAuditResponse errorAuditResponse, ArtifactAuditStatus artifactAuditStatus) {
         errorAuditResponse.addAuditStatus(artifactAuditStatus);
         errorAuditResponse.setLastExecutionTime(collectorItem.getLastUpdated());
         errorAuditResponse.setArtifactName(getValue(collectorItem, ARTIFACT_NAME));
