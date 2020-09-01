@@ -208,11 +208,13 @@ public class CodeQualityEvaluator extends Evaluator<CodeQualityAuditResponse> {
         detailsMissing.addAuditStatus(CodeQualityAuditStatus.CODE_QUALITY_DETAIL_MISSING);
         detailsMissing.setLastUpdated(codeQualityCollectorItem.getLastUpdated());
         detailsMissing.setAuditEntity(codeQualityCollectorItem.getOptions());
-        List<CodeQuality> codeQualities = codeQualityRepository.findByCollectorItemIdOrderByTimestampDesc(codeQualityCollectorItem.getId());
-        for(CodeQuality returnCodeQuality:codeQualities) {
-            detailsMissing.setUrl(returnCodeQuality.getUrl());
-            detailsMissing.setName(returnCodeQuality.getName());
-            detailsMissing.setLastExecutionTime(returnCodeQuality.getTimestamp());
+        Optional<CodeQuality> codeQualityOpt = Optional.ofNullable(
+                codeQualityRepository.findTop1ByCollectorItemIdOrderByTimestampDesc(codeQualityCollectorItem.getId()));
+        if (codeQualityOpt.isPresent()) {
+            CodeQuality codeQuality = codeQualityOpt.get();
+            detailsMissing.setUrl(codeQuality.getUrl());
+            detailsMissing.setName(codeQuality.getName());
+            detailsMissing.setLastExecutionTime(codeQuality.getTimestamp());
         }
         return detailsMissing;
     }
