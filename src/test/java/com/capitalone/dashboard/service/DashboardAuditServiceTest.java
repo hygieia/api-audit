@@ -131,6 +131,7 @@ public class DashboardAuditServiceTest {
         TestUtils.loadFeature(featureRepository);
         TestUtils.loadArtifacts(binaryArtifactRepository);
         apiSettings.setServiceAccountRegEx("/./g");
+        apiSettings.setThirdPartyRegex("(?i:.*third)");
     }
 
     @Test
