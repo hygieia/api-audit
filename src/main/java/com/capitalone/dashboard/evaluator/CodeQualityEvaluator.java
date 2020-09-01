@@ -209,10 +209,11 @@ public class CodeQualityEvaluator extends Evaluator<CodeQualityAuditResponse> {
         detailsMissing.setLastUpdated(codeQualityCollectorItem.getLastUpdated());
         detailsMissing.setAuditEntity(codeQualityCollectorItem.getOptions());
         List<CodeQuality> codeQualities = codeQualityRepository.findByCollectorItemIdOrderByTimestampDesc(codeQualityCollectorItem.getId());
-        for(CodeQuality returnCodeQuality:codeQualities) {
-            detailsMissing.setUrl(returnCodeQuality.getUrl());
-            detailsMissing.setName(returnCodeQuality.getName());
-            detailsMissing.setLastExecutionTime(returnCodeQuality.getTimestamp());
+        if (CollectionUtils.isNotEmpty(codeQualities)) {
+            CodeQuality codeQuality = codeQualities.get(0);
+            detailsMissing.setUrl(codeQuality.getUrl());
+            detailsMissing.setName(codeQuality.getName());
+            detailsMissing.setLastExecutionTime(codeQuality.getTimestamp());
         }
         return detailsMissing;
     }
