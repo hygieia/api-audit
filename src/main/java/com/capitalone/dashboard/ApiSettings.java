@@ -48,6 +48,7 @@ public class ApiSettings {
     private int criticalLicenseVulnerabilitiesAge;
     private List<String> buildStageRegEx;
     private List<String> ldapdnCheckIgnoredAuthorTypes = new ArrayList<>();
+    private String thirdPartyRegex;
 
     public String getKey() {
         return key;
@@ -233,4 +234,11 @@ public class ApiSettings {
         this.ldapdnCheckIgnoredAuthorTypes = ldapdnCheckIgnoredAuthorTypes;
     }
 
+    public String getThirdPartyRegex() {
+        return thirdPartyRegex;
+    }
+
+    public void setThirdPartyRegex(String thirdPartyRegex) {
+        this.thirdPartyRegex = thirdPartyRegex;
+    }
 }
