@@ -116,10 +116,8 @@ public class ArtifactEvaluator extends Evaluator<ArtifactAuditResponse> {
     }
 
     private boolean isThirdParty(String repoName) {
-        if(StringUtils.isNotEmpty(repoName)){
-            return Pattern.compile(apiSettings.getThirdPartyRegex()).matcher(repoName).matches();
-        }
-        return false;
+        if(StringUtils.isEmpty(apiSettings.getThirdPartyRegex()) || StringUtils.isEmpty(repoName)) return false;
+        return Pattern.compile(apiSettings.getThirdPartyRegex()).matcher(repoName).matches();
     }
 
     private ArtifactAuditResponse getErrorResponse(CollectorItem collectorItem, ArtifactAuditResponse errorAuditResponse, ArtifactAuditStatus artifactAuditStatus) {

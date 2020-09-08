@@ -59,7 +59,7 @@
     <properties>
         <repository.name>api-audit</repository.name>
         <java.version>1.8</java.version>
-        <com.capitalone.dashboard.core.version>3.7.11</com.capitalone.dashboard.core.version>
+        <com.capitalone.dashboard.core.version>3.9.8</com.capitalone.dashboard.core.version>
         <bc.version>3.0.2</bc.version>
         <application.version.number>${version}</application.version.number>
         <apache.rat.plugin.version>0.13</apache.rat.plugin.version>
