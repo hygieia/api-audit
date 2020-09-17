@@ -71,11 +71,13 @@ public class LoggingFilter implements Filter {
         HttpServletRequest httpServletRequest = (HttpServletRequest) request;
         HttpServletResponse httpServletResponse = (HttpServletResponse) response;
 
-        if (settings.checkIgnoreEndPoint(httpServletRequest.getRequestURI())) return;
-
         Map<String, String> requestMap = this.getTypesafeRequestMap(httpServletRequest);
         BufferedRequestWrapper bufferedRequest = new BufferedRequestWrapper(httpServletRequest);
         BufferedResponseWrapper bufferedResponse = new BufferedResponseWrapper(httpServletResponse);
+        if (settings.checkIgnoreEndPoint(httpServletRequest.getRequestURI())) {
+            chain.doFilter(bufferedRequest, bufferedResponse);
+            return;
+        }
         String apiUser = bufferedRequest.getHeader(API_USER_KEY);
         long startTime = System.currentTimeMillis();
         AuditRequestLog requestLog = new AuditRequestLog();
