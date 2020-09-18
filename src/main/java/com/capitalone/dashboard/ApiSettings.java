@@ -253,7 +253,7 @@ public class ApiSettings {
 
     public boolean checkIgnoreEndPoint(String endPointURI) {
         if(CollectionUtils.isEmpty(this.ignoreEndPoints)) return false;
-        List<String> matchingElements  = ignoreEndPoints.parallelStream().filter (str -> StringUtils.containsAny(endPointURI, str)).collect(Collectors.toList());
+        List<String> matchingElements  = ignoreEndPoints.parallelStream().filter (str -> StringUtils.contains(endPointURI.toLowerCase(), str)).collect(Collectors.toList());
         return CollectionUtils.isNotEmpty(matchingElements);
     }
 }
