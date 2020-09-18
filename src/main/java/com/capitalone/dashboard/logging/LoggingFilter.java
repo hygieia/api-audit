@@ -74,10 +74,7 @@ public class LoggingFilter implements Filter {
         Map<String, String> requestMap = this.getTypesafeRequestMap(httpServletRequest);
         BufferedRequestWrapper bufferedRequest = new BufferedRequestWrapper(httpServletRequest);
         BufferedResponseWrapper bufferedResponse = new BufferedResponseWrapper(httpServletResponse);
-        if (settings.checkIgnoreEndPoint(httpServletRequest.getRequestURI())) {
-            chain.doFilter(bufferedRequest, bufferedResponse);
-            return;
-        }
+
         String apiUser = bufferedRequest.getHeader(API_USER_KEY);
         long startTime = System.currentTimeMillis();
         AuditRequestLog requestLog = new AuditRequestLog();
@@ -86,6 +83,12 @@ public class LoggingFilter implements Filter {
         requestLog.setMethod(httpServletRequest.getMethod());
         requestLog.setParameter(requestMap.toString());
         requestLog.setApiUser(StringUtils.isNotEmpty(apiUser) ? apiUser : UNKNOWN_USER);
+
+        if(settings.checkIgnoreEndPoint(httpServletRequest.getRequestURI()) || settings.checkIgnoreApiUser(requestLog.getApiUser())) {
+            chain.doFilter(bufferedRequest, bufferedResponse);
+            return;
+        }
+
         requestLog.setRequestSize(httpServletRequest.getContentLengthLong());
         requestLog.setRequestContentType(httpServletRequest.getContentType());
 
