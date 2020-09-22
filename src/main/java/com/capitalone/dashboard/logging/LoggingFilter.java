@@ -79,13 +79,14 @@ public class LoggingFilter implements Filter {
             return;
         }
         String apiUser = bufferedRequest.getHeader(API_USER_KEY);
+        apiUser = (StringUtils.isEmpty(apiUser) ? UNKNOWN_USER : apiUser);
         long startTime = System.currentTimeMillis();
         AuditRequestLog requestLog = new AuditRequestLog();
         requestLog.setClient(httpServletRequest.getRemoteAddr());
         requestLog.setEndpoint(httpServletRequest.getRequestURI());
         requestLog.setMethod(httpServletRequest.getMethod());
         requestLog.setParameter(requestMap.toString());
-        requestLog.setApiUser(StringUtils.isNotEmpty(apiUser) ? apiUser : UNKNOWN_USER);
+        requestLog.setApiUser(apiUser);
         requestLog.setRequestSize(httpServletRequest.getContentLengthLong());
         requestLog.setRequestContentType(httpServletRequest.getContentType());
 
@@ -102,6 +103,13 @@ public class LoggingFilter implements Filter {
             }
         } catch (MimeTypeParseException e) {
             LOGGER.error("Invalid MIME Type detected. Request MIME type=" + httpServletRequest.getContentType() + ". Response MIME Type=" + bufferedResponse.getContentType());
+        } finally {
+            LOGGER.info("requester=" + apiUser
+                    + ", timeTaken=" + (System.currentTimeMillis() - startTime)
+                    + ", endPoint=" + httpServletRequest.getRequestURI()
+                    + ", reqMethod=" + httpServletRequest.getMethod()
+                    + ", status=" + (httpServletResponse == null ? 0 : httpServletResponse.getStatus())
+                    + ", clientIp=" + httpServletRequest.getRemoteAddr());
         }
         requestLog.setResponseSize(bufferedResponse.getContent().length());
 
