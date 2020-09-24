@@ -5,18 +5,21 @@ import com.capitalone.dashboard.request.CodeReviewAuditRequest;
 import com.capitalone.dashboard.response.CodeReviewAuditResponse;
 import com.capitalone.dashboard.service.CodeReviewAuditService;
 import com.capitalone.dashboard.util.GitHubParsedUrl;
+import io.swagger.annotations.ApiOperation;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
-import io.swagger.annotations.ApiOperation;
 
 @RestController
 public class CodeReviewAuditController {
@@ -44,7 +47,12 @@ public class CodeReviewAuditController {
         GitHubParsedUrl gitHubParsed = new GitHubParsedUrl(request.getRepo());
         String repoUrl = gitHubParsed.getUrl();
         Collection<CodeReviewAuditResponse> allPeerReviews = codeReviewAuditService.getPeerReviewResponses(repoUrl, request.getBranch(), request.getScmName(), request.getBeginDate(), request.getEndDate());
-        return ResponseEntity.ok().body(allPeerReviews);
+        Collection<CodeReviewAuditResponse> mutatedPeerReviews = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(allPeerReviews)) {
+            mutatedPeerReviews = allPeerReviews.parallelStream().filter(Objects::nonNull).collect(Collectors.toList());
+            mutatedPeerReviews.parallelStream().forEach( mutatedPeerReview -> mutatedPeerReview.setClientReference(request.getClientReference()));
+        }
+        return ResponseEntity.ok().body(mutatedPeerReviews);
     }
 
 }

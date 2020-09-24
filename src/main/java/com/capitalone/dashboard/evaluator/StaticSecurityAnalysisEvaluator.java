@@ -9,18 +9,15 @@ import com.capitalone.dashboard.model.Dashboard;
 import com.capitalone.dashboard.repository.CodeQualityRepository;
 import com.capitalone.dashboard.response.SecurityReviewAuditResponse;
 import com.capitalone.dashboard.status.CodeQualityAuditStatus;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.Optional;
-
 import java.util.stream.Collectors;
 
 @Component

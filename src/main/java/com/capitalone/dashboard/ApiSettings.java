@@ -52,8 +52,8 @@ public class ApiSettings {
     private List<String> buildStageRegEx;
     private List<String> ldapdnCheckIgnoredAuthorTypes = new ArrayList<>();
     private String thirdPartyRegex;
-
     private List<String> ignoreEndPoints = new ArrayList();
+    private List<String> ignoreApiUsers = new ArrayList();
 
     public String getKey() {
         return key;
@@ -251,9 +251,21 @@ public class ApiSettings {
 
     public void setIgnoreEndPoints(List<String> ignoreEndPoints) { this.ignoreEndPoints = ignoreEndPoints; }
 
+
+    public List<String> getIgnoreApiUsers() { return ignoreApiUsers; }
+
+    public void setIgnoreApiUsers(List<String> ignoreApiUsers) { this.ignoreApiUsers = ignoreApiUsers; }
+
     public boolean checkIgnoreEndPoint(String endPointURI) {
         if(CollectionUtils.isEmpty(this.ignoreEndPoints)) return false;
         List<String> matchingElements  = ignoreEndPoints.parallelStream().filter (str -> StringUtils.contains(endPointURI.toLowerCase(), str)).collect(Collectors.toList());
         return CollectionUtils.isNotEmpty(matchingElements);
     }
+
+    public boolean checkIgnoreApiUser(String apiUser) {
+        if(CollectionUtils.isEmpty(this.ignoreApiUsers)) return false;
+        List<String> matchingElements  = ignoreApiUsers.parallelStream().filter (str -> StringUtils.equalsIgnoreCase(apiUser, str)).collect(Collectors.toList());
+        return CollectionUtils.isNotEmpty(matchingElements);
+    }
+
 }
