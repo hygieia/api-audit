@@ -89,7 +89,7 @@ public class LoggingFilter implements Filter {
         requestLog.setApiUser(apiUser);
         if(MapUtils.isNotEmpty(requestMap)) {
             String clientReference = requestMap.get(CLIENT_REFERENCE_PARAM);
-            requestLog.setClientReference(StringUtils.isNotEmpty(clientReference) ? clientReference : "blank");
+            requestLog.setClientReference(StringUtils.isNotEmpty(clientReference) ? clientReference : StringUtils.EMPTY);
         }
 
         if(settings.checkIgnoreEndPoint(httpServletRequest.getRequestURI()) || settings.checkIgnoreApiUser(requestLog.getApiUser())) {
