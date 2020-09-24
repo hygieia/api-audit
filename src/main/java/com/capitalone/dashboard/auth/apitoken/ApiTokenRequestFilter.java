@@ -3,7 +3,7 @@ package com.capitalone.dashboard.auth.apitoken;
 import com.capitalone.dashboard.auth.AuthenticationResultHandler;
 import com.capitalone.dashboard.model.AuthType;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -59,10 +59,10 @@ public class ApiTokenRequestFilter extends AbstractAuthenticationProcessingFilte
 
         String authHeader = request.getHeader("Authorization");
 
-        String encodedAuthStr = authHeader.substring(authHeader.indexOf(" "), authHeader.length());
+        String encodedAuthStr = authHeader.substring(authHeader.indexOf(" "));
         byte[] encodedAuthbytes = encodedAuthStr.getBytes();
         String decodedAuthStr = new String(Base64.decodeBase64(encodedAuthbytes));
-        String decodedAuthJson = decodedAuthStr.substring(decodedAuthStr.indexOf(":") + 1, decodedAuthStr.length());
+        String decodedAuthJson = decodedAuthStr.substring(decodedAuthStr.indexOf(":") + 1);
 
         JSONParser jsonParser = new JSONParser();
         try {

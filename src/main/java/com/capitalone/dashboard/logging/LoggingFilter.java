@@ -77,7 +77,8 @@ public class LoggingFilter implements Filter {
         Map<String, String> requestMap = this.getTypesafeRequestMap(httpServletRequest);
         BufferedRequestWrapper bufferedRequest = new BufferedRequestWrapper(httpServletRequest);
         BufferedResponseWrapper bufferedResponse = new BufferedResponseWrapper(httpServletResponse);
-
+        String apiUser = bufferedRequest.getHeader(API_USER_KEY);
+        apiUser = (StringUtils.isEmpty(apiUser) ? UNKNOWN_USER : apiUser);
 
         long startTime = System.currentTimeMillis();
         AuditRequestLog requestLog = new AuditRequestLog();
@@ -85,12 +86,11 @@ public class LoggingFilter implements Filter {
         requestLog.setEndpoint(httpServletRequest.getRequestURI());
         requestLog.setMethod(httpServletRequest.getMethod());
         requestLog.setParameter(requestMap.toString());
+        requestLog.setApiUser(apiUser);
         if(MapUtils.isNotEmpty(requestMap)) {
             String clientReference = requestMap.get(CLIENT_REFERENCE_PARAM);
             requestLog.setClientReference(StringUtils.isNotEmpty(clientReference) ? clientReference : "blank");
         }
-        String apiUser = bufferedRequest.getHeader(API_USER_KEY);
-        requestLog.setApiUser(StringUtils.isNotEmpty(apiUser) ? apiUser : UNKNOWN_USER);
 
         if(settings.checkIgnoreEndPoint(httpServletRequest.getRequestURI()) || settings.checkIgnoreApiUser(requestLog.getApiUser())) {
             chain.doFilter(bufferedRequest, bufferedResponse);
@@ -113,6 +113,13 @@ public class LoggingFilter implements Filter {
             }
         } catch (MimeTypeParseException e) {
             LOGGER.error("Invalid MIME Type detected. Request MIME type=" + httpServletRequest.getContentType() + ". Response MIME Type=" + bufferedResponse.getContentType());
+        } finally {
+            LOGGER.info("requester=" + apiUser
+                    + ", timeTaken=" + (System.currentTimeMillis() - startTime)
+                    + ", endPoint=" + httpServletRequest.getRequestURI()
+                    + ", reqMethod=" + httpServletRequest.getMethod()
+                    + ", status=" + (httpServletResponse == null ? 0 : httpServletResponse.getStatus())
+                    + ", clientIp=" + httpServletRequest.getRemoteAddr());
         }
         requestLog.setResponseSize(bufferedResponse.getContent().length());
 
