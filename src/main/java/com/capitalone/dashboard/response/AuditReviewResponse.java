@@ -14,6 +14,8 @@ public class AuditReviewResponse<T> {
 
     private Map<String, Object> auditEntity = new HashMap<>();
 
+    private String clientReference;
+
     public void addAuditStatus(T status) {
         auditStatuses.add(status);
     }
@@ -45,4 +47,8 @@ public class AuditReviewResponse<T> {
     public void setAuditEntity(Map<String, Object> auditEntity) {
         this.auditEntity = auditEntity;
     }
+
+    public String getClientReference() { return clientReference; }
+
+    public void setClientReference(String clientReference) { this.clientReference = clientReference; }
 }
