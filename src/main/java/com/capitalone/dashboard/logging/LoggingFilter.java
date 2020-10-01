@@ -71,6 +71,8 @@ public class LoggingFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
 
+        long startTime = System.currentTimeMillis();
+
         HttpServletRequest httpServletRequest = (HttpServletRequest) request;
         HttpServletResponse httpServletResponse = (HttpServletResponse) response;
 
@@ -80,7 +82,19 @@ public class LoggingFilter implements Filter {
         String apiUser = bufferedRequest.getHeader(API_USER_KEY);
         apiUser = (StringUtils.isEmpty(apiUser) ? UNKNOWN_USER : apiUser);
 
-        long startTime = System.currentTimeMillis();
+        chain.doFilter(bufferedRequest, bufferedResponse);
+        LOGGER.info("requester=" + apiUser
+                + ", timeTaken=" + (System.currentTimeMillis() - startTime)
+                + ", endPoint=" + httpServletRequest.getRequestURI()
+                + ", reqMethod=" + httpServletRequest.getMethod()
+                + ", status=" + (httpServletResponse == null ? 0 : httpServletResponse.getStatus())
+                + ", clientIp=" + httpServletRequest.getRemoteAddr());
+
+        if(settings.checkIgnoreEndPoint(httpServletRequest.getRequestURI()) || settings.checkIgnoreApiUser(apiUser)) {
+            LOGGER.info("ignoring audit_requests from: endPoint=" + httpServletRequest.getRequestURI() + ", requester=" + apiUser);
+            return;
+        }
+
         AuditRequestLog requestLog = new AuditRequestLog();
         requestLog.setClient(httpServletRequest.getRemoteAddr());
         requestLog.setEndpoint(httpServletRequest.getRequestURI());
@@ -91,39 +105,21 @@ public class LoggingFilter implements Filter {
             String clientReference = requestMap.get(CLIENT_REFERENCE_PARAM);
             requestLog.setClientReference(StringUtils.isNotEmpty(clientReference) ? clientReference : StringUtils.EMPTY);
         }
-
-        if(settings.checkIgnoreEndPoint(httpServletRequest.getRequestURI()) || settings.checkIgnoreApiUser(requestLog.getApiUser())) {
-            chain.doFilter(bufferedRequest, bufferedResponse);
-            return;
-        }
-
         requestLog.setRequestSize(httpServletRequest.getContentLengthLong());
         requestLog.setRequestContentType(httpServletRequest.getContentType());
-
-        chain.doFilter(bufferedRequest, bufferedResponse);
         requestLog.setResponseContentType(httpServletResponse.getContentType());
+        requestLog.setResponseSize(bufferedResponse.getContent().length());
+        requestLog.setResponseCode(bufferedResponse.getStatus());
         try {
-
             if ((httpServletRequest.getContentType() != null) && (new MimeType(httpServletRequest.getContentType()).match(new MimeType(APPLICATION_JSON_VALUE)))) {
                 requestLog.setRequestBody(JSON.parse(bufferedRequest.getRequestBody()));
             }
-
             if ((bufferedResponse.getContentType() != null) && (new MimeType(bufferedResponse.getContentType()).match(new MimeType(APPLICATION_JSON_VALUE)))) {
                 requestLog.setResponseBody(JSON.parse(bufferedResponse.getContent()));
             }
         } catch (MimeTypeParseException e) {
             LOGGER.error("Invalid MIME Type detected. Request MIME type=" + httpServletRequest.getContentType() + ". Response MIME Type=" + bufferedResponse.getContentType());
-        } finally {
-            LOGGER.info("requester=" + apiUser
-                    + ", timeTaken=" + (System.currentTimeMillis() - startTime)
-                    + ", endPoint=" + httpServletRequest.getRequestURI()
-                    + ", reqMethod=" + httpServletRequest.getMethod()
-                    + ", status=" + (httpServletResponse == null ? 0 : httpServletResponse.getStatus())
-                    + ", clientIp=" + httpServletRequest.getRemoteAddr());
         }
-        requestLog.setResponseSize(bufferedResponse.getContent().length());
-
-        requestLog.setResponseCode(bufferedResponse.getStatus());
         long endTime = System.currentTimeMillis();
         requestLog.setResponseTime(endTime - startTime);
         requestLog.setTimestamp(endTime);
