@@ -62,7 +62,7 @@ To configure the Hygieia Audit API layer, execute the following steps:
 	To run the executable file, change directory to 'api-audit\target' and then execute the following command from the command prompt:
 
 	```bash
-	java -jar apiaudit.jar --spring.config.location=C:\[path to]\Hygieia\api-audit\api-audit.properties
+	java -jar apiaudit.jar --spring.config.location=C:\[path to]\api-audit.properties
 	```
 	Verify API access from the web browser using the url: http://localhost:8080/apiaudit/ping.
 
