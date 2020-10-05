@@ -1,20 +1,24 @@
----
-title: Hygieia Audit API
-tags:
-keywords:
-toc: true
-summary: Learn how to install and configure Hygieia audit APIs
-sidebar: hygieia_sidebar
-permalink: api-audit.html
----
+## Hygieia Audit API
+
+[![Build Status](https://api.travis-ci.com/Hygieia/api-audit.svg?branch=master)](https://travis-ci.com/Hygieia/api-audit?branch=master)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Hygieia_api-audit&metric=alert_status)](https://sonarcloud.io/dashboard?id=Hygieia_api-audit)
+[![Maven Central](https://img.shields.io/maven-central/v/com.capitalone.dashboard/api-audit.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.capitalone.dashboard%22%20AND%20a:%22api-audit%22)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/Hygieia/api-audit.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Hygieia/api-audit/alerts/)
+[![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/Hygieia/api-audit.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Hygieia/api-audit/context:java)
+[![License](https://img.shields.io/badge/license-Apache%202-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+[![Gitter Chat](https://badges.gitter.im/Join%20Chat.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+<br>
+<br>
+Hygieia Audit API - Learn how to install and configure Hygieia audit APIs
+
 [![Docker Stars](https://img.shields.io/docker/stars/capitalone/hygieia-api.svg)](https://hub.docker.com/r/capitalone/hygieia-api/)
 [![Docker Stars](https://img.shields.io/docker/pulls/capitalone/hygieia-api.svg)](https://hub.docker.com/r/capitalone/hygieia-api/)
 
 Hygieia audit APIs are a collection of API endpoints that serve to audit CI/CD data gathered by Hygieia collectors. The audit API provides endpoints to audit individual widgets on the Dashboard. In addition to these endpoints, Hygieia also provides a dashboard-level audit API. 
 
-The audit API logic adds various audit flags depending on the data. For a  detailed listing of the audit flags, see the audit-api module's [model package](https://github.com/capitalone/Hygieia/blob/master/api-audit/src/main/java/com/capitalone/dashboard/model/AuditStatus.java).
+The audit API logic adds various audit flags depending on the data. 
 
-For detailed information on audit APIs, see the Swagger documentation available at `http://[your-doman].com/apiaudit/swagger/index.html#`. 
+For detailed information on audit APIs, see the Swagger documentation available at `http://[your-domain].com/apiaudit/swagger/index.html#`. 
 
 Hygieia uses Spring Boot to package the APIs as an executable JAR file with dependencies.
 
@@ -34,7 +38,7 @@ To configure the Hygieia audit API layer, execute the following steps:
 
 *	**Step 2: Set Parameters in the API Properties File**
 
-	Set the configurable parameters in the `dashboard.properties` file to connect to the Dashboard MongoDB database instance, including properties required by the audit API module. To configure the parameters, refer to the [API properties](#api-properties-file) file.
+	Set the configurable parameters in the `dashboard.properties` file to connect to the Dashboard MongoDB database instance, including properties required by the audit API module. To configure the parameters, refer to the [API properties](#api-properties-section) section.
 
 	For more information about the server configuration, see the Spring Boot [documentation](http://docs.spring.io/spring-boot/docs/current-SNAPSHOT/reference/htmlsingle/#boot-features-external-config-application-property-files).
 
@@ -54,11 +58,11 @@ To configure the Hygieia audit API layer, execute the following steps:
 	server.port=8080
 	```
 
-	**Note**: The 'jasypt.encryptor.password' system property is used to decrypt the database password. For more information, refer to [Encrypted Properties](../collectors/collectors.md#encrypted-properties).
+	**Note**: The 'jasypt.encryptor.password' system property is used to decrypt the database password. 
 
-## API Properties File
+## API Properties Section
 
-The sample `api-audit.properties` file lists parameters with sample values to configure the audit API layer. Set the parameters based on your environment setup.
+The sample `api-audit.properties` lists parameters with sample values to configure the audit API layer. Set the parameters based on your environment setup.
 
 ```properties
 # api-audit.properties
@@ -125,8 +129,6 @@ To configure the Hygieia audit API layer, execute the following steps:
 	```
 	docker run -t -p 8080:8080 -v ./logs:/hygieia/logs -e "SPRING_DATA_MONGODB_HOST=127.0.0.1" -i hygieia-apiaudit:latest
 	```
-
-	To define more properties, refer to the [Dockerfile](https://github.com/capitalone/Hygieia/blob/master/api-audit/docker/Dockerfile).
 
 *	**Step 4: Run the API**
 
