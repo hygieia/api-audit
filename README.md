@@ -27,17 +27,29 @@ Hygieia uses Spring Boot to package the APIs as an executable JAR file with depe
 
 ## Setup Instructions
 
-To configure the Hygieia audit API layer, execute the following steps:
+To configure the Hygieia Audit API layer, execute the following steps:
 
-*	**Step 1: Run Maven Build**
+*	**Step 1 - Artifact Preparation:**
 
-	To package the audit API source code into an executable JAR file, run the maven build from the `\Hygieia` directory of your source code installation:
+	Please review the two options in Step 1 to find the best fit for you. 
+	
+	***Option 1 - Download the artifact:***
+	
+	You can download the SNAPSHOTs from the SNAPSHOT directory [here](https://oss.sonatype.org/content/repositories/snapshots/com/capitalone/dashboard/api-audit/) or from the maven central repository [here](https://search.maven.org/artifact/com.capitalone.dashboard/api-audit).  
+	
+	***Option 2 - Build locally:***
+
+	To configure the Hygieia API Audit layer, git clone the [api audit repo](https://github.com/Hygieia/api-audit).  Then, execute the following steps:
+
+	To package the Audit API source code into an executable JAR file, run the maven build from the `\api-audit` directory of your source code installation:
 
 	```bash
 	mvn install
 	```
 
 	The output file `apiaudit.jar` is generated in the `\api-audit\target` folder.
+
+	Once you have chosen an option in Step 1, please proceed: 
 
 *	**Step 2: Set Parameters in the API Properties File**
 
