@@ -90,63 +90,26 @@ All values in the `api-audit.properties` file are optional. If you have MongoDB 
 
 **Note**: If the value of `dbusername` is empty, then system skips MongoDB authorization.
 
-## Docker Image for API
+## Docker Image for API Audit 
 
 To configure the Hygieia audit API layer, execute the following steps:
 
-*	**Step 1: Run Maven Build**
+You can install Hygieia by using a docker image from docker hub. This section gives detailed instructions on how to download and run with Docker. 
 
-	To package the audit API source code into an executable JAR file, run the maven build from the `\Hygieia` directory of your source code installation:
+*	**Step 1: Download**
 
-	```bash
-	mvn clean package -pl api-audit docker:build
-	```
+	Navigate to the audit api docker hub location [here](https://hub.docker.com/r/hygieiadoc/apiaudit/tags) and download the latest image (most recent version is preferred).  Tags can also be used, if needed.
+
+*	**Step 2: Run with Docker**
+
+	```Docker run -e SKIP_PROPERTIES_BUILDER=true -v properties_location:/hygieia/config image_name```
 	
-*	**Step 2: Start MongoDB Docker Container**
+	- <code>-e SKIP_PROPERTIES_BUILDER=true</code>  <br />
+	indicates whether you want to supply a properties file for the java application. If false/omitted, the script will build a properties file with default values
+	- <code>-v properties_location:/hygieia/config</code> <br />
+	if you want to use your own properties file that located outside of docker container, supply the path here. 
+		- Example: <code>-v /Home/User/Document/application.properties:/hygieia/config</code>
 
-	Execute the following commands to start MongoDB, switch to db dashbaord, and then add dashboard user:
-
-	``` bash
-	docker run -d -p 27017:27017 --name mongodb -v ./mongo:/data/db mongo:latest  mongod --smallfiles
-
-	# Connect to MongoDB
-	docker exec -t -i mongodb bash
-
-	# Switch to db dashbaord
-	use dashboarddb
-
-	# Create dashboard user
-	db.createUser({user: "dashoarduser", pwd: "dbpassword", roles: [{role: "readWrite", db: "dashboarddb"}]})
-
-	# To execute from CLI:
-
-	mongo 192.168.64.2/admin --eval 'db.getSiblingDB("dashboarddb").createUser({user: "dashboarduser", pwd: "dbpassword", roles: [{role: "readWrite", db: "dashboarddb"}]})'
-	```
-
-	For more information on creating Docker image for MongoDB, refer to the [Docker Hub Document](https://hub.docker.com/r/library/mongo/).
-
-*   **Step 3: Set Environment Variables**
-
-	Specify the Environment Variables for dashboard properties:
-
-	```
-	docker run -t -p 8080:8080 -v ./logs:/hygieia/logs -e "SPRING_DATA_MONGODB_HOST=127.0.0.1" -i hygieia-apiaudit:latest
-	```
-
-*	**Step 4: Run the API**
-
-	To run the API from Docker, execute the following command from the command prompt:
-
-	```
-	docker run -t -p 8080:8080 --link mongodb:mongo -v ./logs:/hygieia/logs -i hygieia-apiaudit:latest
-	```
-	To verify audit API access from the web browser, take the port mapping and the IP for your docker-machine <env> ip and then verify using url: `http://<docker-machine env ip>:<docker port for hygieia_api>/apiaudit/dashboard`
-
-	To list the running containers in the local repository, execute the following command:
-
-	```bash
-	docker ps
-	```
 
 ## Create a New Audit API
 
