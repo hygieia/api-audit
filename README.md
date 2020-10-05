@@ -22,7 +22,7 @@ Hygieia uses Spring Boot to package the APIs as an executable JAR file with depe
 # Table of Contents
 * [Setup Instructions](#setup-instructions)
 * [Api Properties Section](#api-properties)
-* [Docker Image for API](#docker-image-for-api)
+* [Docker Image for API Audit](#docker-image-for-api-audit)
 * [Create a New Audit API](#create-a-new-audit-api)
 
 ## Setup Instructions
@@ -91,8 +91,6 @@ All values in the `api-audit.properties` file are optional. If you have MongoDB 
 **Note**: If the value of `dbusername` is empty, then system skips MongoDB authorization.
 
 ## Docker Image for API Audit 
-
-To configure the Hygieia audit API layer, execute the following steps:
 
 You can install Hygieia by using a docker image from docker hub. This section gives detailed instructions on how to download and run with Docker. 
 
