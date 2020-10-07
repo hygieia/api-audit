@@ -5,6 +5,7 @@ import com.capitalone.dashboard.request.CodeReviewAuditRequest;
 import com.capitalone.dashboard.response.CodeReviewAuditResponse;
 import com.capitalone.dashboard.service.CodeReviewAuditService;
 import com.capitalone.dashboard.util.GitHubParsedUrl;
+import com.newrelic.api.agent.NewRelic;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,8 +45,14 @@ public class CodeReviewAuditController {
     @RequestMapping(value = "/peerReview", method = GET, produces = APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Audit status of peer review validation", notes = "Returns the audit status as passed or failed for the peer review of a pull request, based on the following checks: <br />" +  "• No direct commits merged to master/release branch <br />" + "• Any change made to the master/release branch is reviewed by a second person before merge ", response = CodeReviewAuditResponse.class, responseContainer = "List")
     public ResponseEntity<Iterable<CodeReviewAuditResponse>> peerReviewByRepo(@Valid CodeReviewAuditRequest request) throws AuditException {
+        NewRelic.addCustomParameter("peerReview.request.getRepo()", request.getRepo());
+        NewRelic.addCustomParameter("peerReview.request.getBranch()", request.getBranch());
+        NewRelic.addCustomParameter("peerReview.request.getScmName()", request.getScmName());
+        NewRelic.addCustomParameter("request.BeginDate", request.getBeginDate());
+        NewRelic.addCustomParameter("request.EndDate", request.getEndDate());
         GitHubParsedUrl gitHubParsed = new GitHubParsedUrl(request.getRepo());
         String repoUrl = gitHubParsed.getUrl();
+        NewRelic.addCustomParameter("peerReview.repoURL", repoUrl);
         Collection<CodeReviewAuditResponse> allPeerReviews = codeReviewAuditService.getPeerReviewResponses(repoUrl, request.getBranch(), request.getScmName(), request.getBeginDate(), request.getEndDate());
         Collection<CodeReviewAuditResponse> mutatedPeerReviews = new ArrayList<>();
         if(CollectionUtils.isNotEmpty(allPeerReviews)) {

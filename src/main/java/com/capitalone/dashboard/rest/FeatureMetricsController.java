@@ -5,6 +5,7 @@ import com.capitalone.dashboard.model.ComponentFeatureMetrics;
 import com.capitalone.dashboard.model.LobFeatureMetrics;
 import com.capitalone.dashboard.model.ProductFeatureMetrics;
 import com.capitalone.dashboard.service.FeatureMetricsService;
+import com.newrelic.api.agent.NewRelic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,6 +29,7 @@ public class FeatureMetricsController {
 
     @RequestMapping(value = "/metrics/component/{componentName}", method = GET, produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<ComponentFeatureMetrics> getComponentMetrics(@Valid @PathVariable String componentName) {
+        NewRelic.addCustomParameter("request.componentName", componentName);
         ComponentFeatureMetrics featureMetrics = featureMetricsService.getComponentFeatureMetrics(componentName);
         return ResponseEntity.ok().body(featureMetrics);
     }
@@ -36,14 +38,15 @@ public class FeatureMetricsController {
     @RequestMapping(value = "/metrics/component/{componentName}/metric/{metricName}", method = GET, produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<ComponentFeatureMetrics> getComponentMetricByType(@Valid @PathVariable String componentName,
                                                                             @Valid @PathVariable String metricName){
+        NewRelic.addCustomParameter("request.componentName", componentName);
+        NewRelic.addCustomParameter("request.metricName", metricName);
         ComponentFeatureMetrics featureMetrics = featureMetricsService.getComponentFeatureMetricByType(componentName, metricName);
-
         return ResponseEntity.ok().body(featureMetrics);
     }
 
     @RequestMapping(value = "metrics/application/{applicationName}", method = GET, produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<ProductFeatureMetrics> getProductMetrics(@Valid @PathVariable String applicationName){
-
+        NewRelic.addCustomParameter("request.applicationName", applicationName);
         ProductFeatureMetrics productFeatureMetrics = featureMetricsService.getProductFeatureMetrics(applicationName);
         return ResponseEntity.ok(productFeatureMetrics);
     }
@@ -52,6 +55,8 @@ public class FeatureMetricsController {
     public ResponseEntity<ProductFeatureMetrics> getProductMetricsByType(@Valid @PathVariable String applicationName
                                                                          ,@Valid @PathVariable String metricName){
 
+        NewRelic.addCustomParameter("request.applicationName", applicationName);
+        NewRelic.addCustomParameter("request.metricName", metricName);
         ProductFeatureMetrics productFeatureMetrics = featureMetricsService.getProductFeatureMetricsByType(applicationName,metricName);
         return ResponseEntity.ok(productFeatureMetrics);
     }
@@ -59,6 +64,7 @@ public class FeatureMetricsController {
     @RequestMapping(value = "metrics/lob/{lobName}", method = GET, produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<LobFeatureMetrics> getLobMetrics(@Valid @PathVariable String lobName){
 
+        NewRelic.addCustomParameter("request.lobName", lobName);
         LobFeatureMetrics lobFeatureMetrics = featureMetricsService.getLobFeatureMetrics(lobName);
         return ResponseEntity.ok(lobFeatureMetrics);
     }
@@ -67,13 +73,16 @@ public class FeatureMetricsController {
     public ResponseEntity<LobFeatureMetrics> getLobMetricsByType(@Valid @PathVariable String lobName,
                                                                  @Valid @PathVariable String type){
 
-        LobFeatureMetrics lobFeatureMetrics = featureMetricsService.getLobFeatureMetricsByType(lobName,type );
+        NewRelic.addCustomParameter("request.lobName", lobName);
+        NewRelic.addCustomParameter("request.type", type);
+        LobFeatureMetrics lobFeatureMetrics = featureMetricsService.getLobFeatureMetricsByType(lobName, type);
         return ResponseEntity.ok(lobFeatureMetrics);
     }
 
     @RequestMapping(value = "metrics/executive/{executiveName}", method = GET, produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<ExecutiveFeatureMetrics> getExecutiveMetrics(@Valid @PathVariable String executiveName){
 
+        NewRelic.addCustomParameter("request.executiveName", executiveName);
         ExecutiveFeatureMetrics executiveFeatureMetrics = featureMetricsService.getExecutiveFeatureMetrics(executiveName);
         return ResponseEntity.ok(executiveFeatureMetrics);
     }
@@ -82,6 +91,8 @@ public class FeatureMetricsController {
     public ResponseEntity<ExecutiveFeatureMetrics> getExecutiveMetricsByType(@Valid @PathVariable String executiveName,
                                                                              @Valid @PathVariable String type){
 
+        NewRelic.addCustomParameter("request.executiveName", executiveName);
+        NewRelic.addCustomParameter("request.type", type);
         ExecutiveFeatureMetrics executiveFeatureMetrics = featureMetricsService.getExecutiveFeatureMetricsByType(executiveName, type);
         return ResponseEntity.ok(executiveFeatureMetrics);
     }
