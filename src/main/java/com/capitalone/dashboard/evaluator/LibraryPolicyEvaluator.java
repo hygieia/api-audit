@@ -10,6 +10,7 @@ import com.capitalone.dashboard.model.LibraryPolicyThreatLevel;
 import com.capitalone.dashboard.model.LibraryPolicyType;
 import com.capitalone.dashboard.model.ScanState;
 import com.capitalone.dashboard.repository.LibraryPolicyResultsRepository;
+import com.capitalone.dashboard.request.ArtifactAuditRequest;
 import com.capitalone.dashboard.response.LibraryPolicyAuditResponse;
 import com.capitalone.dashboard.status.LibraryPolicyAuditStatus;
 import org.apache.commons.collections.CollectionUtils;
@@ -46,6 +47,12 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
 
         return libraryPolicyItems.stream().map(item -> evaluate(item, beginDate, endDate, null)).collect(Collectors.toList());
     }
+
+    @Override
+    public Collection<LibraryPolicyAuditResponse> evaluateNextGen(ArtifactAuditRequest artifactAuditRequest, Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data) throws AuditException {
+        return null;
+    }
+
 
     @Override
     public LibraryPolicyAuditResponse evaluate(CollectorItem collectorItem, long beginDate, long endDate, Map<?, ?> data) {

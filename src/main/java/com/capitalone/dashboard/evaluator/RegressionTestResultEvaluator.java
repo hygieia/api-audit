@@ -17,6 +17,7 @@ import com.capitalone.dashboard.model.StoryIndicator;
 
 import com.capitalone.dashboard.repository.FeatureRepository;
 import com.capitalone.dashboard.repository.TestResultRepository;
+import com.capitalone.dashboard.request.ArtifactAuditRequest;
 import com.capitalone.dashboard.response.TestResultsAuditResponse;
 import com.capitalone.dashboard.status.TestResultAuditStatus;
 import org.apache.commons.collections.CollectionUtils;
@@ -87,6 +88,12 @@ public class RegressionTestResultEvaluator extends Evaluator<TestResultsAuditRes
         testItems.forEach(testItem -> testResultsAuditResponse.add(getRegressionTestResultAudit(dashboard, testItem)));
         return testResultsAuditResponse;
     }
+
+    @Override
+    public Collection<TestResultsAuditResponse> evaluateNextGen(ArtifactAuditRequest artifactAuditRequest, Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data) throws AuditException {
+        return null;
+    }
+
 
     @Override
     public TestResultsAuditResponse evaluate(CollectorItem collectorItem, long beginDate, long endDate, Map<?, ?> data) {

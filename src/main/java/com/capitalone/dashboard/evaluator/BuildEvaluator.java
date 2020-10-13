@@ -12,6 +12,7 @@ import com.capitalone.dashboard.model.RepoBranch;
 import com.capitalone.dashboard.repository.BuildRepository;
 import com.capitalone.dashboard.repository.CollItemConfigHistoryRepository;
 import com.capitalone.dashboard.repository.CommitRepository;
+import com.capitalone.dashboard.request.ArtifactAuditRequest;
 import com.capitalone.dashboard.response.BuildAuditResponse;
 import com.capitalone.dashboard.status.BuildAuditStatus;
 import com.capitalone.dashboard.util.GitHubParsedUrl;
@@ -55,6 +56,12 @@ public class BuildEvaluator extends Evaluator<BuildAuditResponse> {
         repoData.put("repos", repoItems);
         return buildItems.stream().map(item -> evaluate(item, beginDate, endDate, repoData)).collect(Collectors.toList());
     }
+
+    @Override
+    public Collection<BuildAuditResponse> evaluateNextGen(ArtifactAuditRequest artifactAuditRequest, Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data) throws AuditException {
+        return null;
+    }
+
 
     @Override
     public BuildAuditResponse evaluate(CollectorItem collectorItem, long beginDate, long endDate, Map<?, ?> data) {
