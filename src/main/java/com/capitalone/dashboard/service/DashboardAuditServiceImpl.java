@@ -12,6 +12,8 @@ import com.capitalone.dashboard.model.DashboardType;
 import com.capitalone.dashboard.repository.CmdbRepository;
 import com.capitalone.dashboard.repository.CollectorItemRepository;
 import com.capitalone.dashboard.repository.DashboardRepository;
+import com.capitalone.dashboard.request.ArtifactAuditRequest;
+import com.capitalone.dashboard.request.DashboardAuditRequest;
 import com.capitalone.dashboard.response.AuditReviewResponse;
 import com.capitalone.dashboard.response.DashboardReviewResponse;
 import com.capitalone.dashboard.status.DashboardAuditStatus;
@@ -22,7 +24,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 
 @Component
@@ -102,6 +107,48 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
     }
 
     @Override
+    public DashboardReviewResponse getDashboardReviewResponseNextGen(DashboardAuditRequest dashboardAuditRequest) throws AuditException {
+        String businessService = dashboardAuditRequest.getBusinessService();
+        String businessApp = dashboardAuditRequest.getBusinessApplication();
+        Set<AuditType> auditTypes = dashboardAuditRequest.getAuditType();
+        long beginDate = dashboardAuditRequest.getBeginDate();
+        long endDate = dashboardAuditRequest.getEndDate();
+        validateParameters(dashboardAuditRequest.getTitle(),DashboardType.Team, businessService, businessApp, dashboardAuditRequest.getBeginDate(), dashboardAuditRequest.getEndDate());
+        validateArtifactParameters(dashboardAuditRequest.getArtifactAuditRequest());
+        // Get all artifacts configured to dashboard
+        DashboardReviewResponse dashboardReviewResponse = new DashboardReviewResponse();
+        Dashboard dashboard = getDashboard(dashboardAuditRequest.getTitle(), DashboardType.Team, businessService, businessApp);
+        if (dashboard == null) {
+            dashboardReviewResponse.addAuditStatus(DashboardAuditStatus.DASHBOARD_NOT_REGISTERED);
+            return dashboardReviewResponse;
+        }
+        dashboardReviewResponse.setDashboardTitle(dashboard.getTitle());
+        dashboardReviewResponse.setBusinessApplication(StringUtils.isEmpty(businessApp) ? dashboard.getConfigurationItemBusAppName() : businessApp);
+        dashboardReviewResponse.setBusinessService(StringUtils.isEmpty(businessService) ? dashboard.getConfigurationItemBusServName() : businessService);
+        dashboardReviewResponse.setAuditEntity(null);
+
+        if (auditTypes.contains(AuditType.ALL)) {
+            auditTypes.addAll(Sets.newHashSet(AuditType.ARTIFACT));
+            auditTypes.remove(AuditType.ALL);
+        }
+
+        auditTypes.forEach(auditType -> {
+            Evaluator evaluator = auditModel.evaluatorMap().get(auditType);
+            try {
+                Collection<AuditReviewResponse> auditResponse = evaluator.evaluateNextGen(dashboardAuditRequest.getArtifactAuditRequest(), dashboard, beginDate, endDate, null);
+                dashboardReviewResponse.addReview(auditType, auditResponse);
+                dashboardReviewResponse.addAuditStatus(auditModel.successStatusMap().get(auditType));
+            } catch (AuditException e) {
+                if (e.getErrorCode() == AuditException.NO_COLLECTOR_ITEM_CONFIGURED) {
+                    dashboardReviewResponse.addAuditStatus(auditModel.errorStatusMap().get(auditType));
+                }
+            }
+        });
+        return dashboardReviewResponse;
+
+    }
+
+    @Override
     public List<CollectorItem> getSonarProjects(String description) {
 
         return collectorItemRepository.findByDescription(description);
@@ -123,6 +170,17 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
             throw new AuditException("Invalid parameters. Valid query must have a title OR non-null business service and non-null business application", AuditException.BAD_INPUT_DATA);
         }
     }
+
+    private void validateArtifactParameters(ArtifactAuditRequest artifactAuditRequest) throws AuditException{
+        if (Objects.isNull(artifactAuditRequest)) {
+            throw new AuditException("Artifact information is null ", AuditException.BAD_INPUT_DATA);
+        }
+        boolean inValid  = Stream.of(artifactAuditRequest.getArtifactName(),artifactAuditRequest.getArtifactPath(),artifactAuditRequest.getArtifactRepo(),artifactAuditRequest.getArtifactVersion(),artifactAuditRequest.getArtifactUrl()).anyMatch(Objects::isNull);
+        if (inValid) {
+            throw new AuditException("One/many of the values artifact name,artifact path, artifact repo, artifact version, artifact url is/are null", AuditException.BAD_INPUT_DATA);
+        }
+    }
+
 
 
     /**

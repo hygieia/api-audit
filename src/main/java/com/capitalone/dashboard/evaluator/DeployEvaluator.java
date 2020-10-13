@@ -11,6 +11,7 @@ import com.capitalone.dashboard.model.Collector;
 import com.capitalone.dashboard.repository.BuildRepository;
 import com.capitalone.dashboard.repository.CollectorItemRepository;
 import com.capitalone.dashboard.repository.CollectorRepository;
+import com.capitalone.dashboard.request.ArtifactAuditRequest;
 import com.capitalone.dashboard.response.DeployAuditResponse;
 import com.capitalone.dashboard.status.DeployAuditStatus;
 import com.google.common.collect.Iterables;
@@ -60,6 +61,12 @@ public class DeployEvaluator extends Evaluator<DeployAuditResponse> {
         }
         return deployItems.stream().map(item -> evaluate(item, beginDate, endDate, null)).collect(Collectors.toList());
     }
+
+    @Override
+    public Collection<DeployAuditResponse> evaluateNextGen(ArtifactAuditRequest artifactAuditRequest, Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data) throws AuditException {
+        return null;
+    }
+
 
     @Override
     public DeployAuditResponse evaluate(CollectorItem collectorItem, long beginDate, long endDate, Map<?, ?> data) {

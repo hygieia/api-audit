@@ -11,6 +11,8 @@ import com.capitalone.dashboard.model.Component;
 import com.capitalone.dashboard.repository.CollectorItemRepository;
 import com.capitalone.dashboard.repository.ComponentRepository;
 import com.capitalone.dashboard.repository.DashboardRepository;
+import com.capitalone.dashboard.request.ArtifactAuditRequest;
+import com.capitalone.dashboard.request.DashboardAuditRequest;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
@@ -41,6 +43,8 @@ public abstract class Evaluator<T> {
     protected ApiSettings settings;
 
     public abstract Collection<T> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data) throws AuditException;
+
+    public abstract Collection<T> evaluateNextGen(ArtifactAuditRequest artifactAuditRequest, Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data) throws AuditException;
 
     public abstract T evaluate(CollectorItem collectorItem, long beginDate, long endDate, Map<?, ?> data) throws AuditException, HygieiaException;
 
@@ -76,4 +80,14 @@ public abstract class Evaluator<T> {
     public Dashboard getDashboard(String businessService, String businessComponent) {
         return dashboardRepository.findByConfigurationItemBusServNameIgnoreCaseAndConfigurationItemBusAppNameIgnoreCase(businessService, businessComponent);
     }
+
+    List<CollectorItem> getCollectorItemsNextGen(Dashboard dashboard, CollectorType collectorType) {
+        Optional<ObjectId> componentIdOpt = dashboard.getApplication().getComponents().stream().findFirst().map(Component::getId);
+        Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findOne(componentIdOpt.get())) : Optional.empty();
+        // This collector items from component is stale. So, need the id's to look up current state of collector items.
+        List<ObjectId> collectorItemIds = componentOpt.map(component ->
+                component.getCollectorItems(collectorType).stream().map(CollectorItem::getId).collect(Collectors.toList())).orElse(Collections.emptyList());
+        return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : Collections.emptyList();
+    }
+
 }

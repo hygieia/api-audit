@@ -12,7 +12,7 @@ public class DashboardAuditRequest extends AuditReviewRequest {
     private String businessApplication;
     @ApiModelProperty(value = "Audit Type has one of these values: ALL, CODE_REVIEW, BUILD_REVIEW, CODE_QUALITY, TEST_RESULT, PERF_TEST,ARTIFACT", example = "ALL")
 	private Set<AuditType> auditType;
-
+    private ArtifactAuditRequest artifactAuditRequest;
 
     public String getTitle() {
         return title;
@@ -44,5 +44,13 @@ public class DashboardAuditRequest extends AuditReviewRequest {
 
     public void setAuditType(Set<AuditType> auditType) {
         this.auditType = auditType;
+    }
+
+    public ArtifactAuditRequest getArtifactAuditRequest() {
+        return artifactAuditRequest;
+    }
+
+    public void setArtifactAuditRequest(ArtifactAuditRequest artifactAuditRequest) {
+        this.artifactAuditRequest = artifactAuditRequest;
     }
 }
