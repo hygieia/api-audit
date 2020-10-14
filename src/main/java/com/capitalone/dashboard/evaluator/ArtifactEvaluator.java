@@ -127,11 +127,11 @@ public class ArtifactEvaluator extends Evaluator<ArtifactAuditResponse> {
             artifactAuditResponse.addAuditStatus(ArtifactAuditStatus.ART_SYS_ACCT_BUILD_THIRD_PARTY);
         }
         List<BinaryArtifact> binaryArtifacts = binaryArtifactRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(collectorItem.getId(), beginDate - 1, endDate + 1);
-        if (CollectionUtils.isEmpty(binaryArtifacts)) {
-            return getErrorResponse(collectorItem, artifactAuditResponse, ArtifactAuditStatus.NO_ACTIVITY);
-        }
         // filter binary artifacts basing on version
         List<BinaryArtifact> filtered = binaryArtifacts.stream().filter(binaryArtifact -> binaryArtifact.getArtifactVersion().contains(version)).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(filtered)) {
+            return getErrorResponse(collectorItem, artifactAuditResponse, ArtifactAuditStatus.NO_ACTIVITY);
+        }
         artifactAuditResponse.setBinaryArtifacts(filtered);
         filtered.sort(Comparator.comparing(BinaryArtifact::getCreatedTimeStamp));
         artifactAuditResponse.setLastUpdated(getLastUpdated(filtered));
