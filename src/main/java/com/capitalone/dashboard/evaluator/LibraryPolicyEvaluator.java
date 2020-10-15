@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -77,7 +78,7 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
             libraryPolicyAuditResponse.addAuditStatus(LibraryPolicyAuditStatus.LIBRARY_POLICY_AUDIT_MISSING);
             return libraryPolicyAuditResponse;
         }
-
+        libraryPolicyResults.sort(Comparator.comparing(LibraryPolicyResult::getEvaluationTimestamp).reversed());
         LibraryPolicyResult returnPolicyResult = libraryPolicyResults.get(0);
         libraryPolicyAuditResponse.setLibraryPolicyResult(returnPolicyResult);
         libraryPolicyAuditResponse.setLastExecutionTime(returnPolicyResult.getEvaluationTimestamp());
