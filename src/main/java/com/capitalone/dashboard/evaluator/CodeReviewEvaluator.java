@@ -226,10 +226,10 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
 
     private boolean hasValidRepoError(CollectorItem repoItem, List<GitRequest> pullRequests, List<Commit> commits, long beginDt, long endDt) {
         List<CollectionError> colErrors = repoItem.getErrors();
-        if (!CollectionUtils.isEmpty(colErrors) && (colErrors.stream().anyMatch(err -> isWithinTimeRange(err.getTimestamp(), beginDt, endDt)))) {
-            return (CollectionUtils.isEmpty(pullRequests) && CollectionUtils.isEmpty(commits));
-        }
-        return false;
+        return (CollectionUtils.isNotEmpty(colErrors)
+                && colErrors.stream().anyMatch(err -> isWithinTimeRange(err.getTimestamp(), beginDt, endDt))
+                && CollectionUtils.isEmpty(pullRequests)
+                && CollectionUtils.isEmpty(commits));
     }
 
     private boolean isWithinTimeRange(long timestamp, long beginDt, long endDt) {
