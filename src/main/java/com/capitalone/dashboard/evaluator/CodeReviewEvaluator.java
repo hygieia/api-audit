@@ -11,6 +11,7 @@ import com.capitalone.dashboard.model.Dashboard;
 import com.capitalone.dashboard.model.GitRequest;
 import com.capitalone.dashboard.model.Review;
 import com.capitalone.dashboard.model.SCM;
+import com.capitalone.dashboard.model.CollectionError;
 import com.capitalone.dashboard.repository.CollectorRepository;
 import com.capitalone.dashboard.model.ServiceAccount;
 import com.capitalone.dashboard.model.AuditException;
@@ -163,10 +164,6 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
             return getErrorResponse(repoItem, scmBranch, parsedUrl);
         }
 
-        if (!CollectionUtils.isEmpty(repoItem.getErrors())) {
-            return getErrorResponse(repoItem, scmBranch, parsedUrl);
-        }
-
         //if the collector item is pending data collection
         if (repoItem.getLastUpdated() == 0) {
             reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.PENDING_DATA_COLLECTION);
@@ -183,6 +180,10 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         List<Commit> commits = allCommits.stream().filter(commit -> commit.getNumberOfChanges()>0).collect(Collectors.toList());
         commits.sort(Comparator.comparing(Commit::getScmCommitTimestamp).reversed());
         pullRequests.sort(Comparator.comparing(GitRequest::getMergedAt).reversed());
+
+        if (hasValidRepoError(repoItem, pullRequests, commits, beginDt, endDt)) {
+            return getErrorResponse(repoItem, scmBranch, parsedUrl);
+        }
 
         if (CollectionUtils.isEmpty(pullRequests)) {
             reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.NO_PULL_REQ_FOR_DATE_RANGE);
@@ -221,6 +222,18 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         });
 
         return reviewAuditResponseV2;
+    }
+
+    private boolean hasValidRepoError(CollectorItem repoItem, List<GitRequest> pullRequests, List<Commit> commits, long beginDt, long endDt) {
+        List<CollectionError> colErrors = repoItem.getErrors();
+        return (CollectionUtils.isNotEmpty(colErrors)
+                && colErrors.stream().anyMatch(err -> isWithinTimeRange(err.getTimestamp(), beginDt, endDt))
+                && CollectionUtils.isEmpty(pullRequests)
+                && CollectionUtils.isEmpty(commits));
+    }
+
+    private boolean isWithinTimeRange(long timestamp, long beginDt, long endDt) {
+        return (timestamp >= beginDt && timestamp <= endDt);
     }
 
     /**
