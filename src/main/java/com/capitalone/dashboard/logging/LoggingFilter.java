@@ -117,17 +117,17 @@ public class LoggingFilter implements Filter {
         } catch (MimeTypeParseException e) {
             LOGGER.error("Invalid MIME Type detected. Request MIME type=" + httpServletRequest.getContentType() + ". Response MIME Type=" + bufferedResponse.getContentType());
         } finally {
-            String parameters = Collections.list(request.getParameterNames()).stream()
-                            .map(p -> p + ":" + Arrays.asList( request.getParameterValues(p)) )
-                            .collect(Collectors.joining(","));
+            String parameters = MapUtils.isEmpty(request.getParameterMap())? "NONE" :
+                    Collections.list(request.getParameterNames()).stream()
+                               .map(p -> p + ":" + Arrays.asList( request.getParameterValues(p)) )
+                               .collect(Collectors.joining(","));
             LOGGER.info("requester=" + apiUser
                     + ", timeTaken=" + (System.currentTimeMillis() - startTime)
                     + ", endPoint=" + httpServletRequest.getRequestURI()
                     + ", reqMethod=" + httpServletRequest.getMethod()
                     + ", status=" + (httpServletResponse == null ? 0 : httpServletResponse.getStatus())
                     + ", clientIp=" + httpServletRequest.getRemoteAddr()
-                    + (StringUtils.equalsIgnoreCase(httpServletRequest.getMethod(), "GET") ? ", requestParams="
-                        + ((parameters.isEmpty())? "NONE." : parameters) :  StringUtils.EMPTY ));
+                    + (StringUtils.equalsIgnoreCase(httpServletRequest.getMethod(), "GET") ? ", requestParams="+parameters :  StringUtils.EMPTY ));
         }
         requestLog.setResponseSize(bufferedResponse.getContent().length());
 
