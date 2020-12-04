@@ -69,17 +69,15 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
      * @return SecurityReviewAuditResponse
      */
     private LibraryPolicyAuditResponse getLibraryPolicyAuditResponse(CollectorItem collectorItem, long beginDate, long endDate) {
-        List<LibraryPolicyResult> libraryPolicyResults = libraryPolicyResultsRepository.findByCollectorItemIdAndEvaluationTimestampIsBetweenOrderByTimestampDesc(collectorItem.getId(), beginDate - 1, endDate + 1);
+        LibraryPolicyResult returnPolicyResult = libraryPolicyResultsRepository.findTopByCollectorItemIdOrderByEvaluationTimestampDesc(collectorItem.getId());
 
         LibraryPolicyAuditResponse libraryPolicyAuditResponse = new LibraryPolicyAuditResponse();
         libraryPolicyAuditResponse.setAuditEntity(collectorItem.getOptions());
 
-        if (CollectionUtils.isEmpty(libraryPolicyResults)) {
+        if (Objects.isNull(returnPolicyResult)) {
             libraryPolicyAuditResponse.addAuditStatus(LibraryPolicyAuditStatus.LIBRARY_POLICY_AUDIT_MISSING);
             return libraryPolicyAuditResponse;
         }
-        libraryPolicyResults.sort(Comparator.comparing(LibraryPolicyResult::getEvaluationTimestamp).reversed());
-        LibraryPolicyResult returnPolicyResult = libraryPolicyResults.get(0);
         libraryPolicyAuditResponse.setLibraryPolicyResult(returnPolicyResult);
         libraryPolicyAuditResponse.setLastExecutionTime(returnPolicyResult.getEvaluationTimestamp());
 
