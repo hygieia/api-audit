@@ -37,11 +37,14 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -114,12 +117,17 @@ public class LoggingFilter implements Filter {
         } catch (MimeTypeParseException e) {
             LOGGER.error("Invalid MIME Type detected. Request MIME type=" + httpServletRequest.getContentType() + ". Response MIME Type=" + bufferedResponse.getContentType());
         } finally {
+            String parameters = MapUtils.isEmpty(request.getParameterMap())? "NONE" :
+                    Collections.list(request.getParameterNames()).stream()
+                               .map(p -> p + ":" + Arrays.asList( request.getParameterValues(p)) )
+                               .collect(Collectors.joining(","));
             LOGGER.info("requester=" + apiUser
                     + ", timeTaken=" + (System.currentTimeMillis() - startTime)
                     + ", endPoint=" + httpServletRequest.getRequestURI()
                     + ", reqMethod=" + httpServletRequest.getMethod()
                     + ", status=" + (httpServletResponse == null ? 0 : httpServletResponse.getStatus())
-                    + ", clientIp=" + httpServletRequest.getRemoteAddr());
+                    + ", clientIp=" + httpServletRequest.getRemoteAddr()
+                    + (StringUtils.equalsIgnoreCase(httpServletRequest.getMethod(), "GET") ? ", requestParams="+parameters :  StringUtils.EMPTY ));
         }
         requestLog.setResponseSize(bufferedResponse.getContent().length());
 
