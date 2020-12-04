@@ -57,18 +57,16 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
 
     @Override
     public LibraryPolicyAuditResponse evaluate(CollectorItem collectorItem, long beginDate, long endDate, Map<?, ?> data) {
-        return getLibraryPolicyAuditResponse(collectorItem, beginDate, endDate);
+        return getLibraryPolicyAuditResponse(collectorItem);
     }
 
     /**
      * Reusable method for constructing the LibraryPolicyAuditResponse object
      *
      * @param collectorItem Collector item
-     * @param beginDate     Begin Date
-     * @param endDate       End Date
      * @return SecurityReviewAuditResponse
      */
-    private LibraryPolicyAuditResponse getLibraryPolicyAuditResponse(CollectorItem collectorItem, long beginDate, long endDate) {
+    private LibraryPolicyAuditResponse getLibraryPolicyAuditResponse(CollectorItem collectorItem) {
         LibraryPolicyResult returnPolicyResult = libraryPolicyResultsRepository.findTopByCollectorItemIdOrderByEvaluationTimestampDesc(collectorItem.getId());
 
         LibraryPolicyAuditResponse libraryPolicyAuditResponse = new LibraryPolicyAuditResponse();
