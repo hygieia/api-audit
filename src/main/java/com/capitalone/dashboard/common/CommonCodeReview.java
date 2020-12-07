@@ -1,6 +1,7 @@
 package com.capitalone.dashboard.common;
 
 import com.capitalone.dashboard.ApiSettings;
+import com.capitalone.dashboard.model.BaseWhitelistContent;
 import com.capitalone.dashboard.model.CodeAction;
 import com.capitalone.dashboard.model.CodeActionType;
 import com.capitalone.dashboard.model.CollectorItem;
@@ -8,11 +9,14 @@ import com.capitalone.dashboard.model.Comment;
 import com.capitalone.dashboard.model.Commit;
 import com.capitalone.dashboard.model.CommitStatus;
 import com.capitalone.dashboard.model.GitRequest;
+import com.capitalone.dashboard.model.MavenWhitelistContent;
 import com.capitalone.dashboard.model.Review;
 import com.capitalone.dashboard.model.SCM;
 import com.capitalone.dashboard.model.ServiceAccount;
+import com.capitalone.dashboard.model.WhitelistCommitType;
 import com.capitalone.dashboard.repository.CommitRepository;
 import com.capitalone.dashboard.repository.ServiceAccountRepository;
+import com.capitalone.dashboard.repository.WhitelistCommitTypeRepository;
 import com.capitalone.dashboard.response.AuditReviewResponse;
 import com.capitalone.dashboard.response.CodeReviewAuditResponse;
 import com.capitalone.dashboard.response.CodeReviewAuditResponseV2;
@@ -166,6 +170,7 @@ public class CommonCodeReview {
                 auditReviewResponse.addAuditStatus(CodeReviewAuditStatus.DIRECT_COMMIT_CHANGE_WHITELISTED_ACCOUNT);
             }
         }
+        // this checks if a service account but not for filetypes changes
         if (!CollectionUtils.isEmpty(serviceAccountOU) && StringUtils.isNotBlank(userLdapDN) && !isValid) {
             try {
                 String userLdapDNParsed = LdapUtils.getStringValue(new LdapName(userLdapDN), "OU");
@@ -188,6 +193,7 @@ public class CommonCodeReview {
         for (String serviceAccount:allowedServiceAccounts.keySet()) {
             String fileNames = allowedServiceAccounts.get(serviceAccount);
             for (String s : fileNames.split(",")) {
+                // what happens if rogue actor makes expected change in a file but also another change in some other file????
                 if (serviceAccount.equalsIgnoreCase(author) && findFileMatch(s, commitFiles)){
                     isValidServiceAccount = true;
                 }
@@ -343,5 +349,19 @@ public class CommonCodeReview {
         return pattern.matcher(commitMessage).matches();
     }
 
+    //ADDED
+    public static boolean matchCommitMessageWithRegex(String commitMessage, String commitLogRegex) {
+        if (StringUtils.isEmpty(commitLogRegex)) return false;
+        Pattern pattern = Pattern.compile(commitLogRegex);
+        return pattern.matcher(commitMessage).matches();
+    }
+
+    // Creates different whitelist content types here (expandable in future)
+    public static void addWhitelistContent(Map<String, BaseWhitelistContent> whitelistContentMap, WhitelistCommitType commitType) {
+        String commitLogRegex = commitType.getCommitLogRegex();
+        // add content check types here
+        // comparing against regex, could be better to compare by commit type name?
+        if (commitLogRegex.contains("maven")) whitelistContentMap.put(commitLogRegex, new MavenWhitelistContent(commitType));
+    }
 
 }
