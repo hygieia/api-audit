@@ -468,13 +468,10 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         // check if service account and changes in whitelisted filetypes
        if (CommonCodeReview.checkForServiceAccount(commit.getScmAuthorLDAPDN(), settings,getAllServiceAccounts(),commit.getScmAuthor(),collectionCombined.stream().collect(Collectors.toList()),true,reviewAuditResponseV2)) {
            reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.COMMITAUTHOR_EQ_SERVICEACCOUNT);
-           //auditIncrementVersionTag(reviewAuditResponseV2, commit, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT);
            auditCommitLogAndContent(reviewAuditResponseV2, commit, getAllWhitelistCommitTypes(), CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT);
         } else  if (StringUtils.isBlank(commit.getScmAuthorLDAPDN())) {
-           //auditIncrementVersionTag(reviewAuditResponseV2, commit, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE);
            auditCommitLogAndContent(reviewAuditResponseV2, commit, getAllWhitelistCommitTypes(), CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE);
         }else {
-           //auditIncrementVersionTag(reviewAuditResponseV2, commit, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_USER_ACCOUNT);
            auditCommitLogAndContent(reviewAuditResponseV2, commit, getAllWhitelistCommitTypes(), CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_USER_ACCOUNT);
         }
     }
@@ -482,12 +479,11 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
     // general method to handle multiple types of commit message and content checks
     protected void auditCommitLogAndContent(CodeReviewAuditResponseV2 reviewAuditResponseV2, Commit commit, List<WhitelistCommitType> whitelistCommitTypes, CodeReviewAuditStatus directCommitWhitelistCommitStatus) {
         boolean isValid = false;
-        // will include the filename and patch
         List<RepoFile> commitFiles = commit.getFiles();
         for (WhitelistCommitType type : whitelistCommitTypes) {
             // if commitLogRegex matches commit message, i.e. increment version tag
             if (CommonCodeReview.matchCommitMessageWithRegex(commit.getScmCommitLog(), type.getCommitLogRegex())) {
-                // from map of commit log message to whitelist info (i.e. MavenWhitelist)
+                // check content if doContentCheck is true, otherwise bypass
                 isValid = !type.doContentCheck() || checkContent(type, commitFiles);
                 break;
             }
@@ -501,7 +497,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
     }
 
     protected boolean checkContent(WhitelistCommitType type, List<RepoFile> commitFiles) {
-        // get whitelisted content patterns from map and call isWhitelistedCommit method
+        // get whitelisted content patterns
         Map<String, BaseWhitelistContent> whitelistContentMap = getAllWhitelistContentPatterns();
         // if no content patterns found for whitelist type, just return true
         if (whitelistContentMap.get(type.getCommitLogRegex()) == null) return true;

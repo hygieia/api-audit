@@ -170,7 +170,6 @@ public class CommonCodeReview {
                 auditReviewResponse.addAuditStatus(CodeReviewAuditStatus.DIRECT_COMMIT_CHANGE_WHITELISTED_ACCOUNT);
             }
         }
-        // this checks if a service account but not for filetypes changes
         if (!CollectionUtils.isEmpty(serviceAccountOU) && StringUtils.isNotBlank(userLdapDN) && !isValid) {
             try {
                 String userLdapDNParsed = LdapUtils.getStringValue(new LdapName(userLdapDN), "OU");
@@ -193,7 +192,6 @@ public class CommonCodeReview {
         for (String serviceAccount:allowedServiceAccounts.keySet()) {
             String fileNames = allowedServiceAccounts.get(serviceAccount);
             for (String s : fileNames.split(",")) {
-                // what happens if rogue actor makes expected change in a file but also another change in some other file????
                 if (serviceAccount.equalsIgnoreCase(author) && findFileMatch(s, commitFiles)){
                     isValidServiceAccount = true;
                 }
@@ -349,18 +347,16 @@ public class CommonCodeReview {
         return pattern.matcher(commitMessage).matches();
     }
 
-    //ADDED
     public static boolean matchCommitMessageWithRegex(String commitMessage, String commitLogRegex) {
         if (StringUtils.isEmpty(commitLogRegex)) return false;
         Pattern pattern = Pattern.compile(commitLogRegex);
         return pattern.matcher(commitMessage).matches();
     }
 
-    // Creates different whitelist content types here (expandable in future)
+    // Creates different whitelist content types here (expandable)
     public static void addWhitelistContent(Map<String, BaseWhitelistContent> whitelistContentMap, WhitelistCommitType commitType) {
         String commitLogRegex = commitType.getCommitLogRegex();
         // add content check types here
-        // comparing against regex, could be better to compare by commit type name?
         if (commitLogRegex.contains("maven")) whitelistContentMap.put(commitLogRegex, new MavenWhitelistContent(commitType));
     }
 
