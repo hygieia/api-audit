@@ -55,7 +55,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         private final ServiceAccountRepository serviceAccountRepository;
         private final WhitelistCommitTypeRepository whitelistCommitTypeRepository;
 
-    protected ApiSettings settings;
+        protected ApiSettings settings;
         private static final String BRANCH = "branch";
         private static final String REPO_URL = "url";
 
@@ -479,11 +479,11 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
     // general method to handle multiple types of commit message and content checks
     protected void auditCommitLogAndContent(CodeReviewAuditResponseV2 reviewAuditResponseV2, Commit commit, List<WhitelistCommitType> whitelistCommitTypes, CodeReviewAuditStatus directCommitWhitelistCommitStatus) {
         boolean isValid = false;
-        List<RepoFile> commitFiles = commit.getFiles();
         for (WhitelistCommitType type : whitelistCommitTypes) {
             // if commitLogRegex matches commit message, i.e. increment version tag
             if (CommonCodeReview.matchCommitMessageWithRegex(commit.getScmCommitLog(), type.getCommitLogRegex())) {
                 // check content if doContentCheck is true, otherwise bypass
+                List<RepoFile> commitFiles = commit.getFiles();
                 isValid = !type.doContentCheck() || checkContent(type, commitFiles);
                 break;
             }
@@ -497,6 +497,8 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
     }
 
     protected boolean checkContent(WhitelistCommitType type, List<RepoFile> commitFiles) {
+        // if files are not attached to commit or empty, return true
+        if (CollectionUtils.isEmpty(commitFiles)) return true;
         // get whitelisted content patterns
         Map<String, BaseWhitelistContent> whitelistContentMap = getAllWhitelistContentPatterns();
         // if no content patterns found for whitelist type, just return true
