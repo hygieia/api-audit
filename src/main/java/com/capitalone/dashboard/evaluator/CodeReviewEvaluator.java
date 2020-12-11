@@ -2,25 +2,25 @@ package com.capitalone.dashboard.evaluator;
 
 import com.capitalone.dashboard.ApiSettings;
 import com.capitalone.dashboard.common.CommonCodeReview;
-import com.capitalone.dashboard.model.BaseWhitelistContent;
+import com.capitalone.dashboard.model.BaseFilterContent;
 import com.capitalone.dashboard.model.Collector;
 import com.capitalone.dashboard.model.CollectorItem;
 import com.capitalone.dashboard.model.CollectorType;
 import com.capitalone.dashboard.model.Commit;
 import com.capitalone.dashboard.model.CommitType;
 import com.capitalone.dashboard.model.Dashboard;
+import com.capitalone.dashboard.model.FilterCommitType;
 import com.capitalone.dashboard.model.GitRequest;
 import com.capitalone.dashboard.model.RepoFile;
 import com.capitalone.dashboard.model.Review;
 import com.capitalone.dashboard.model.SCM;
 import com.capitalone.dashboard.model.CollectionError;
-import com.capitalone.dashboard.model.WhitelistCommitType;
 import com.capitalone.dashboard.repository.CollectorRepository;
 import com.capitalone.dashboard.model.ServiceAccount;
 import com.capitalone.dashboard.model.AuditException;
 import com.capitalone.dashboard.repository.CommitRepository;
 import com.capitalone.dashboard.repository.GitRequestRepository;
-import com.capitalone.dashboard.repository.WhitelistCommitTypeRepository;
+import com.capitalone.dashboard.repository.FilterCommitTypeRepository;
 import com.capitalone.dashboard.request.ArtifactAuditRequest;
 import com.capitalone.dashboard.response.CodeReviewAuditResponseV2;
 import com.capitalone.dashboard.status.CodeReviewAuditStatus;
@@ -53,7 +53,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         private final GitRequestRepository gitRequestRepository;
         private final CollectorRepository collectorRepository;
         private final ServiceAccountRepository serviceAccountRepository;
-        private final WhitelistCommitTypeRepository whitelistCommitTypeRepository;
+        private final FilterCommitTypeRepository filterCommitTypeRepository;
 
         protected ApiSettings settings;
         private static final String BRANCH = "branch";
@@ -62,14 +62,14 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
     @Autowired
     public CodeReviewEvaluator(CommitRepository commitRepository, GitRequestRepository gitRequestRepository,
                                 CollectorRepository collectorRepository, ServiceAccountRepository serviceAccountRepository,
-                                WhitelistCommitTypeRepository whitelistCommitTypeRepository,
+                                FilterCommitTypeRepository filterCommitTypeRepository,
                                 ApiSettings settings) {
         this.commitRepository = commitRepository;
         this.gitRequestRepository = gitRequestRepository;
         this.collectorRepository = collectorRepository;
         this.settings = settings;
         this.serviceAccountRepository = serviceAccountRepository;
-        this.whitelistCommitTypeRepository = whitelistCommitTypeRepository;
+        this.filterCommitTypeRepository = filterCommitTypeRepository;
     }
 
 
@@ -465,46 +465,54 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         Stream<String> combinedStream
                 = Stream.of(commit.getFilesAdded(), commit.getFilesModified(),commit.getFilesRemoved()).filter(Objects::nonNull).flatMap(Collection::stream);
         Collection<String> collectionCombined = combinedStream.collect(Collectors.toList());
-        // check if service account and changes in whitelisted filetypes
        if (CommonCodeReview.checkForServiceAccount(commit.getScmAuthorLDAPDN(), settings,getAllServiceAccounts(),commit.getScmAuthor(),collectionCombined.stream().collect(Collectors.toList()),true,reviewAuditResponseV2)) {
            reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.COMMITAUTHOR_EQ_SERVICEACCOUNT);
-           auditCommitLogAndContent(reviewAuditResponseV2, commit, getAllWhitelistCommitTypes(), CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT);
+           auditIfFilteredCommitOrIndeedDirectCommit(reviewAuditResponseV2, commit, getAllFilterCommitTypes(), CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT);
         } else  if (StringUtils.isBlank(commit.getScmAuthorLDAPDN())) {
-           auditCommitLogAndContent(reviewAuditResponseV2, commit, getAllWhitelistCommitTypes(), CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE);
+           auditIfFilteredCommitOrIndeedDirectCommit(reviewAuditResponseV2, commit, getAllFilterCommitTypes(), CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE);
         }else {
-           auditCommitLogAndContent(reviewAuditResponseV2, commit, getAllWhitelistCommitTypes(), CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_USER_ACCOUNT);
+           auditIfFilteredCommitOrIndeedDirectCommit(reviewAuditResponseV2, commit, getAllFilterCommitTypes(), CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_USER_ACCOUNT);
         }
     }
 
-    // general method to handle multiple types of commit message and content checks
-    protected void auditCommitLogAndContent(CodeReviewAuditResponseV2 reviewAuditResponseV2, Commit commit, List<WhitelistCommitType> whitelistCommitTypes, CodeReviewAuditStatus directCommitWhitelistCommitStatus) {
-        boolean isValid = false;
-        for (WhitelistCommitType type : whitelistCommitTypes) {
-            // if commitLogRegex matches commit message, i.e. increment version tag
-            if (CommonCodeReview.matchCommitMessageWithRegex(commit.getScmCommitLog(), type.getCommitLogRegex())) {
-                // check content if doContentCheck is true, otherwise bypass
-                List<RepoFile> commitFiles = commit.getFiles();
-                isValid = !type.doContentCheck() || checkContent(type, commitFiles);
-                break;
-            }
+    // Check if this is a filtered commit (matches commit message (and) content checks) or is indeed a direct commit
+    protected void auditIfFilteredCommitOrIndeedDirectCommit(CodeReviewAuditResponseV2 reviewAuditResponseV2, Commit commit, List<FilterCommitType> filterCommitTypes, CodeReviewAuditStatus directCommitFilterCommitStatus) {
+        boolean isValidFilteredCommit = false;
+        FilterCommitType matchedFilter = matchedCommitLogFilter(commit, filterCommitTypes);
+        // commit log matched a commit log regex
+        if (matchedFilter != null) {
+            isValidFilteredCommit = matchedFilter.doContentCheck() ? isExpectedContentChange(matchedFilter, commit.getFiles()) : true;
         }
 
-        if (isValid) {
-            reviewAuditResponseV2.addAuditStatus(directCommitWhitelistCommitStatus);
+        if (isValidFilteredCommit) {
+            reviewAuditResponseV2.addAuditStatus(directCommitFilterCommitStatus);
         } else {
             addDirectCommitsToBase(reviewAuditResponseV2,commit);
         }
     }
 
-    protected boolean checkContent(WhitelistCommitType type, List<RepoFile> commitFiles) {
-        // if files are not attached to commit or empty, return true
-        if (CollectionUtils.isEmpty(commitFiles)) return true;
-        // get whitelisted content patterns
-        Map<String, BaseWhitelistContent> whitelistContentMap = getAllWhitelistContentPatterns();
-        // if no content patterns found for whitelist type, just return true
-        if (whitelistContentMap.get(type.getCommitLogRegex()) == null) return true;
+    // match commit message against list of filter commit log regular expressions. If found, return the filter commit type, otherwise return null
+    protected FilterCommitType matchedCommitLogFilter(Commit commit, List<FilterCommitType> filterCommitTypes) {
+        if (CollectionUtils.isEmpty(filterCommitTypes)) return null;
+        for (FilterCommitType type : filterCommitTypes) {
+            // if commitLogRegex matches commit message, e.g. increment version tag
+            if (CommonCodeReview.matchCommitMessageWithRegex(commit.getScmCommitLog(), type.getCommitLogRegex())) {
+                return type;
+            }
+        }
+        return null;
+    }
 
-        return whitelistContentMap.get(type.getCommitLogRegex()).isWhitelistedCommitContent(commitFiles);
+    // check file content changes
+    protected boolean isExpectedContentChange(FilterCommitType type, List<RepoFile> commitFiles) {
+        // if repo files with filename and patch are not attached to commit, or empty, return true
+        if (CollectionUtils.isEmpty(commitFiles)) return true;
+        // get filtered content patterns
+        Map<String, BaseFilterContent> filterContentMap = getAllFilterContentPatterns();
+        // if content patterns is missing for filter commit type, return false
+        if (filterContentMap.get(type.getCommitLogRegex()) == null) return false;
+
+        return filterContentMap.get(type.getCommitLogRegex()).isFilteredCommitContent(commitFiles);
     }
 
     protected void auditIncrementVersionTag(CodeReviewAuditResponseV2 reviewAuditResponseV2, Commit commit, CodeReviewAuditStatus directCommitIncrementVersionTagStatus) {
@@ -529,20 +537,19 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         return serviceAccounts.stream().collect(Collectors.toMap(ServiceAccount :: getServiceAccountName, ServiceAccount::getFileNames));
     }
 
-    //  ADDED
-    public Map<String, BaseWhitelistContent> getAllWhitelistContentPatterns() {
-        Map<String, BaseWhitelistContent> whitelistContentMap = new HashMap<>();
-        List<WhitelistCommitType> whitelistCommitTypes = getAllWhitelistCommitTypes();
-        for (WhitelistCommitType commitType : whitelistCommitTypes) {
+    public Map<String, BaseFilterContent> getAllFilterContentPatterns() {
+        Map<String, BaseFilterContent> filterContentMap = new HashMap<>();
+        List<FilterCommitType> filterCommitTypes = getAllFilterCommitTypes();
+        for (FilterCommitType commitType : filterCommitTypes) {
             if (MapUtils.isNotEmpty(commitType.getContentPatterns())) {
-                CommonCodeReview.addWhitelistContent(whitelistContentMap, commitType);
+                CommonCodeReview.addFilterContent(filterContentMap, commitType);
             }
         }
-        return whitelistContentMap;
+        return filterContentMap;
     }
 
-    public List<WhitelistCommitType> getAllWhitelistCommitTypes() {
-        List<WhitelistCommitType> whitelistCommitTypes = (List<WhitelistCommitType>) whitelistCommitTypeRepository.findAll();
-        return whitelistCommitTypes;
+    public List<FilterCommitType> getAllFilterCommitTypes() {
+        List<FilterCommitType> filterCommitTypes = (List<FilterCommitType>) filterCommitTypeRepository.findAll();
+        return filterCommitTypes;
     }
 }

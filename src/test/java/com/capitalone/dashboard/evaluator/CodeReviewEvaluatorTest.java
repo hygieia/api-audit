@@ -6,15 +6,15 @@ import com.capitalone.dashboard.model.CollectionError;
 import com.capitalone.dashboard.model.CollectorItem;
 import com.capitalone.dashboard.model.Commit;
 import com.capitalone.dashboard.model.CommitType;
+import com.capitalone.dashboard.model.FilterCommitType;
 import com.capitalone.dashboard.model.GitRequest;
 import com.capitalone.dashboard.model.RepoFile;
 import com.capitalone.dashboard.model.Review;
 import com.capitalone.dashboard.model.ServiceAccount;
-import com.capitalone.dashboard.model.WhitelistCommitType;
 import com.capitalone.dashboard.repository.CommitRepository;
 import com.capitalone.dashboard.repository.GitRequestRepository;
 import com.capitalone.dashboard.repository.ServiceAccountRepository;
-import com.capitalone.dashboard.repository.WhitelistCommitTypeRepository;
+import com.capitalone.dashboard.repository.FilterCommitTypeRepository;
 import com.capitalone.dashboard.response.CodeReviewAuditResponseV2;
 import com.capitalone.dashboard.status.CodeReviewAuditStatus;
 import org.apache.commons.lang3.StringUtils;
@@ -51,7 +51,7 @@ public class CodeReviewEvaluatorTest {
     @Mock
     private ServiceAccountRepository serviceAccountRepository;
     @Mock
-    private WhitelistCommitTypeRepository whitelistCommitTypeRepository;
+    private FilterCommitTypeRepository filterCommitTypeRepository;
 
     @Mock
     private ApiSettings apiSettings;
@@ -95,7 +95,7 @@ public class CodeReviewEvaluatorTest {
         when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(new ArrayList<GitRequest>());
         when(commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(Stream.of(makeCommit("test message","scmRevisionNumber1", "servUserName", null,0L)).collect(Collectors.toList()));
         when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
-        when(whitelistCommitTypeRepository.findAll()).thenReturn(makeWhitelistCommitTypeList());
+        when(filterCommitTypeRepository.findAll()).thenReturn(makeFilterCommitTypeList());
         CodeReviewAuditResponseV2 responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1, "master"), 125634536, 6235263, null);
         Assert.assertEquals(true, responseV2.getAuditStatuses().toString().contains("COMMITAUTHOR_EQ_SERVICEACCOUNT"));
         Assert.assertEquals(true,responseV2.getAuditEntity().toString().contains("url"));
@@ -109,7 +109,7 @@ public class CodeReviewEvaluatorTest {
         when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.SERVICE_ACCOUNTS);
 //        when(apiSettings.getCommitLogIgnoreAuditRegEx()).thenReturn("(.)*(Increment_Version_Tag)(.)*");
         when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
-        when(whitelistCommitTypeRepository.findAll()).thenReturn(makeWhitelistCommitTypeList());
+        when(filterCommitTypeRepository.findAll()).thenReturn(makeFilterCommitTypeList());
         CodeReviewAuditResponseV2 responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1,"master"),125634536, 6235263, null);
         Assert.assertEquals(true, responseV2.getAuditStatuses().toString().contains("DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT"));
         Assert.assertEquals(true,responseV2.getAuditEntity().toString().contains("url"));
@@ -123,7 +123,7 @@ public class CodeReviewEvaluatorTest {
         when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
 //        when(apiSettings.getCommitLogIgnoreAuditRegEx()).thenReturn("(.)*(Increment_Version_Tag)(.)*");
         when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
-        when(whitelistCommitTypeRepository.findAll()).thenReturn(makeWhitelistCommitTypeList());
+        when(filterCommitTypeRepository.findAll()).thenReturn(makeFilterCommitTypeList());
         CodeReviewAuditResponseV2 responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1,"master"),125634536, 6235263, null);
         Assert.assertEquals(true, responseV2.getAuditStatuses().toString().contains("DIRECT_COMMIT_NONCODE_CHANGE_USER_ACCOUNT"));
         Assert.assertEquals(true,responseV2.getAuditEntity().toString().contains("url"));
@@ -137,7 +137,7 @@ public class CodeReviewEvaluatorTest {
         when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
 //        when(apiSettings.getCommitLogIgnoreAuditRegEx()).thenReturn("(.)*(Increment_Version_Tag)(.)*");
         when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
-        when(whitelistCommitTypeRepository.findAll()).thenReturn(makeWhitelistCommitTypeList());
+        when(filterCommitTypeRepository.findAll()).thenReturn(makeFilterCommitTypeList());
         CodeReviewAuditResponseV2 responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1,"master"),125634536, 6235263, null);
         Assert.assertEquals(Boolean.FALSE, responseV2.getAuditStatuses().contains(CodeReviewAuditStatus.DIRECT_COMMITS_TO_BASE));
         Assert.assertEquals(true,responseV2.getAuditEntity().toString().contains("url"));
@@ -158,7 +158,7 @@ public class CodeReviewEvaluatorTest {
         when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
 //        when(apiSettings.getCommitLogIgnoreAuditRegEx()).thenReturn("(.)*(Increment_Version_Tag)(.)*");
         when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
-        when(whitelistCommitTypeRepository.findAll()).thenReturn(makeWhitelistCommitTypeList());
+        when(filterCommitTypeRepository.findAll()).thenReturn(makeFilterCommitTypeList());
         CodeReviewAuditResponseV2 responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1,"master"), collectorItemList,125634536, 6235263, null);
         Assert.assertTrue(responseV2.getAuditStatuses().contains(CodeReviewAuditStatus.DIRECT_COMMITS_TO_BASE));
         Assert.assertEquals(3,responseV2.getDirectCommitsToBase().size());
@@ -394,54 +394,140 @@ public class CodeReviewEvaluatorTest {
         CodeReviewAuditResponseV2 reviewAuditResponseV2 = new CodeReviewAuditResponseV2();
         commit.setScmAuthorLDAPDN(null);
 
-        List<WhitelistCommitType> whitelistCommitTypeList = makeWhitelistCommitTypeList();
+        List<FilterCommitType> filterCommitTypeList = makeFilterCommitTypeList();
 
         when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
-        when(whitelistCommitTypeRepository.findAll()).thenReturn(whitelistCommitTypeList);
+        when(filterCommitTypeRepository.findAll()).thenReturn(filterCommitTypeList);
 
+        // commit author ldapdn is null
         codeReviewEvaluator.auditDirectCommits(reviewAuditResponseV2, commit);
-        verify(codeReviewEvaluator).auditCommitLogAndContent(reviewAuditResponseV2, commit, whitelistCommitTypeList, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE);
+        verify(codeReviewEvaluator).auditIfFilteredCommitOrIndeedDirectCommit(reviewAuditResponseV2, commit, filterCommitTypeList, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE);
 
+        // user account made the change
+        commit = makeCommit("Commit 21", "CommitOid21", "Author12", "Committer12",12345678L);
+        List<String> serviceAccountOU = new ArrayList<>();
         reviewAuditResponseV2 = new CodeReviewAuditResponseV2();
+        serviceAccountOU.add("some value");
+        when(apiSettings.getServiceAccountOU()).thenReturn(serviceAccountOU);
+        when(filterCommitTypeRepository.findAll()).thenReturn(filterCommitTypeList);
+        codeReviewEvaluator.auditDirectCommits(reviewAuditResponseV2, commit);
+        verify(codeReviewEvaluator).auditIfFilteredCommitOrIndeedDirectCommit(reviewAuditResponseV2, commit, filterCommitTypeList, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_USER_ACCOUNT);
+
+    }
+
+    @Test
+    public void auditDirectCommitsChangesMatchFilterCriteriaTest() {
+        // [Scenario] Positive Case: if valid service account, matched a filter commitLogRegex with doContentCheck=true, and matched content filter criteria
+        // Expected: Should pass the content check and assigned service account non-code change status
+        CodeReviewEvaluator codeReviewEvaluator = Mockito.spy(this.codeReviewEvaluator);
+        CodeReviewAuditResponseV2 reviewAuditResponseV2 = new CodeReviewAuditResponseV2();
+        List<FilterCommitType> filterCommitTypeList = makeFilterCommitTypeList();
         String patch = "@@ -2,7 +2,7 @@\n   <artifactId>some-artifact</artifactId>\n-  <version>1.0.0</version>\n+  <version>1.0.1-SNAPSHOT</version>";
-        commit = makeDirectCommitServiceAccount("maven", patch, "Author12", "Committer12",12345678L);
+        Commit commit = makeDirectCommitServiceAccount("maven", patch, "Author12", "Committer12",12345678L);
         List<String> serviceAccountOU = new ArrayList<>();
         serviceAccountOU.add("CN=hygieiaUser,OU=Service Accounts,DC=basic,DC=ds,DC=industry,DC=com");
+
         when(apiSettings.getServiceAccountOU()).thenReturn(serviceAccountOU);
         when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
+        when(filterCommitTypeRepository.findAll()).thenReturn(filterCommitTypeList);
 
-        // positive case: changes match whitelisted criteria
         codeReviewEvaluator.auditDirectCommits(reviewAuditResponseV2, commit);
-        verify(codeReviewEvaluator).auditCommitLogAndContent(reviewAuditResponseV2, commit, whitelistCommitTypeList, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT);
+        verify(codeReviewEvaluator).auditIfFilteredCommitOrIndeedDirectCommit(reviewAuditResponseV2, commit, filterCommitTypeList, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT);
         System.out.println(reviewAuditResponseV2.getAuditStatuses());
         Assert.assertEquals(true, reviewAuditResponseV2.getAuditStatuses().contains(CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT));
+    }
 
-        reviewAuditResponseV2 = new CodeReviewAuditResponseV2();
-        // missing patterns should ignore the content check
-        List<WhitelistCommitType> mavenWhitelistCommitType = makeMavenWhitelistCommitTypeListContentCheckMissingPatterns();
-        when(whitelistCommitTypeRepository.findAll()).thenReturn(mavenWhitelistCommitType);
-        codeReviewEvaluator.auditDirectCommits(reviewAuditResponseV2, commit);
-        verify(codeReviewEvaluator).auditCommitLogAndContent(reviewAuditResponseV2, commit, mavenWhitelistCommitType, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT);
-        System.out.println(reviewAuditResponseV2.getAuditStatuses());
-        Assert.assertEquals(true, reviewAuditResponseV2.getAuditStatuses().contains(CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT));
+    @Test
+    public void auditDirectCommitsMissingFilterContentPatterns() {
+        // [Scenario] Negative Case: if valid service account and matched a filter commitLogRegex with doContentCheck=true, but missing content patterns
+        // Expected: Should bypass the content check and flag as direct commit to base
+        CodeReviewEvaluator codeReviewEvaluator = Mockito.spy(this.codeReviewEvaluator);
+        CodeReviewAuditResponseV2 reviewAuditResponseV2 = new CodeReviewAuditResponseV2();
+        Commit commit = makeDirectCommitServiceAccount("maven", "dummy patch changes", "Author12", "Committer12",12345678L);
+        List<String> serviceAccountOU = new ArrayList<>();
+        serviceAccountOU.add("CN=hygieiaUser,OU=Service Accounts,DC=basic,DC=ds,DC=industry,DC=com");
+        List<FilterCommitType> mavenFilterCommitType = makeMavenFilterCommitTypeListContentCheckMissingPatterns();
 
-        reviewAuditResponseV2 = new CodeReviewAuditResponseV2();
-        // negative case: content changes do not match whitelisted criteria
-        patch = "@@ -2,7 +2,7 @@\n   <artifactId>some-artifact</artifactId>\n-  <version>1.0.0</version>\n+  <version>1.0.1-SNAPSHOT</version>\n+  <added-tag>unexpected-change</added-tag>\n   <parent>";
-        commit = makeDirectCommitServiceAccount("maven", patch, "Author12", "Committer12",12345678L);
-        when(whitelistCommitTypeRepository.findAll()).thenReturn(whitelistCommitTypeList);
+        when(apiSettings.getServiceAccountOU()).thenReturn(serviceAccountOU);
+        when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
+        when(filterCommitTypeRepository.findAll()).thenReturn(mavenFilterCommitType);
+
         codeReviewEvaluator.auditDirectCommits(reviewAuditResponseV2, commit);
-        verify(codeReviewEvaluator).auditCommitLogAndContent(reviewAuditResponseV2, commit, whitelistCommitTypeList, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT);
+        verify(codeReviewEvaluator).auditIfFilteredCommitOrIndeedDirectCommit(reviewAuditResponseV2, commit, mavenFilterCommitType, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT);
         System.out.println(reviewAuditResponseV2.getAuditStatuses());
         Assert.assertEquals(false, reviewAuditResponseV2.getAuditStatuses().contains(CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT));
         Assert.assertEquals(true, reviewAuditResponseV2.getAuditStatuses().contains(CodeReviewAuditStatus.DIRECT_COMMITS_TO_BASE));
+    }
 
-        reviewAuditResponseV2 = new CodeReviewAuditResponseV2();
-        serviceAccountOU = new ArrayList<>();
-        serviceAccountOU.add("some value");
+    @Test
+    public void auditDirectCommitsContentChangesDoNotMatchFilterCriteria() {
+        // [Scenario] Negative Case: if valid service account and matched a filter commitLogRegex with doContentCheck=true, but content changes do not match filter criteria
+        // Expected: Should be flagged as direct commit to base
+        CodeReviewEvaluator codeReviewEvaluator = Mockito.spy(this.codeReviewEvaluator);
+        CodeReviewAuditResponseV2 reviewAuditResponseV2 = new CodeReviewAuditResponseV2();
+        String patch = "@@ -2,7 +2,7 @@\n   <artifactId>some-artifact</artifactId>\n-  <version>1.0.0</version>\n+  <version>1.0.1-SNAPSHOT</version>\n+  <added-tag>unexpected-change</added-tag>\n   <parent>";
+        Commit commit = makeDirectCommitServiceAccount("maven", patch, "Author12", "Committer12",12345678L);
+        List<String> serviceAccountOU = new ArrayList<>();
+        serviceAccountOU.add("CN=hygieiaUser,OU=Service Accounts,DC=basic,DC=ds,DC=industry,DC=com");
+        List<FilterCommitType> filterCommitTypeList = makeFilterCommitTypeList();
+
         when(apiSettings.getServiceAccountOU()).thenReturn(serviceAccountOU);
+        when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
+        when(filterCommitTypeRepository.findAll()).thenReturn(filterCommitTypeList);
+
         codeReviewEvaluator.auditDirectCommits(reviewAuditResponseV2, commit);
-        verify(codeReviewEvaluator).auditCommitLogAndContent(reviewAuditResponseV2, commit, whitelistCommitTypeList, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_USER_ACCOUNT);
+        verify(codeReviewEvaluator).auditIfFilteredCommitOrIndeedDirectCommit(reviewAuditResponseV2, commit, filterCommitTypeList, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT);
+        System.out.println(reviewAuditResponseV2.getAuditStatuses());
+        Assert.assertEquals(false, reviewAuditResponseV2.getAuditStatuses().contains(CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT));
+        Assert.assertEquals(true, reviewAuditResponseV2.getAuditStatuses().contains(CodeReviewAuditStatus.DIRECT_COMMITS_TO_BASE));
+    }
+
+    @Test
+    public void auditDirectCommitsMultipleContentChecksWithMatchingLogRegexDifferentContentPatterns() {
+        // [Scenario] Positive Case: if valid service account, and there exists 2 identical filter commitLogRegex with doContentCheck=true but different set of contentPatterns,
+        // matched one of those sets of content patterns
+        // Expected: Should pass the content check and assigned service account non-code change status
+        CodeReviewEvaluator codeReviewEvaluator = Mockito.spy(this.codeReviewEvaluator);
+        CodeReviewAuditResponseV2 reviewAuditResponseV2 = new CodeReviewAuditResponseV2();
+        Map<String, String> contentPatterns = makeContentPatterns();
+        contentPatterns.put("snapshotTagPattern", "some-other-regex");
+        List<FilterCommitType> filterCommitTypeList = makeFilterCommitTypeList();
+        filterCommitTypeList.add(0, new FilterCommitType("(.)*(maven)(.)*",true , contentPatterns));
+        String patch = "@@ -2,7 +2,7 @@\n   <artifactId>some-artifact</artifactId>\n-  <version>1.0.0</version>\n+  <version>1.0.1-SNAPSHOT</version>";
+        Commit commit = makeDirectCommitServiceAccount("maven", patch, "Author12", "Committer12",12345678L);
+        List<String> serviceAccountOU = new ArrayList<>();
+        serviceAccountOU.add("CN=hygieiaUser,OU=Service Accounts,DC=basic,DC=ds,DC=industry,DC=com");
+
+        when(apiSettings.getServiceAccountOU()).thenReturn(serviceAccountOU);
+        when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
+        when(filterCommitTypeRepository.findAll()).thenReturn(filterCommitTypeList);
+
+        codeReviewEvaluator.auditDirectCommits(reviewAuditResponseV2, commit);
+        verify(codeReviewEvaluator).auditIfFilteredCommitOrIndeedDirectCommit(reviewAuditResponseV2, commit, filterCommitTypeList, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT);
+        System.out.println(reviewAuditResponseV2.getAuditStatuses());
+        Assert.assertEquals(true, reviewAuditResponseV2.getAuditStatuses().contains(CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT));
+    }
+
+    @Test
+    public void auditDirectCommitsNoFilterCommitTypesFound() {
+        // [Scenario] Negative Case: if valid service account but no FilterCommitTypes provided/found in the DB
+        // Expected: Should be flagged as direct commit to base
+        CodeReviewEvaluator codeReviewEvaluator = Mockito.spy(this.codeReviewEvaluator);
+        CodeReviewAuditResponseV2 reviewAuditResponseV2 = new CodeReviewAuditResponseV2();
+        List<FilterCommitType> emptyList = new ArrayList<>();
+        Commit commit = makeDirectCommitServiceAccount("maven", "some dummy patch", "Author12", "Committer12",12345678L);
+        List<String> serviceAccountOU = new ArrayList<>();
+        serviceAccountOU.add("CN=hygieiaUser,OU=Service Accounts,DC=basic,DC=ds,DC=industry,DC=com");
+
+        when(apiSettings.getServiceAccountOU()).thenReturn(serviceAccountOU);
+        when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
+        when(filterCommitTypeRepository.findAll()).thenReturn(emptyList);
+
+        codeReviewEvaluator.auditDirectCommits(reviewAuditResponseV2, commit);
+        verify(codeReviewEvaluator).auditIfFilteredCommitOrIndeedDirectCommit(reviewAuditResponseV2, commit, emptyList, CodeReviewAuditStatus.DIRECT_COMMIT_NONCODE_CHANGE_SERVICE_ACCOUNT);
+        System.out.println(reviewAuditResponseV2.getAuditStatuses());
+        Assert.assertEquals(true, reviewAuditResponseV2.getAuditStatuses().contains(CodeReviewAuditStatus.DIRECT_COMMITS_TO_BASE));
+
     }
 
     @Test
@@ -677,21 +763,25 @@ public class CodeReviewEvaluatorTest {
         return  new ServiceAccount("servUserName","pom.xml,*.json");
     }
 
-    private List<WhitelistCommitType> makeWhitelistCommitTypeList(){
-        List<WhitelistCommitType> commitTypes = new ArrayList<>();
+    private List<FilterCommitType> makeFilterCommitTypeList(){
+        List<FilterCommitType> commitTypes = new ArrayList<>();
+        commitTypes.add(new FilterCommitType("(.)*(maven)(.)*",true , makeContentPatterns()));
+        commitTypes.add(new FilterCommitType("(.)*(Increment_Version_Tag)(.)*", false, null));
+        return commitTypes;
+    }
+
+    private Map<String, String> makeContentPatterns() {
         Map<String, String> contentPatterns = new HashMap<>();
         contentPatterns.put("snapshotTagPattern", "^.*(<version>[0-9\\.]+)\\-SNAPSHOT(</version>.*)");
         contentPatterns.put("releaseTagPattern", "^.*(<version>[0-9\\.]+)(</version>.*)");
         contentPatterns.put("indentPattern", "^\\W+.*");
         contentPatterns.put("tagTagPattern", "<tag>");
-        commitTypes.add(new WhitelistCommitType("maven",true , contentPatterns));
-        commitTypes.add(new WhitelistCommitType("(.)*(Increment_Version_Tag)(.)*", false, null));
-        return commitTypes;
+        return contentPatterns;
     }
 
-    private List<WhitelistCommitType> makeMavenWhitelistCommitTypeListContentCheckMissingPatterns(){
-        List<WhitelistCommitType> commitTypes = new ArrayList<>();
-        commitTypes.add(new WhitelistCommitType("maven",true , null));
+    private List<FilterCommitType> makeMavenFilterCommitTypeListContentCheckMissingPatterns(){
+        List<FilterCommitType> commitTypes = new ArrayList<>();
+        commitTypes.add(new FilterCommitType("maven",true , null));
         return commitTypes;
     }
 }

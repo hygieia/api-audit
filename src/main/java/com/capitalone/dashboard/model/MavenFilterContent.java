@@ -5,15 +5,15 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MavenWhitelistContent extends BaseWhitelistContent {
+public class MavenFilterContent extends BaseFilterContent {
 
     private static final String SNAPSHOT_TAG_PATTERN = "snapshotTagPattern";
     private static final String RELEASE_TAG_PATTERN = "releaseTagPattern";
     private static final String INDENT_PATTERN = "indentPattern";
     private static final String TAG_TAG_PATTERN = "tagTagPattern";
 
-    public MavenWhitelistContent(WhitelistCommitType mavenWhitelistCommitType) {
-        super(mavenWhitelistCommitType.getContentPatterns());
+    public MavenFilterContent(FilterCommitType mavenFilterCommitType) {
+        super(mavenFilterCommitType.getContentPatterns());
     }
 
     /* Example valid patch:
@@ -33,11 +33,11 @@ public class MavenWhitelistContent extends BaseWhitelistContent {
         String[] patchArray = StringUtils.split(patch,"\n");
         int idx = 0;
         while (idx < patchArray.length) {
-            // check if any required patterns are not provided or empty, bypass check and just return true
+            // check if any required patterns are not provided or empty, return false
             if (StringUtils.isEmpty(getContentPattern(SNAPSHOT_TAG_PATTERN))
                     || StringUtils.isEmpty(getContentPattern(RELEASE_TAG_PATTERN))
                     || StringUtils.isEmpty(getContentPattern(INDENT_PATTERN))
-                    || StringUtils.isEmpty(getContentPattern(TAG_TAG_PATTERN))) return true;
+                    || StringUtils.isEmpty(getContentPattern(TAG_TAG_PATTERN))) return false;
 
             // skip context lines until we reach changes
             boolean isIndentedLine = patchArray[idx].startsWith(" ") && patternMatcher(getContentPattern(INDENT_PATTERN)).matcher(patchArray[idx]).matches();
@@ -84,7 +84,7 @@ public class MavenWhitelistContent extends BaseWhitelistContent {
     }
 
     @Override
-    public boolean isWhitelistedCommitContent(List<RepoFile> commitFiles) {
+    public boolean isFilteredCommitContent(List<RepoFile> commitFiles) {
         for (RepoFile file : commitFiles) {
             if (file.getFilename().endsWith("package.json") || file.getFilename().endsWith("package-lock.json")) continue;
 

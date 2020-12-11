@@ -3,17 +3,17 @@ package com.capitalone.dashboard.model;
 import java.util.List;
 import java.util.Map;
 
-public abstract class BaseWhitelistContent {
+public abstract class BaseFilterContent {
 
     private Map<String,String> contentPatterns;
 
-    public BaseWhitelistContent(Map<String,String> contentPatterns) {
+    public BaseFilterContent(Map<String,String> contentPatterns) {
         this.contentPatterns = contentPatterns;
     };
 
     abstract boolean pluginDidThis(String commitContent);
 
-    public abstract boolean isWhitelistedCommitContent(List<RepoFile> commitFiles);
+    public abstract boolean isFilteredCommitContent(List<RepoFile> commitFiles);
 
     public Map<String, String> getContentPatterns() { return contentPatterns; }
 

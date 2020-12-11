@@ -1,22 +1,21 @@
 package com.capitalone.dashboard.common;
 
 import com.capitalone.dashboard.ApiSettings;
-import com.capitalone.dashboard.model.BaseWhitelistContent;
+import com.capitalone.dashboard.model.BaseFilterContent;
 import com.capitalone.dashboard.model.CodeAction;
 import com.capitalone.dashboard.model.CodeActionType;
 import com.capitalone.dashboard.model.CollectorItem;
 import com.capitalone.dashboard.model.Comment;
 import com.capitalone.dashboard.model.Commit;
 import com.capitalone.dashboard.model.CommitStatus;
+import com.capitalone.dashboard.model.FilterCommitType;
 import com.capitalone.dashboard.model.GitRequest;
-import com.capitalone.dashboard.model.MavenWhitelistContent;
+import com.capitalone.dashboard.model.MavenFilterContent;
 import com.capitalone.dashboard.model.Review;
 import com.capitalone.dashboard.model.SCM;
 import com.capitalone.dashboard.model.ServiceAccount;
-import com.capitalone.dashboard.model.WhitelistCommitType;
 import com.capitalone.dashboard.repository.CommitRepository;
 import com.capitalone.dashboard.repository.ServiceAccountRepository;
-import com.capitalone.dashboard.repository.WhitelistCommitTypeRepository;
 import com.capitalone.dashboard.response.AuditReviewResponse;
 import com.capitalone.dashboard.response.CodeReviewAuditResponse;
 import com.capitalone.dashboard.response.CodeReviewAuditResponseV2;
@@ -353,11 +352,11 @@ public class CommonCodeReview {
         return pattern.matcher(commitMessage).matches();
     }
 
-    // Creates different whitelist content types here (expandable)
-    public static void addWhitelistContent(Map<String, BaseWhitelistContent> whitelistContentMap, WhitelistCommitType commitType) {
+    // Creates different filter content types here (expandable)
+    public static void addFilterContent(Map<String, BaseFilterContent> filterContentMap, FilterCommitType commitType) {
         String commitLogRegex = commitType.getCommitLogRegex();
         // add content check types here
-        if (commitLogRegex.contains("maven")) whitelistContentMap.put(commitLogRegex, new MavenWhitelistContent(commitType));
+        if (commitLogRegex.contains("maven")) filterContentMap.put(commitLogRegex, new MavenFilterContent(commitType));
     }
 
 }
