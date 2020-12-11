@@ -716,7 +716,6 @@ public class CodeReviewEvaluatorTest {
         RepoFile file1 = new RepoFile();
         file1.setFilename("pom.xml");
         file1.setPatch(patch);
-//        file1.setPatch("@@ -2,7 +2,7 @@\n   <artifactId>some-artifact</artifactId>\n-  <version>1.0.0</version>\n+  <version>1.0.1-SNAPSHOT</version>\n   <scm>\n-    <tag>old-tag-1.0.0</tag>\n+    <tag>new-tag-1.0.1</tag>\n   </scm>");
         c.setFiles(Stream.of(file1).collect(Collectors.toList()));
         RepoFile file2 = new RepoFile();
         file2.setFilename("package.json");
