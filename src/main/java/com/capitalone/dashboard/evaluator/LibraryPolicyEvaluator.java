@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -72,18 +73,14 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
         LibraryPolicyAuditResponse libraryPolicyAuditResponse = new LibraryPolicyAuditResponse();
         libraryPolicyAuditResponse.setAuditEntity(collectorItem.getOptions());
 
-        if (Objects.isNull(returnPolicyResult)) {
-            libraryPolicyAuditResponse.addAuditStatus(LibraryPolicyAuditStatus.LIBRARY_POLICY_AUDIT_MISSING);
-            return libraryPolicyAuditResponse;
-        }
-        libraryPolicyAuditResponse.setLibraryPolicyResult(returnPolicyResult);
-        libraryPolicyAuditResponse.setLastExecutionTime(returnPolicyResult.getEvaluationTimestamp());
-
-        if (StringUtils.equalsIgnoreCase(returnPolicyResult.getScanState(), ScanState.INVALID.getState())) {
+        if(Objects.isNull(returnPolicyResult) || MapUtils.isEmpty(returnPolicyResult.getThreats())){
             libraryPolicyAuditResponse.addAuditStatus(LibraryPolicyAuditStatus.LIBRARY_POLICY_INVALID_SCAN);
-        } else if (StringUtils.equalsIgnoreCase(returnPolicyResult.getScanState(), ScanState.NO_FINDINGS.getState())) {
-            libraryPolicyAuditResponse.addAuditStatus(LibraryPolicyAuditStatus.LIBRARY_POLICY_AUDIT_OK);
+            libraryPolicyAuditResponse.setLibraryPolicyResult(returnPolicyResult);
+            libraryPolicyAuditResponse.setLastExecutionTime(Objects.nonNull(returnPolicyResult) ? returnPolicyResult.getEvaluationTimestamp() : 0L );
+            return libraryPolicyAuditResponse;
         } else {
+            libraryPolicyAuditResponse.setLibraryPolicyResult(returnPolicyResult);
+            libraryPolicyAuditResponse.setLastExecutionTime(returnPolicyResult.getEvaluationTimestamp());
             //threats by type
             Set<LibraryPolicyResult.Threat> securityThreats = !MapUtils.isEmpty(returnPolicyResult.getThreats()) ? returnPolicyResult.getThreats().get(LibraryPolicyType.Security) : SetUtils.EMPTY_SET;
             Set<LibraryPolicyResult.Threat> licenseThreats = !MapUtils.isEmpty(returnPolicyResult.getThreats()) ? returnPolicyResult.getThreats().get(LibraryPolicyType.License) : SetUtils.EMPTY_SET;
