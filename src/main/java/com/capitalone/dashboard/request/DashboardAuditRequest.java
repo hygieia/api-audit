@@ -13,7 +13,7 @@ public class DashboardAuditRequest extends AuditReviewRequest {
     private String businessApplication;
     @ApiModelProperty(value = "Audit Type has one of these values: ALL, CODE_REVIEW, BUILD_REVIEW, CODE_QUALITY, TEST_RESULT, PERF_TEST,ARTIFACT", example = "ALL")
 	private Set<AuditType> auditType;
-    @ApiModelProperty(value = "Audit Type has one of these values: ALL, CODE_REVIEW, BUILD_REVIEW, CODE_QUALITY, TEST_RESULT, PERF_TEST,ARTIFACT", example = "ALL")
+    @ApiModelProperty(value = "Auto discover audit type has one of these values: ALL, CODE_REVIEW, BUILD_REVIEW, CODE_QUALITY, TEST_RESULT, PERF_TEST,ARTIFACT", example = "ALL")
     private AutoDiscoverAuditType autoDiscoverAuditType;
 
     private ArtifactAuditRequest artifactAuditRequest;
