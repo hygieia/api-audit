@@ -1,6 +1,7 @@
 package com.capitalone.dashboard.rest;
 
 import com.capitalone.dashboard.model.AuditException;
+import com.capitalone.dashboard.model.AutoDiscoverAuditType;
 import com.capitalone.dashboard.model.CollectorItem;
 import com.capitalone.dashboard.model.DashboardType;
 import com.capitalone.dashboard.request.DashboardAuditRequest;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Objects;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
@@ -43,7 +45,7 @@ public class DashboardAuditController {
     public ResponseEntity<DashboardReviewResponse> dashboardReview(@Valid DashboardAuditRequest request) throws AuditException {
         DashboardReviewResponse dashboardReviewResponse = dashboardAuditService.getDashboardReviewResponse(request.getTitle(), DashboardType.Team,
                 request.getBusinessService(), request.getBusinessApplication(),
-                request.getBeginDate(), request.getEndDate(), request.getAuditType());
+                request.getBeginDate(), request.getEndDate(), request.getAuditType(), Objects.nonNull(request.getAutoDiscoverAuditType())? request.getAutoDiscoverAuditType() : AutoDiscoverAuditType.ALL);
         dashboardReviewResponse.setClientReference(request.getClientReference());
         return ResponseEntity.ok().body(dashboardReviewResponse);
     }

@@ -1,6 +1,7 @@
 package com.capitalone.dashboard.request;
 
 import com.capitalone.dashboard.model.AuditType;
+import com.capitalone.dashboard.model.AutoDiscoverAuditType;
 import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Set;
@@ -12,6 +13,9 @@ public class DashboardAuditRequest extends AuditReviewRequest {
     private String businessApplication;
     @ApiModelProperty(value = "Audit Type has one of these values: ALL, CODE_REVIEW, BUILD_REVIEW, CODE_QUALITY, TEST_RESULT, PERF_TEST,ARTIFACT", example = "ALL")
 	private Set<AuditType> auditType;
+    @ApiModelProperty(value = "Audit Type has one of these values: ALL, CODE_REVIEW, BUILD_REVIEW, CODE_QUALITY, TEST_RESULT, PERF_TEST,ARTIFACT", example = "ALL")
+    private AutoDiscoverAuditType autoDiscoverAuditType;
+
     private ArtifactAuditRequest artifactAuditRequest;
 
     public String getTitle() {
@@ -52,5 +56,13 @@ public class DashboardAuditRequest extends AuditReviewRequest {
 
     public void setArtifactAuditRequest(ArtifactAuditRequest artifactAuditRequest) {
         this.artifactAuditRequest = artifactAuditRequest;
+    }
+
+    public AutoDiscoverAuditType getAutoDiscoverAuditType() {
+        return autoDiscoverAuditType;
+    }
+
+    public void setAutoDiscoverAuditType(AutoDiscoverAuditType autoDiscoverAuditType) {
+        this.autoDiscoverAuditType = autoDiscoverAuditType;
     }
 }
