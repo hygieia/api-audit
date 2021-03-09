@@ -4,6 +4,8 @@ import com.capitalone.dashboard.ApiSettings;
 import com.capitalone.dashboard.evaluator.Evaluator;
 import com.capitalone.dashboard.model.AuditException;
 import com.capitalone.dashboard.model.AuditType;
+import com.capitalone.dashboard.model.AutoDiscoverAuditType;
+import com.capitalone.dashboard.model.AutoDiscovery;
 import com.capitalone.dashboard.model.Cmdb;
 import com.capitalone.dashboard.model.CollectorItem;
 import com.capitalone.dashboard.model.Dashboard;
@@ -15,9 +17,13 @@ import com.capitalone.dashboard.repository.DashboardRepository;
 import com.capitalone.dashboard.request.ArtifactAuditRequest;
 import com.capitalone.dashboard.request.DashboardAuditRequest;
 import com.capitalone.dashboard.response.AuditReviewResponse;
+import com.capitalone.dashboard.response.AutoDiscoverAuditResponse;
 import com.capitalone.dashboard.response.DashboardReviewResponse;
+import com.capitalone.dashboard.status.AutoDiscoverAuditStatus;
 import com.capitalone.dashboard.status.DashboardAuditStatus;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -27,6 +33,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
@@ -69,7 +76,7 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
      */
     @SuppressWarnings("PMD.NPathComplexity")
     @Override
-    public DashboardReviewResponse getDashboardReviewResponse(String dashboardTitle, DashboardType dashboardType, String businessService, String businessApp, long beginDate, long endDate, Set<AuditType> auditTypes) throws AuditException {
+    public DashboardReviewResponse getDashboardReviewResponse(String dashboardTitle, DashboardType dashboardType, String businessService, String businessApp, long beginDate, long endDate, Set<AuditType> auditTypes, AutoDiscoverAuditType autoDiscoverAuditType) throws AuditException {
 
         validateParameters(dashboardTitle,dashboardType, businessService, businessApp, beginDate, endDate);
 
@@ -94,9 +101,15 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
         auditTypes.forEach(auditType -> {
             Evaluator evaluator = auditModel.evaluatorMap().get(auditType);
             try {
+
                 Collection<AuditReviewResponse> auditResponse = evaluator.evaluate(dashboard, beginDate, endDate, null);
-                dashboardReviewResponse.addReview(auditType, auditResponse);
-                dashboardReviewResponse.addAuditStatus(auditModel.successStatusMap().get(auditType));
+                if(auditType == AuditType.AUTO_DISCOVER){
+                    setAutoDiscoverAuditResponse(autoDiscoverAuditType, dashboardReviewResponse, auditType, auditResponse);
+                }else{
+                    dashboardReviewResponse.addReview(auditType, auditResponse);
+                    dashboardReviewResponse.addAuditStatus(auditModel.successStatusMap().get(auditType));
+                }
+
             } catch (AuditException e) {
                 if (e.getErrorCode() == AuditException.NO_COLLECTOR_ITEM_CONFIGURED) {
                     dashboardReviewResponse.addAuditStatus(auditModel.errorStatusMap().get(auditType));
@@ -104,6 +117,118 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
             }
         });
         return dashboardReviewResponse;
+    }
+
+    private void setAutoDiscoverAuditResponse(AutoDiscoverAuditType autoDiscoverAuditType, DashboardReviewResponse dashboardReviewResponse, AuditType auditType, Collection<AuditReviewResponse> auditResponse) {
+        AutoDiscoverAuditResponse autoDiscoverAuditResponse = (AutoDiscoverAuditResponse) Iterables.get(auditResponse,0);
+        AutoDiscoverAuditResponse modified = new AutoDiscoverAuditResponse();
+        if(autoDiscoverAuditResponse.getAuditStatuses().contains(AutoDiscoverAuditStatus.AUTO_DISCOVER_EVIDENCES_NOT_FOUND)){
+            dashboardReviewResponse.addReview(auditType,  Stream.of(autoDiscoverAuditResponse).collect(Collectors.toList()));
+            dashboardReviewResponse.addAuditStatus(auditModel.successStatusMap().get(auditType));
+        }else{
+            AutoDiscovery autoDiscovery = autoDiscoverAuditResponse.getAutoDiscoveries().get(0);
+            AutoDiscovery updated = new AutoDiscovery();
+            updated.setMetaData(autoDiscovery.getMetaData());
+            updated.setModifiedTimestamp(autoDiscovery.getModifiedTimestamp());
+            setCodeRepoEntries(autoDiscoverAuditType, autoDiscovery, updated, modified);
+            setBuildEntries(autoDiscoverAuditType, autoDiscovery, updated, modified);
+            setSecurityScanEntries(autoDiscoverAuditType, autoDiscovery, updated, modified);
+            setDeployEntries(autoDiscoverAuditType, autoDiscovery, updated, modified);
+            setLibraryPolicyEntries(autoDiscoverAuditType, autoDiscovery, updated, modified);
+            setTestEntries(autoDiscoverAuditType, autoDiscovery, updated, modified);
+            setArtifactEntries(autoDiscoverAuditType, autoDiscovery, updated, modified);
+            setCodeQualityEntries(autoDiscoverAuditType, autoDiscovery, updated, modified);
+            setPerfTestEntries(autoDiscoverAuditType, autoDiscovery, updated, modified);
+            modified.setAutoDiscoveries(Stream.of(updated).collect(Collectors.toList()));
+            dashboardReviewResponse.addReview(auditType,  Stream.of(modified).collect(Collectors.toList()));
+            dashboardReviewResponse.addAuditStatus(auditModel.successStatusMap().get(auditType));
+        }
+
+    }
+
+    private void setPerfTestEntries(AutoDiscoverAuditType autoDiscoverAuditType, AutoDiscovery autoDiscovery, AutoDiscovery updated, AutoDiscoverAuditResponse modified) {
+        if(AutoDiscoverAuditType.PERF_TEST.equals(autoDiscoverAuditType) || AutoDiscoverAuditType.ALL.equals(autoDiscoverAuditType)){
+            if(CollectionUtils.isNotEmpty(autoDiscovery.getPerformanceTestEntries())){
+                updated.setPerformanceTestEntries(autoDiscovery.getPerformanceTestEntries());
+                modified.addAuditStatus(AutoDiscoverAuditStatus.AUTO_DISCOVER_PERF_TEST_EVIDENCES_FOUND);
+            }
+        }
+    }
+
+    private void setCodeQualityEntries(AutoDiscoverAuditType autoDiscoverAuditType, AutoDiscovery autoDiscovery, AutoDiscovery updated, AutoDiscoverAuditResponse modified) {
+        if(AutoDiscoverAuditType.CODE_QUALITY.equals(autoDiscoverAuditType) || AutoDiscoverAuditType.ALL.equals(autoDiscoverAuditType)){
+            if(CollectionUtils.isNotEmpty(autoDiscovery.getStaticCodeEntries())) {
+                updated.setStaticCodeEntries(autoDiscovery.getStaticCodeEntries());
+                modified.addAuditStatus(AutoDiscoverAuditStatus.AUTO_DISCOVER_STATIC_CODE_EVIDENCES_FOUND);
+            }
+        }
+    }
+
+    private void setArtifactEntries(AutoDiscoverAuditType autoDiscoverAuditType, AutoDiscovery autoDiscovery, AutoDiscovery updated, AutoDiscoverAuditResponse modified) {
+        if(AutoDiscoverAuditType.ARTIFACT.equals(autoDiscoverAuditType) || AutoDiscoverAuditType.ALL.equals(autoDiscoverAuditType)){
+            if(CollectionUtils.isNotEmpty(autoDiscovery.getArtifactEntries())) {
+                updated.setArtifactEntries(autoDiscovery.getArtifactEntries());
+                modified.addAuditStatus(AutoDiscoverAuditStatus.AUTO_DISCOVER_ARTIFACT_EVIDENCES_FOUND);
+            }
+        }
+    }
+
+    private void setTestEntries(AutoDiscoverAuditType autoDiscoverAuditType, AutoDiscovery autoDiscovery, AutoDiscovery updated, AutoDiscoverAuditResponse modified) {
+        if(AutoDiscoverAuditType.TEST_RESULT.equals(autoDiscoverAuditType) || AutoDiscoverAuditType.ALL.equals(autoDiscoverAuditType)){
+            if(CollectionUtils.isNotEmpty(autoDiscovery.getFunctionalTestEntries())){
+                updated.setFunctionalTestEntries(autoDiscovery.getFunctionalTestEntries());
+                modified.addAuditStatus(AutoDiscoverAuditStatus.AUTO_DISCOVER_FUNCTIONAL_TEST_EVIDENCES_FOUND);
+            }
+           if(CollectionUtils.isNotEmpty(autoDiscovery.getFeatureEntries())){
+               updated.setFeatureEntries(autoDiscovery.getFeatureEntries());
+               modified.addAuditStatus(AutoDiscoverAuditStatus.AUTO_DISCOVER_FEATURE_EVIDENCES_FOUND);
+           }
+        }
+    }
+
+    private void setLibraryPolicyEntries(AutoDiscoverAuditType autoDiscoverAuditType, AutoDiscovery autoDiscovery, AutoDiscovery updated, AutoDiscoverAuditResponse modified) {
+        if(AutoDiscoverAuditType.LIBRARY_POLICY.equals(autoDiscoverAuditType) || AutoDiscoverAuditType.ALL.equals(autoDiscoverAuditType)){
+            if(CollectionUtils.isNotEmpty(autoDiscovery.getLibraryScanEntries())){
+                updated.setLibraryScanEntries(autoDiscovery.getLibraryScanEntries());
+                modified.addAuditStatus(AutoDiscoverAuditStatus.AUTO_DISCOVER_LIBRARY_POLICY_EVIDENCES_FOUND);
+            }
+        }
+    }
+
+    private void setDeployEntries(AutoDiscoverAuditType autoDiscoverAuditType, AutoDiscovery autoDiscovery, AutoDiscovery updated, AutoDiscoverAuditResponse modified) {
+        if(AutoDiscoverAuditType.DEPLOY.equals(autoDiscoverAuditType) || AutoDiscoverAuditType.ALL.equals(autoDiscoverAuditType)){
+            if(CollectionUtils.isNotEmpty(autoDiscovery.getDeploymentEntries())) {
+                updated.setDeploymentEntries(autoDiscovery.getDeploymentEntries());
+                modified.addAuditStatus(AutoDiscoverAuditStatus.AUTO_DISCOVER_DEPLOY_EVIDENCES_FOUND);
+            }
+        }
+    }
+
+    private void setSecurityScanEntries(AutoDiscoverAuditType autoDiscoverAuditType, AutoDiscovery autoDiscovery, AutoDiscovery updated, AutoDiscoverAuditResponse modified) {
+        if(AutoDiscoverAuditType.STATIC_SECURITY_ANALYSIS.equals(autoDiscoverAuditType) || AutoDiscoverAuditType.ALL.equals(autoDiscoverAuditType)){
+            if(CollectionUtils.isNotEmpty(autoDiscovery.getSecurityScanEntries())) {
+                updated.setSecurityScanEntries(autoDiscovery.getSecurityScanEntries());
+                modified.addAuditStatus(AutoDiscoverAuditStatus.AUTO_DISCOVER_SECURITY_SCAN_EVIDENCES_FOUND);
+            }
+        }
+    }
+
+    private void setBuildEntries(AutoDiscoverAuditType autoDiscoverAuditType, AutoDiscovery autoDiscovery, AutoDiscovery updated, AutoDiscoverAuditResponse modified) {
+        if(AutoDiscoverAuditType.BUILD_REVIEW.equals(autoDiscoverAuditType) || AutoDiscoverAuditType.ALL.equals(autoDiscoverAuditType)){
+            if(CollectionUtils.isNotEmpty(autoDiscovery.getBuildEntries())) {
+                updated.setBuildEntries(autoDiscovery.getBuildEntries());
+                modified.addAuditStatus(AutoDiscoverAuditStatus.AUTO_DISCOVER_BUILD_EVIDENCES_FOUND);
+            }
+        }
+    }
+
+    private void setCodeRepoEntries(AutoDiscoverAuditType autoDiscoverAuditType, AutoDiscovery autoDiscovery, AutoDiscovery updated, AutoDiscoverAuditResponse modified) {
+        if(AutoDiscoverAuditType.CODE_REVIEW.equals(autoDiscoverAuditType) || AutoDiscoverAuditType.ALL.equals(autoDiscoverAuditType)) {
+            if(CollectionUtils.isNotEmpty(autoDiscovery.getCodeRepoEntries())) {
+                updated.setCodeRepoEntries(autoDiscovery.getCodeRepoEntries());
+                modified.addAuditStatus(AutoDiscoverAuditStatus.AUTO_DISCOVER_CODE_REPO_URLS_FOUND);
+            }
+        }
     }
 
     @Override
