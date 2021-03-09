@@ -366,8 +366,8 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         for (String mergeCommitRegex : mergeCommitFromTargetBranchRegEx) {
             Pattern pattern = Pattern.compile(mergeCommitRegex, Pattern.CASE_INSENSITIVE);
             Matcher matcher = pattern.matcher(commitLog);
-            if (matcher.matches()) return StringUtils.equalsIgnoreCase(pr.getScmBranch(), matcher.group(2)) // matches "merge branch 'x' into y" or "merge branch 'origin/x' into y
-                    || StringUtils.equalsIgnoreCase(pr.getScmUrl(), matcher.group(2)); // matches "merge github.com/org/repo into y"
+            if (matcher.matches()) return StringUtils.equalsIgnoreCase(pr.getScmBranch(), matcher.group(2))
+                    || StringUtils.equalsIgnoreCase(pr.getScmUrl(), matcher.group(2));
         }
         return false;
     }

@@ -249,6 +249,7 @@ public class CodeReviewEvaluatorTest {
         when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
         when(apiSettings.getServiceAccountOU()).thenReturn(TestConstants.USER_ACCOUNTS);
         when(apiSettings.getCommitLogIgnoreAuditRegEx()).thenReturn("(.)*(Increment_Version_Tag)(.)*");
+        when(apiSettings.getMergeCommitFromTargetBranchRegEx()).thenReturn(TestConstants.TARGET_BRANCH_MERGE_COMMIT_REGEX);
         when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
         CodeReviewAuditResponseV2 responseV2 = codeReviewEvaluator.evaluate(makeCollectorItem(1,"master"), collectorItemList,1L, 99999999L, null);
         Assert.assertFalse(responseV2.getAuditStatuses().contains(CodeReviewAuditStatus.COMMITS_AFTER_PR_REVIEWS));
