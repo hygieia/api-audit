@@ -54,6 +54,7 @@ public class ApiSettings {
     private String thirdPartyRegex;
     private List<String> ignoreEndPoints = new ArrayList();
     private List<String> ignoreApiUsers = new ArrayList();
+    private List<String> mergeCommitFromTargetBranchRegEx;
 
     public String getKey() {
         return key;
@@ -268,4 +269,7 @@ public class ApiSettings {
         return CollectionUtils.isNotEmpty(matchingElements);
     }
 
+    public List<String> getMergeCommitFromTargetBranchRegEx() { return mergeCommitFromTargetBranchRegEx; }
+
+    public void setMergeCommitFromTargetBranchRegEx(List<String> mergeCommitFromTargetBranchRegEx) { this.mergeCommitFromTargetBranchRegEx = mergeCommitFromTargetBranchRegEx; }
 }

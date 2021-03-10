@@ -362,10 +362,14 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
     private boolean isMergeCommitFromTargetBranch(Commit commit, GitRequest pr) {
         if(commit == null || pr == null) return false;
         String commitLog = commit.getScmCommitLog();
-        Pattern pattern = Pattern.compile("(.*merge branch.*\')(.*)(\'.*into.*)", Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(commitLog);
-        if(!matcher.matches()) return false;
-        return StringUtils.equalsIgnoreCase(pr.getScmBranch(), matcher.group(2));
+        List<String> mergeCommitFromTargetBranchRegEx = settings.getMergeCommitFromTargetBranchRegEx();
+        for (String mergeCommitRegex : mergeCommitFromTargetBranchRegEx) {
+            Pattern pattern = Pattern.compile(mergeCommitRegex, Pattern.CASE_INSENSITIVE);
+            Matcher matcher = pattern.matcher(commitLog);
+            if (matcher.matches()) return StringUtils.equalsIgnoreCase(pr.getScmBranch(), matcher.group(2))
+                    || StringUtils.equalsIgnoreCase(pr.getScmUrl(), matcher.group(2));
+        }
+        return false;
     }
 
     protected boolean existsApprovedPROnAnotherBranch(CollectorItem repoItem, Commit commit, List<CollectorItem> collectorItemList,

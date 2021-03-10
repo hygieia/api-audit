@@ -8,4 +8,6 @@ public class TestConstants {
     public static final List<String> SERVICE_ACCOUNTS = Arrays.asList("Service Accounts", "UNIX");
 
     public static final List<String> USER_ACCOUNTS = Arrays.asList("User Accounts");
+
+    public static final List<String> TARGET_BRANCH_MERGE_COMMIT_REGEX = Arrays.asList("(.*merge branch.*\\')(.*)(\\'.*into.*)");
 }
