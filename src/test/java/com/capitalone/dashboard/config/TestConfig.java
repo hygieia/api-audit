@@ -1,6 +1,9 @@
 package com.capitalone.dashboard.config;
 
 import com.capitalone.dashboard.ApiSettings;
+import com.capitalone.dashboard.repository.CustomRepositoryQuery;
+import com.capitalone.dashboard.service.CollectorService;
+import org.mockito.Mockito;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +31,14 @@ public class TestConfig {
         settings.setValidStoryStatus(validStoryStatus);
         return settings;
     }
+
+    @Bean
+    public CollectorService collectorService() {
+        return Mockito.mock(CollectorService.class);
+    }
+
+    @Bean
+    public CustomRepositoryQuery customRepositoryQuery() { return Mockito.mock(CustomRepositoryQuery.class); }
 
 /*    @Bean
     public DashboardAuditService dashboardAuditService() {
