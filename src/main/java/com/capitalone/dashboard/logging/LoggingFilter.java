@@ -114,7 +114,7 @@ public class LoggingFilter implements Filter {
                     + ", uri=" + bufferedRequest.getRequestURI()
                     + ", request_method=" + bufferedRequest.getMethod()
                     + ", response_status=" + (success ? "success" : "failed")
-                    + ", response_code=" + (bufferedResponse == null ? 0 : bufferedResponse.getStatus())
+                    + ", response_code=" + bufferedResponse.getStatus()
                     + ", client_ip=" + httpServletRequest.getRemoteAddr()
                     + (StringUtils.equalsIgnoreCase(httpServletRequest.getMethod(), "GET") ? ", request_params="+parameters :  StringUtils.EMPTY ));
             return;
@@ -148,7 +148,7 @@ public class LoggingFilter implements Filter {
                     + ", uri=" + bufferedRequest.getRequestURI()
                     + ", request_method=" + bufferedRequest.getMethod()
                     + ", response_status=" + (success ? "success" : "failed")
-                    + ", response_code=" + (bufferedResponse == null ? 0 : bufferedResponse.getStatus())
+                    + ", response_code=" +  bufferedResponse.getStatus()
                     + ", client_ip=" + httpServletRequest.getRemoteAddr()
                     + (StringUtils.equalsIgnoreCase(httpServletRequest.getMethod(), "GET") ? ", request_params="+parameters :  StringUtils.EMPTY ));
         }
