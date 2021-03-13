@@ -59,6 +59,8 @@ public class LoggingFilter implements Filter {
 
     private static final String UNKNOWN_USER = "unknown";
 
+    private static final String PING = "ping";
+
     @Autowired
     private AuditRequestLogRepository auditRequestLogRepository;
 
@@ -79,6 +81,13 @@ public class LoggingFilter implements Filter {
         Map<String, String> requestMap = this.getTypesafeRequestMap(httpServletRequest);
         BufferedRequestWrapper bufferedRequest = new BufferedRequestWrapper(httpServletRequest);
         BufferedResponseWrapper bufferedResponse = new BufferedResponseWrapper(httpServletResponse);
+
+        //no need for further action for ping
+        if(StringUtils.containsIgnoreCase(httpServletRequest.getRequestURI(), PING)) {
+            chain.doFilter(bufferedRequest, bufferedResponse);
+            return;
+        }
+
         String apiUser = bufferedRequest.getHeader(API_USER_KEY);
         apiUser = (StringUtils.isEmpty(apiUser) ? UNKNOWN_USER : apiUser);
         //retrieve header value from request and set it to response
@@ -103,16 +112,14 @@ public class LoggingFilter implements Filter {
 
         if(settings.checkIgnoreEndPoint(httpServletRequest.getRequestURI()) || settings.checkIgnoreApiUser(requestLog.getApiUser())) {
             chain.doFilter(bufferedRequest, bufferedResponse);
-
             int response_code = bufferedResponse.getStatus();
             boolean success = (response_code >=200 && response_code <=399) ;
-
             LOGGER.info("correlation_id=" + correlation_id
-                    + ", requester=" + apiUser
-                    + ", duration=" + (System.currentTimeMillis() - startTime)
                     + ", application=hygieia, service=api-audit"
                     + ", uri=" + bufferedRequest.getRequestURI()
+                    + ", requester=" + apiUser
                     + ", request_method=" + bufferedRequest.getMethod()
+                    + ", duration=" + (System.currentTimeMillis() - startTime)
                     + ", response_status=" + (success ? "success" : "failed")
                     + ", response_code=" + bufferedResponse.getStatus()
                     + ", client_ip=" + httpServletRequest.getRemoteAddr()
@@ -130,25 +137,21 @@ public class LoggingFilter implements Filter {
             if ((httpServletRequest.getContentType() != null) && (new MimeType(httpServletRequest.getContentType()).match(new MimeType(APPLICATION_JSON_VALUE)))) {
                 requestLog.setRequestBody(JSON.parse(bufferedRequest.getRequestBody()));
             }
-
-            if ((bufferedResponse.getContentType() != null) && (new MimeType(bufferedResponse.getContentType()).match(new MimeType(APPLICATION_JSON_VALUE)))) {
-                requestLog.setResponseBody(JSON.parse(bufferedResponse.getContent()));
-            }
+            // removing the logging of responses as the collection size is way too big
         } catch (MimeTypeParseException e) {
             LOGGER.error("Invalid MIME Type detected. Request MIME type=" + httpServletRequest.getContentType() + ". Response MIME Type=" + bufferedResponse.getContentType());
         } finally {
 
             int response_code = bufferedResponse.getStatus();
             boolean success = (response_code >=200 && response_code <=399) ;
-
             LOGGER.info("correlation_id=" + correlation_id
-                    + ", requester=" + apiUser
-                    + ", duration=" + (System.currentTimeMillis() - startTime)
                     + ", application=hygieia, service=api-audit"
                     + ", uri=" + bufferedRequest.getRequestURI()
+                    + ", requester=" + apiUser
                     + ", request_method=" + bufferedRequest.getMethod()
+                    + ", duration=" + (System.currentTimeMillis() - startTime)
                     + ", response_status=" + (success ? "success" : "failed")
-                    + ", response_code=" +  bufferedResponse.getStatus()
+                    + ", response_code=" + bufferedResponse.getStatus()
                     + ", client_ip=" + httpServletRequest.getRemoteAddr()
                     + (StringUtils.equalsIgnoreCase(httpServletRequest.getMethod(), "GET") ? ", request_params="+parameters :  StringUtils.EMPTY ));
         }
