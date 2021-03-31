@@ -135,7 +135,7 @@ public class LoggingFilter implements Filter {
         try {
 
             if ((httpServletRequest.getContentType() != null) && (new MimeType(httpServletRequest.getContentType()).match(new MimeType(APPLICATION_JSON_VALUE)))) {
-                requestLog.setRequestBody(JSON.parse(bufferedRequest.getRequestBody()));
+                requestLog.setRequestBody(bufferedRequest.getRequestBody());
             }
             // removing the logging of responses as the collection size is way too big
         } catch (MimeTypeParseException e) {
