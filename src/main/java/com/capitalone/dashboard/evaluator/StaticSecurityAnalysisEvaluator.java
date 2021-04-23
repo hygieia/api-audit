@@ -81,16 +81,12 @@ public class StaticSecurityAnalysisEvaluator extends Evaluator<SecurityReviewAud
 
         if (metrics.stream().anyMatch(metric -> metric.getName().equalsIgnoreCase(STR_CRITICAL))){
             securityReviewAuditResponse.addAuditStatus(CodeQualityAuditStatus.STATIC_SECURITY_SCAN_FOUND_CRITICAL);
+            securityReviewAuditResponse.addAuditStatus(CodeQualityAuditStatus.STATIC_SECURITY_SCAN_FAIL);
         }else if (metrics.stream().anyMatch(metric -> metric.getName().equalsIgnoreCase(STR_HIGH))){
             securityReviewAuditResponse.addAuditStatus(CodeQualityAuditStatus.STATIC_SECURITY_SCAN_FOUND_HIGH);
+            securityReviewAuditResponse.addAuditStatus(CodeQualityAuditStatus.STATIC_SECURITY_SCAN_FAIL);
         }else{
-            CodeQualityMetric scoreMetric = metrics.stream().filter(metric -> metric.getName().equalsIgnoreCase(STR_SCORE)).findFirst().get();
-            Integer nScore = StringUtils.isNumeric(scoreMetric.getValue()) ? Integer.parseInt(scoreMetric.getValue()) : 0;
-            if (nScore > 0) {
                 securityReviewAuditResponse.addAuditStatus(CodeQualityAuditStatus.STATIC_SECURITY_SCAN_OK);
-            } else {
-                securityReviewAuditResponse.addAuditStatus(CodeQualityAuditStatus.STATIC_SECURITY_SCAN_FAIL);
-            }
         }
         return securityReviewAuditResponse;
     }
