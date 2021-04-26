@@ -7,6 +7,7 @@ import com.capitalone.dashboard.evaluator.CodeQualityEvaluator;
 import com.capitalone.dashboard.evaluator.CodeReviewEvaluator;
 import com.capitalone.dashboard.evaluator.DeployEvaluator;
 import com.capitalone.dashboard.evaluator.Evaluator;
+import com.capitalone.dashboard.evaluator.InfrastructureEvaluator;
 import com.capitalone.dashboard.evaluator.LibraryPolicyEvaluator;
 import com.capitalone.dashboard.evaluator.PerformanceTestResultEvaluator;
 import com.capitalone.dashboard.evaluator.RegressionTestResultEvaluator;
@@ -35,6 +36,7 @@ public class DashboardAuditModel {
     private final ArtifactEvaluator artifactEvaluator;
     private final DeployEvaluator deployEvaluator;
     private final AutoDiscoverEvaluator autoDiscoverEvaluator;
+    private final InfrastructureEvaluator infrastructureEvaluator;
 
 
 
@@ -47,7 +49,8 @@ public class DashboardAuditModel {
                                StaticSecurityAnalysisEvaluator staticSecurityAnalysisEvaluator,
                                LibraryPolicyEvaluator libraryPolicyEvaluator,ArtifactEvaluator artifactEvaluator,
                                DeployEvaluator deployEvaluator,
-                               AutoDiscoverEvaluator autoDiscoverEvaluator) {
+                               AutoDiscoverEvaluator autoDiscoverEvaluator,
+                               InfrastructureEvaluator infrastructureEvaluator) {
         this.codeReviewEvaluator = codeReviewEvaluator;
         this.buildEvaluator = buildEvaluator;
         this.codeQualityEvaluator = codeQualityEvaluator;
@@ -58,6 +61,7 @@ public class DashboardAuditModel {
         this.artifactEvaluator = artifactEvaluator;
         this.deployEvaluator = deployEvaluator;
         this.autoDiscoverEvaluator = autoDiscoverEvaluator;
+        this.infrastructureEvaluator = infrastructureEvaluator;
     }
 
 
@@ -72,7 +76,8 @@ public class DashboardAuditModel {
                 new SimpleEntry<>(AuditType.PERF_TEST, (Evaluator)performanceTestResultEvaluator),
                 new SimpleEntry<>(AuditType.ARTIFACT,(Evaluator)artifactEvaluator),
                 new SimpleEntry<>(AuditType.DEPLOY,(Evaluator)deployEvaluator),
-                new SimpleEntry<>(AuditType.AUTO_DISCOVER,(Evaluator)autoDiscoverEvaluator))
+                new SimpleEntry<>(AuditType.AUTO_DISCOVER,(Evaluator)autoDiscoverEvaluator),
+                new SimpleEntry<>(AuditType.INFRASTRUCTURE_SCAN, (Evaluator)infrastructureEvaluator))
                 .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue)));
     }
 
@@ -89,7 +94,8 @@ public class DashboardAuditModel {
                 new SimpleEntry<>(AuditType.STATIC_SECURITY_ANALYSIS, DashboardAuditStatus.DASHBOARD_STATIC_SECURITY_ANALYSIS_CONFIGURED),
                 new SimpleEntry<>(AuditType.ARTIFACT, DashboardAuditStatus.DASHBOARD_ARTIFACT_CONFIGURED),
                 new SimpleEntry<>(AuditType.DEPLOY, DashboardAuditStatus.DASHBOARD_DEPLOYMENT_SCRIPTS_CONFIGURED),
-                new SimpleEntry<>(AuditType.AUTO_DISCOVER, DashboardAuditStatus.DASHBOARD_AUTO_DISCOVERED_EVIDENCES_FOUND))
+                new SimpleEntry<>(AuditType.AUTO_DISCOVER, DashboardAuditStatus.DASHBOARD_AUTO_DISCOVERED_EVIDENCES_FOUND),
+                new SimpleEntry<>(AuditType.INFRASTRUCTURE_SCAN, DashboardAuditStatus.DASHBOARD_INFRASTRUCTURE_EVIDENCES_FOUND))
                 .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue)));
     }
 
@@ -105,7 +111,8 @@ public class DashboardAuditModel {
                 new SimpleEntry<>(AuditType.STATIC_SECURITY_ANALYSIS, DashboardAuditStatus.DASHBOARD_STATIC_SECURITY_ANALYSIS_NOT_CONFIGURED),
                 new SimpleEntry<>(AuditType.ARTIFACT, DashboardAuditStatus.DASHBOARD_ARTIFACT_NOT_CONFIGURED),
                 new SimpleEntry<>(AuditType.DEPLOY, DashboardAuditStatus.DASHBOARD_DEPLOYMENT_SCRIPTS_NOT_CONFIGURED),
-                new SimpleEntry<>(AuditType.AUTO_DISCOVER, DashboardAuditStatus.DASHBOARD_AUTO_DISCOVERED_EVIDENCES_NOT_FOUND))
+                new SimpleEntry<>(AuditType.AUTO_DISCOVER, DashboardAuditStatus.DASHBOARD_AUTO_DISCOVERED_EVIDENCES_NOT_FOUND),
+                new SimpleEntry<>(AuditType.INFRASTRUCTURE_SCAN, DashboardAuditStatus.DASHBOARD_INFRASTRUCTURE_EVIDENCES_NOT_FOUND))
                 .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue)));
     }
 
