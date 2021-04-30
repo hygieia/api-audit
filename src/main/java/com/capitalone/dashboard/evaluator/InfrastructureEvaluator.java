@@ -64,30 +64,21 @@ public class InfrastructureEvaluator extends Evaluator<InfrastructureAuditRespon
         // filter all scans for businesssComponent
         List<InfrastructureScan> filteredForBAP = infrastructureScans.stream().filter(infrastructureScan -> infrastructureScan.getBusinessApplication().equalsIgnoreCase(businessComponent)).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(filteredForBAP)) {
-            setInfraAudit(infrastructureAuditResponse, filteredForBAP, InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_CRITICAL, InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_HIGH);
+            setInfraAudit(infrastructureAuditResponse, filteredForBAP, InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_CRITICAL, InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_HIGH, InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_OK);
         } else {
             infrastructureAuditResponse.addAuditStatus(InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_COMP_NOT_FOUND);
         }
         //
         if (CollectionUtils.isNotEmpty(infrastructureScans)) {
-            setInfraAudit(infrastructureAuditResponse, infrastructureScans, InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_CRITICAL, InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_HIGH);
+            setInfraAudit(infrastructureAuditResponse, infrastructureScans, InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_CRITICAL, InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_HIGH, InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_OK);
         } else {
             infrastructureAuditResponse.addAuditStatus(InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_NOT_FOUND);
-        }
-        if (!infrastructureAuditResponse.getAuditStatuses().stream().filter(auditStatus -> auditStatus.equals(InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_CRITICAL) ||
-                auditStatus.equals(InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_HIGH) ||
-                auditStatus.equals(InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_COMP_NOT_FOUND) ||
-                auditStatus.equals(InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_CRITICAL) ||
-                auditStatus.equals(InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_HIGH) ||
-                auditStatus.equals(InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_NOT_FOUND)).findAny().isPresent()) {
-            infrastructureAuditResponse.addAuditStatus(InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_OK);
-            infrastructureAuditResponse.addAuditStatus(InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP__OK);
         }
         infrastructureAuditResponse.setInfrastructureScans(infrastructureScans);
         return infrastructureAuditResponse;
     }
 
-    private void setInfraAudit(InfrastructureAuditResponse infrastructureAuditResponse, List<InfrastructureScan> filteredForBAP, InfrastructureAuditStatus infraScanBussCritical, InfrastructureAuditStatus infraScanBussHigh) {
+    private void setInfraAudit(InfrastructureAuditResponse infrastructureAuditResponse, List<InfrastructureScan> filteredForBAP, InfrastructureAuditStatus infraScanBussCritical, InfrastructureAuditStatus infraScanBussHigh, InfrastructureAuditStatus infraScanOK) {
         filteredForBAP.stream().forEach(infrastructureScan -> {
             Vulnerability criticalVuln = CollectionUtils.isNotEmpty(infrastructureScan.getVulnerabilities()) ? infrastructureScan.getVulnerabilities().stream().filter(vulnerability -> vulnerability.getContextualizedRiskLabel().equalsIgnoreCase("CRITICAL")).findAny().orElse(null) : null;
             if (Objects.nonNull(criticalVuln)) {
@@ -96,6 +87,9 @@ public class InfrastructureEvaluator extends Evaluator<InfrastructureAuditRespon
             Vulnerability highVuln = CollectionUtils.isNotEmpty(infrastructureScan.getVulnerabilities()) ? infrastructureScan.getVulnerabilities().stream().filter(vulnerability -> vulnerability.getContextualizedRiskLabel().equalsIgnoreCase("HIGH")).findAny().orElse(null) : null;
             if (Objects.nonNull(highVuln)) {
                 infrastructureAuditResponse.addAuditStatus(infraScanBussHigh);
+            }
+            if(Objects.isNull(criticalVuln) && Objects.isNull(highVuln)){
+                infrastructureAuditResponse.addAuditStatus(infraScanOK);
             }
         });
     }
