@@ -1,15 +1,17 @@
 package com.capitalone.dashboard.evaluator;
 
-import com.capitalone.dashboard.model.CollectorItem;
-import com.capitalone.dashboard.model.CodeQualityMetricStatus;
+import com.capitalone.dashboard.ApiSettings;
 import com.capitalone.dashboard.model.CodeQuality;
 import com.capitalone.dashboard.model.CodeQualityMetric;
+import com.capitalone.dashboard.model.CodeQualityMetricStatus;
 import com.capitalone.dashboard.model.CodeQualityType;
+import com.capitalone.dashboard.model.CollectorItem;
 import com.capitalone.dashboard.repository.CodeQualityRepository;
 import com.capitalone.dashboard.response.SecurityReviewAuditResponse;
 import com.capitalone.dashboard.status.CodeQualityAuditStatus;
 import org.bson.types.ObjectId;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -31,6 +33,9 @@ public class StaticSecurityAnalysisEvaluatorTest {
 
     @Mock
     private CodeQualityRepository codeQualityRepository;
+
+    @Before
+    public void setup() { staticSecurityAnalysisEvaluator.setSettings(getSettings()); }
 
     @Test
     public void testEvaluate_StaticSecurityMissing(){
@@ -121,5 +126,20 @@ public class StaticSecurityAnalysisEvaluatorTest {
         codeQualityMetric.setValue(securityScore);
         codeQuality.addMetric(codeQualityMetric);
         return Arrays.asList(codeQuality);
+    }
+
+    private List<String> getSupportedScanTypes() {
+        String[] validScans = {"Full"};
+        return Arrays.asList(validScans);
+    }
+
+    private ApiSettings getSettings(){
+        ApiSettings settings = new ApiSettings();
+        settings.setTestResultSuccessPriority("Low");
+        settings.setTestResultFailurePriority("High");
+        settings.setTestResultSkippedPriority("High");
+        settings.setTestResultThreshold(95.0);
+        settings.setValidStaticSecurityScanTypes(getSupportedScanTypes());
+        return settings;
     }
 }

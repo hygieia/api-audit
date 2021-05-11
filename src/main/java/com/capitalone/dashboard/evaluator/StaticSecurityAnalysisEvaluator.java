@@ -1,5 +1,6 @@
 package com.capitalone.dashboard.evaluator;
 
+import com.capitalone.dashboard.ApiSettings;
 import com.capitalone.dashboard.model.AuditException;
 import com.capitalone.dashboard.model.CodeQuality;
 import com.capitalone.dashboard.model.CodeQualityMetric;
@@ -102,5 +103,9 @@ public class StaticSecurityAnalysisEvaluator extends Evaluator<SecurityReviewAud
                 securityReviewAuditResponse.addAuditStatus(CodeQualityAuditStatus.STATIC_SECURITY_SCAN_OK);
         }
         return securityReviewAuditResponse;
+    }
+
+    public void setSettings(ApiSettings settings) {
+        this.settings = settings;
     }
 }
