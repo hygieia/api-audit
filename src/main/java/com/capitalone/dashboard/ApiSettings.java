@@ -55,6 +55,7 @@ public class ApiSettings {
     private List<String> ignoreEndPoints = new ArrayList();
     private List<String> ignoreApiUsers = new ArrayList();
     private List<String> mergeCommitFromTargetBranchRegEx;
+    private List<String> validStaticSecurityScanTypes = new ArrayList<>();
 
     public String getKey() {
         return key;
@@ -272,4 +273,8 @@ public class ApiSettings {
     public List<String> getMergeCommitFromTargetBranchRegEx() { return mergeCommitFromTargetBranchRegEx; }
 
     public void setMergeCommitFromTargetBranchRegEx(List<String> mergeCommitFromTargetBranchRegEx) { this.mergeCommitFromTargetBranchRegEx = mergeCommitFromTargetBranchRegEx; }
+
+    public List<String> getValidStaticSecurityScanTypes() { return validStaticSecurityScanTypes; }
+
+    public void setValidStaticSecurityScanTypes(List<String> validStaticSecurityScanTypes) { this.validStaticSecurityScanTypes = validStaticSecurityScanTypes; }
 }
