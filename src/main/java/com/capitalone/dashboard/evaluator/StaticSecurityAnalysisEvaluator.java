@@ -10,7 +10,7 @@ import com.capitalone.dashboard.repository.CodeQualityRepository;
 import com.capitalone.dashboard.request.ArtifactAuditRequest;
 import com.capitalone.dashboard.response.SecurityReviewAuditResponse;
 import com.capitalone.dashboard.status.CodeQualityAuditStatus;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -75,6 +76,18 @@ public class StaticSecurityAnalysisEvaluator extends Evaluator<SecurityReviewAud
             return securityReviewAuditResponse;
         }
         CodeQuality returnQuality = codeQualities.get(0);
+
+        /*
+        * audit on scan type
+        * */
+        List<String> approvedScanTypes = settings.getValidStaticSecurityScanTypes();
+        if(CollectionUtils.isNotEmpty(approvedScanTypes) && Objects.nonNull(returnQuality)) {
+            String scanType = returnQuality.getScanType();
+            List<String> approvedMatches  = approvedScanTypes.parallelStream().filter (p -> StringUtils.equalsIgnoreCase(p, scanType)).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(approvedMatches)) {
+                securityReviewAuditResponse.addAuditStatus(CodeQualityAuditStatus.STATIC_SECURITY_SCAN_UNSUPPORTED_SCANTYPE);
+            }
+        }
         securityReviewAuditResponse.setCodeQuality(returnQuality);
         securityReviewAuditResponse.setLastExecutionTime(returnQuality.getTimestamp());
         Set<CodeQualityMetric> metrics = returnQuality.getMetrics();
