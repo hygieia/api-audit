@@ -366,15 +366,12 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         for (String mergeCommitRegex : mergeCommitFromTargetBranchRegEx) {
             Pattern pattern = Pattern.compile(mergeCommitRegex, Pattern.CASE_INSENSITIVE);
             Matcher matcher = pattern.matcher(commitLog);
-            if (matcher.matches()) {
-                boolean isTargetBranch = StringUtils.equalsIgnoreCase(pr.getScmBranch(), matcher.group(2))
-                        || StringUtils.equalsIgnoreCase(pr.getScmUrl(), matcher.group(2));
-                // match all patterns
-                if (isTargetBranch)  {
+            if (matcher.matches() && (StringUtils.equalsIgnoreCase(pr.getScmBranch(), matcher.group(2))
+                    || StringUtils.equalsIgnoreCase(pr.getScmUrl(), matcher.group(2)))) {
+                    // exit only if matches, else check other patterns
                     return true;
                 }
             }
-        }
         return false;
     }
 
