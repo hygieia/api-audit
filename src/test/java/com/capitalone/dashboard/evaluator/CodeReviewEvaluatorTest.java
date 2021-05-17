@@ -414,6 +414,44 @@ public class CodeReviewEvaluatorTest {
         Assert.assertEquals("errorMessage", noPRsCodeReviewAuditResponse.getErrorMessage());
     }
 
+    @Test
+    public void commitLogPatternMatchTest() {
+        List<String> mergeCommitFromTargetBranchRegEx = new ArrayList();
+        mergeCommitFromTargetBranchRegEx.add("(.*merge branch.*')(.*)('.*into.*)");
+        mergeCommitFromTargetBranchRegEx.add("(.*merge.*'.*\\/)(.*)('.*into.*)");
+        mergeCommitFromTargetBranchRegEx.add("(.*merge.)(https.*)(.into.*)");
+        mergeCommitFromTargetBranchRegEx.add("(.*merge.*\\/)(.*)(.into.*)");
+        mergeCommitFromTargetBranchRegEx.add("(.*merge.)(.*)(.into.*)");
+
+        List<String> matchingLogs = new ArrayList<>();
+        matchingLogs.add("Merge remote-tracking branch 'origin/master' into y");
+        matchingLogs.add("Merge branch 'origin/master' into y");
+        matchingLogs.add("Merge refs/heads/master into y");
+        matchingLogs.add("Merge branch 'master' into x");
+        matchingLogs.add("Merge master into y");
+        matchingLogs.add("Merge https://github.com/test into y");
+
+        GitRequest request = new GitRequest();
+        request.setScmUrl("https://github.com/test");
+        request.setScmBranch("master");
+
+        when(apiSettings.getMergeCommitFromTargetBranchRegEx()).thenReturn(mergeCommitFromTargetBranchRegEx);
+        matchingLogs.forEach(log -> {
+            Commit commit = new Commit();
+            commit.setScmCommitLog(log);
+            Assert.assertTrue(codeReviewEvaluator.isMergeCommitFromTargetBranch(commit, request));
+        });
+
+        List<String> nonMatchingLogs = new ArrayList<>();
+        nonMatchingLogs.add("Merge master");
+        nonMatchingLogs.add("merge upstream master");
+        nonMatchingLogs.forEach(log -> {
+            Commit commit = new Commit();
+            commit.setScmCommitLog(log);
+            Assert.assertFalse(codeReviewEvaluator.isMergeCommitFromTargetBranch(commit, request));
+        });
+    }
+
     private List<GitRequest> makePullRequests(boolean withApprovedReview) {
         List<GitRequest> pullRequestList = new ArrayList<>();
 

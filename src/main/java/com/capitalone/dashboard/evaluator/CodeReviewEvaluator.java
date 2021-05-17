@@ -359,7 +359,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
      * this type of commits has default commit logs that look like "merge branch 'target_branch' into ..."
      * Note that this ins't the ideal way to check this as commit logs can be modified by users
      */
-    private boolean isMergeCommitFromTargetBranch(Commit commit, GitRequest pr) {
+    public boolean isMergeCommitFromTargetBranch(Commit commit, GitRequest pr) {
         if(commit == null || pr == null) return false;
         String commitLog = commit.getScmCommitLog();
         List<String> mergeCommitFromTargetBranchRegEx = settings.getMergeCommitFromTargetBranchRegEx();
