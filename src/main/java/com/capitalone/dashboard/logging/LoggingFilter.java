@@ -9,6 +9,8 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -132,10 +134,11 @@ public class LoggingFilter implements Filter {
 
         chain.doFilter(bufferedRequest, bufferedResponse);
         requestLog.setResponseContentType(httpServletResponse.getContentType());
+        JSONParser jsonParser = new JSONParser();
         try {
 
             if ((httpServletRequest.getContentType() != null) && (new MimeType(httpServletRequest.getContentType()).match(new MimeType(APPLICATION_JSON_VALUE)))) {
-                requestLog.setRequestBody(bufferedRequest.getRequestBody());
+                requestLog.setRequestBody(getRawDataForLog(bufferedRequest.getRequestBody(), jsonParser));
             }
             // removing the logging of responses as the collection size is way too big
         } catch (MimeTypeParseException e) {
@@ -168,6 +171,13 @@ public class LoggingFilter implements Filter {
         }
     }
 
+    private Object getRawDataForLog(String content, JSONParser parser) {
+        try {
+            return parser.parse(content);
+        } catch (ParseException e) {
+            return content;
+        }
+    }
 
     private Map<String, String> getTypesafeRequestMap(HttpServletRequest request) {
         Map<String, String> typesafeRequestMap = new HashMap<>();
