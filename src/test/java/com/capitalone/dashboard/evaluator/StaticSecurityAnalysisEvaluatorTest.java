@@ -48,7 +48,7 @@ public class StaticSecurityAnalysisEvaluatorTest {
     @Test
     public void testEvaluate_StaticSecurityCritical(){
 
-        List<CodeQuality> codeQualitiesCritical = getSecurityCodeQualityData("Critical", CodeQualityMetricStatus.Alert, "");
+        List<CodeQuality> codeQualitiesCritical = getSecurityCodeQualityData("Critical", CodeQualityMetricStatus.Alert, "1");
         when(codeQualityRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class),any(Long.class),any(Long.class))).thenReturn(codeQualitiesCritical);
         CollectorItem collectorItem = new CollectorItem();
         collectorItem.getOptions().put("reportUrl", "");
@@ -59,7 +59,7 @@ public class StaticSecurityAnalysisEvaluatorTest {
     @Test
     public void testEvaluate_StaticSecurityHigh(){
 
-        List<CodeQuality> codeQualitiesCritical = getSecurityCodeQualityData("High", CodeQualityMetricStatus.Alert, "");
+        List<CodeQuality> codeQualitiesCritical = getSecurityCodeQualityData("High", CodeQualityMetricStatus.Alert, "1");
         when(codeQualityRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class),any(Long.class),any(Long.class))).thenReturn(codeQualitiesCritical);
         CollectorItem collectorItem = new CollectorItem();
         collectorItem.getOptions().put("reportUrl", "");

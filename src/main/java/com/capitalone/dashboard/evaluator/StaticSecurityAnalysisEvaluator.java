@@ -79,8 +79,8 @@ public class StaticSecurityAnalysisEvaluator extends Evaluator<SecurityReviewAud
         CodeQuality returnQuality = codeQualities.get(0);
 
         /*
-        * audit on scan type
-        * */
+         * audit on scan type
+         * */
         List<String> approvedScanTypes = settings.getValidStaticSecurityScanTypes();
         if(CollectionUtils.isNotEmpty(approvedScanTypes) && Objects.nonNull(returnQuality)) {
             String scanType = returnQuality.getScanType();
@@ -93,17 +93,26 @@ public class StaticSecurityAnalysisEvaluator extends Evaluator<SecurityReviewAud
         securityReviewAuditResponse.setLastExecutionTime(returnQuality.getTimestamp());
         Set<CodeQualityMetric> metrics = returnQuality.getMetrics();
 
-        if (metrics.stream().anyMatch(metric -> metric.getName().equalsIgnoreCase(STR_CRITICAL))){
+        if (metrics.stream().anyMatch(metric -> metric.getName().equalsIgnoreCase(STR_CRITICAL)) && findSeverityCount(metrics, STR_CRITICAL) > 0){
             securityReviewAuditResponse.addAuditStatus(CodeQualityAuditStatus.STATIC_SECURITY_SCAN_FOUND_CRITICAL);
             securityReviewAuditResponse.addAuditStatus(CodeQualityAuditStatus.STATIC_SECURITY_SCAN_FAIL);
-        }else if (metrics.stream().anyMatch(metric -> metric.getName().equalsIgnoreCase(STR_HIGH))){
+        }else if (metrics.stream().anyMatch(metric -> metric.getName().equalsIgnoreCase(STR_HIGH)) && findSeverityCount(metrics, STR_HIGH) > 0){
             securityReviewAuditResponse.addAuditStatus(CodeQualityAuditStatus.STATIC_SECURITY_SCAN_FOUND_HIGH);
             securityReviewAuditResponse.addAuditStatus(CodeQualityAuditStatus.STATIC_SECURITY_SCAN_FAIL);
         }else{
-                securityReviewAuditResponse.addAuditStatus(CodeQualityAuditStatus.STATIC_SECURITY_SCAN_OK);
+            securityReviewAuditResponse.addAuditStatus(CodeQualityAuditStatus.STATIC_SECURITY_SCAN_OK);
         }
         return securityReviewAuditResponse;
     }
+
+    private int findSeverityCount(Set<CodeQualityMetric> metrics, String severity){
+        if(CollectionUtils.isNotEmpty(metrics)){
+            CodeQualityMetric codeQualityMetric = metrics.stream().filter(metric -> severity.equalsIgnoreCase(metric.getName())).filter(Objects::nonNull).findFirst().get();
+            return StringUtils.isNotEmpty(codeQualityMetric.getValue())?Integer.parseInt(codeQualityMetric.getValue()) : 0;
+        }
+        return 0;
+    }
+
 
     public void setSettings(ApiSettings settings) {
         this.settings = settings;
