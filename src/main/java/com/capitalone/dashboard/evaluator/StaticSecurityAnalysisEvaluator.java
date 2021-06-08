@@ -84,9 +84,11 @@ public class StaticSecurityAnalysisEvaluator extends Evaluator<SecurityReviewAud
         List<String> approvedScanTypes = settings.getValidStaticSecurityScanTypes();
         if(CollectionUtils.isNotEmpty(approvedScanTypes) && Objects.nonNull(returnQuality)) {
             String scanType = returnQuality.getScanType();
-            List<String> approvedMatches  = approvedScanTypes.parallelStream().filter (p -> StringUtils.equalsIgnoreCase(p, scanType)).collect(Collectors.toList());
-            if(CollectionUtils.isEmpty(approvedMatches)) {
-                securityReviewAuditResponse.addAuditStatus(CodeQualityAuditStatus.STATIC_SECURITY_SCAN_UNSUPPORTED_SCANTYPE);
+            if (StringUtils.isNotEmpty(scanType)) {
+                List<String> approvedMatches = approvedScanTypes.parallelStream().filter(p -> StringUtils.equalsIgnoreCase(p, scanType)).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(approvedMatches)) {
+                    securityReviewAuditResponse.addAuditStatus(CodeQualityAuditStatus.STATIC_SECURITY_SCAN_UNSUPPORTED_SCANTYPE);
+                }
             }
         }
         securityReviewAuditResponse.setCodeQuality(returnQuality);
