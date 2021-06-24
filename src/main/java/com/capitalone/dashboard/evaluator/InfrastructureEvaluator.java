@@ -10,7 +10,7 @@ import com.capitalone.dashboard.repository.InfrastructureScanRepository;
 import com.capitalone.dashboard.request.ArtifactAuditRequest;
 import com.capitalone.dashboard.response.InfrastructureAuditResponse;
 import com.capitalone.dashboard.status.InfrastructureAuditStatus;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -19,16 +19,21 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Comparator;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.function.Predicate;
 
 @Component
 public class InfrastructureEvaluator extends Evaluator<InfrastructureAuditResponse> {
 
     private static final String BUSINESS_SERVICE = "businessService";
     public static final String BUSINESS_COMPONENT = "businessComponent";
+    public static final String CRITICAL = "CRITICAL";
+    public static final String HIGH = "HIGH";
     private final InfrastructureScanRepository infrastructureScanRepository;
 
 
@@ -71,17 +76,17 @@ public class InfrastructureEvaluator extends Evaluator<InfrastructureAuditRespon
                 infrastructureScans.stream().filter(infrastructureScan -> infrastructureScan.getBusinessApplication().equalsIgnoreCase(businessComponent)).collect(Collectors.toList());
 
         if (CollectionUtils.isNotEmpty(filteredForBAP)) {
-            InfrastructureScan infrastructureScanLatest = filteredForBAP.stream().sorted(Comparator.comparing(InfrastructureScan::getTimestamp).reversed()).findFirst().get();
-            setInfraAudit(infrastructureAuditResponse, infrastructureScanLatest, InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_CRITICAL, InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_HIGH, InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_OK);
-            infrastructureAuditResponse.setInfrastructureScans(Collections.singletonList(infrastructureScanLatest));
+            List<InfrastructureScan> sortedDistinctForBAP = getSortedAndDistinctByInstanceId(filteredForBAP);
+            setInfraAudit(infrastructureAuditResponse, sortedDistinctForBAP, InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_CRITICAL, InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_HIGH, InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_OK);
+            infrastructureAuditResponse.setInfrastructureScans(sortedDistinctForBAP);
         } else {
             infrastructureAuditResponse.addAuditStatus(InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_COMP_NOT_FOUND);
             List<InfrastructureScan> filteredForASV = StringUtils.isEmpty(businessService) ? Collections.EMPTY_LIST :
                     infrastructureScans.stream().filter(infrastructureScan -> infrastructureScan.getBusinessService().equalsIgnoreCase(businessService)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(filteredForASV)) {
-                InfrastructureScan infrastructureScanLatest = filteredForASV.stream().sorted(Comparator.comparing(InfrastructureScan::getTimestamp).reversed()).findFirst().get();
-                setInfraAudit(infrastructureAuditResponse, infrastructureScanLatest, InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_CRITICAL, InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_HIGH, InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_OK);
-                infrastructureAuditResponse.setInfrastructureScans(Collections.singletonList(infrastructureScanLatest));
+                List<InfrastructureScan> sortedDistinctForASV = getSortedAndDistinctByInstanceId(filteredForASV);
+                setInfraAudit(infrastructureAuditResponse, sortedDistinctForASV, InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_CRITICAL, InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_HIGH, InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_OK);
+                infrastructureAuditResponse.setInfrastructureScans(sortedDistinctForASV);
             } else {
                 infrastructureAuditResponse.addAuditStatus(InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_NOT_FOUND);
                 infrastructureAuditResponse.setInfrastructureScans(Collections.EMPTY_LIST);
@@ -90,18 +95,25 @@ public class InfrastructureEvaluator extends Evaluator<InfrastructureAuditRespon
         return infrastructureAuditResponse;
     }
 
-    private void setInfraAudit(InfrastructureAuditResponse infrastructureAuditResponse, InfrastructureScan infrastructureScan, InfrastructureAuditStatus infraScanBussCritical, InfrastructureAuditStatus infraScanBussHigh, InfrastructureAuditStatus infraScanOK) {
-        Vulnerability criticalVuln = CollectionUtils.isNotEmpty(infrastructureScan.getVulnerabilities()) ? infrastructureScan.getVulnerabilities().stream().filter(vulnerability -> vulnerability.getContextualizedRiskLabel().equalsIgnoreCase("CRITICAL")).findAny().orElse(null) : null;
-        if (Objects.nonNull(criticalVuln)) {
-            infrastructureAuditResponse.addAuditStatus(infraScanBussCritical);
+    private void setInfraAudit(InfrastructureAuditResponse infrastructureAuditResponse, List<InfrastructureScan> infrastructureScans, InfrastructureAuditStatus critical, InfrastructureAuditStatus high, InfrastructureAuditStatus ok) {
+        Set<String> risks = infrastructureScans.stream().map(InfrastructureScan::getVulnerabilities).flatMap(Collection::stream).map(Vulnerability::getContextualizedRiskLabel).collect(Collectors.toSet());
+        boolean hasCritical = risks.stream().anyMatch(r -> r.equalsIgnoreCase(CRITICAL));
+        boolean hasHigh = risks.stream().anyMatch(r -> r.equalsIgnoreCase(HIGH));
+
+        if (hasCritical) {
+            infrastructureAuditResponse.addAuditStatus(critical);
         }
-        Vulnerability highVuln = CollectionUtils.isNotEmpty(infrastructureScan.getVulnerabilities()) ? infrastructureScan.getVulnerabilities().stream().filter(vulnerability -> vulnerability.getContextualizedRiskLabel().equalsIgnoreCase("HIGH")).findAny().orElse(null) : null;
-        if (Objects.nonNull(highVuln)) {
-            infrastructureAuditResponse.addAuditStatus(infraScanBussHigh);
+        if (hasHigh) {
+            infrastructureAuditResponse.addAuditStatus(high);
         }
-        if(Objects.isNull(criticalVuln) && Objects.isNull(highVuln)){
-            infrastructureAuditResponse.addAuditStatus(infraScanOK);
+        if (!hasCritical && !hasHigh) {
+            infrastructureAuditResponse.addAuditStatus(ok);
         }
+    }
+
+    private List<InfrastructureScan> getSortedAndDistinctByInstanceId(List<InfrastructureScan> filteredForBAP) {
+        return CollectionUtils.isNotEmpty(filteredForBAP) ? filteredForBAP.stream().sorted(Comparator.comparing(InfrastructureScan::getTimestamp).reversed())
+                .filter(distinctByKey(InfrastructureScan::getInstanceId)).collect(Collectors.toList()) : Collections.EMPTY_LIST;
     }
 
     private Map<?, ?> getBusinessItemsMap(Dashboard dashboard) {
@@ -109,5 +121,10 @@ public class InfrastructureEvaluator extends Evaluator<InfrastructureAuditRespon
         bMap.put(BUSINESS_SERVICE, dashboard.getConfigurationItemBusServName());
         bMap.put(BUSINESS_COMPONENT, dashboard.getConfigurationItemBusAppName());
         return bMap;
+    }
+
+    public static <T> Predicate<T> distinctByKey(Function<T, Object> function) {
+        Set<Object> seen = new HashSet<>();
+        return t -> seen.add(function.apply(t));
     }
 }
