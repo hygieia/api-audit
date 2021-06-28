@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Collection;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
@@ -86,10 +87,7 @@ public class InfrastructureEvaluatorTest {
     public void testEvaluate_infrastructureComponentCritical() {
         List<InfrastructureScan> infrastructureScanCritical = getInfraScanData("testService", "testComponent","Critical");
         when(infrastructureScanRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(infrastructureScanCritical);
-        CollectorItem collectorItem = new CollectorItem();
-        collectorItem.getOptions().put("businessApplication", "testService");
-        collectorItem.getOptions().put("businessComponent", "testComponent");
-        InfrastructureAuditResponse response = infrastructureEvaluator.evaluate(collectorItem, 125634436, 125634636, getBusinessItemsMap("testService", "testComponent"));
+        InfrastructureAuditResponse response = infrastructureEvaluator.evaluate(getCollectorItem(), 125634436, 125634636, getBusinessItemsMap("testService", "testComponent"));
         Assert.assertEquals(true, response.getAuditStatuses().toString().contains(InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_CRITICAL.name()));
     }
 
@@ -108,10 +106,7 @@ public class InfrastructureEvaluatorTest {
     public void testEvaluate_infrastructureComponentHigh() {
         List<InfrastructureScan> infrastructureScanHigh = getInfraScanData("testService", "testComponent", "High");
         when(infrastructureScanRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(infrastructureScanHigh);
-        CollectorItem collectorItem = new CollectorItem();
-        collectorItem.getOptions().put("businessApplication", "testService");
-        collectorItem.getOptions().put("businessComponent", "testComponent");
-        InfrastructureAuditResponse response = infrastructureEvaluator.evaluate(collectorItem, 125634436, 125634636, getBusinessItemsMap("testService", "testComponent"));
+        InfrastructureAuditResponse response = infrastructureEvaluator.evaluate(getCollectorItem(), 125634436, 125634636, getBusinessItemsMap("testService", "testComponent"));
         Assert.assertEquals(true, response.getAuditStatuses().toString().contains(InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_HIGH.name()));
     }
 
@@ -119,10 +114,7 @@ public class InfrastructureEvaluatorTest {
     public void testEvaluate_infrastructureMedium() {
         List<InfrastructureScan> infrastructureScanMedium = getInfraScanData("testService", "testComponent", "Medium");
         when(infrastructureScanRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(infrastructureScanMedium);
-        CollectorItem collectorItem = new CollectorItem();
-        collectorItem.getOptions().put("businessApplication", "testService");
-        collectorItem.getOptions().put("businessComponent", "testComponent");
-        InfrastructureAuditResponse response = infrastructureEvaluator.evaluate(collectorItem, 125634436, 125634636, getBusinessItemsMap("testService", "testComponent"));
+        InfrastructureAuditResponse response = infrastructureEvaluator.evaluate(getCollectorItem(), 125634436, 125634636, getBusinessItemsMap("testService", "testComponent"));
         Assert.assertEquals(true, response.getAuditStatuses().toString().contains(InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_OK.name()));
     }
 
@@ -130,10 +122,7 @@ public class InfrastructureEvaluatorTest {
     public void testEvaluate_infrastructureLow() {
         List<InfrastructureScan> infrastructureScanLow = getInfraScanData("testService", "testComponent", "Low");
         when(infrastructureScanRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(infrastructureScanLow);
-        CollectorItem collectorItem = new CollectorItem();
-        collectorItem.getOptions().put("businessApplication", "testService");
-        collectorItem.getOptions().put("businessComponent", "testComponent");
-        InfrastructureAuditResponse response = infrastructureEvaluator.evaluate(collectorItem, 125634436, 125634636, getBusinessItemsMap("testService", "testComponent"));
+        InfrastructureAuditResponse response = infrastructureEvaluator.evaluate(getCollectorItem(), 125634436, 125634636, getBusinessItemsMap("testService", "testComponent"));
         Assert.assertEquals(true, response.getAuditStatuses().toString().contains(InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_OK.name()));
     }
 
@@ -142,12 +131,52 @@ public class InfrastructureEvaluatorTest {
     public void testEvaluate_infrastructureNotFound() {
         List<InfrastructureScan> infrastructureScanNotFound = new ArrayList<>();
         when(infrastructureScanRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(infrastructureScanNotFound);
+        InfrastructureAuditResponse response = infrastructureEvaluator.evaluate(getCollectorItem(), 125634436, 125634636, getBusinessItemsMap("testService", "testComponent"));
+        Assert.assertEquals(true, response.getAuditStatuses().toString().contains(InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_NOT_FOUND.name()));
+        Assert.assertEquals(true, response.getAuditStatuses().toString().contains(InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_COMP_NOT_FOUND.name()));
+    }
+
+    @Test
+    public void testEvaluate_infrastructureComponentDistinctByInstanceId() {
+        when(infrastructureScanRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(getInfraScansWithInstances());
+        InfrastructureAuditResponse response = infrastructureEvaluator.evaluate(getCollectorItem(), 123450000, 123457777, getBusinessItemsMap("testService", "testComponent"));
+        Assert.assertEquals(true, response.getAuditStatuses().toString().contains(InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_HIGH.name()));
+        Assert.assertEquals(true, response.getAuditStatuses().toString().contains(InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_CRITICAL.name()));
+        Assert.assertEquals(2, response.getAuditStatuses().size());
+        Assert.assertEquals(3, response.getInfrastructureScans().size());
+    }
+
+    @Test
+    public void testEvaluate_infrastructureAppDistinctByInstanceId() {
+        List<InfrastructureScan> infrastructureScans = getInfraScansWithInstances();
+        infrastructureScans.forEach(infrastructureScan -> infrastructureScan.setBusinessApplication(""));
+        CollectorItem collectorItem = new CollectorItem();
+        collectorItem.getOptions().put("businessApplication", "testService");
+        when(infrastructureScanRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(infrastructureScans);
+        InfrastructureAuditResponse response = infrastructureEvaluator.evaluate(collectorItem, 123450000, 123457777, getBusinessItemsMap("testService", "testComponent"));
+        Assert.assertEquals(true, response.getAuditStatuses().toString().contains(InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_HIGH.name()));
+        Assert.assertEquals(true, response.getAuditStatuses().toString().contains(InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_CRITICAL.name()));
+        Assert.assertEquals(true, response.getAuditStatuses().toString().contains(InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_COMP_NOT_FOUND.name()));
+        Assert.assertEquals(3, response.getAuditStatuses().size());
+        Assert.assertEquals(3, response.getInfrastructureScans().size());
+    }
+
+    @Test
+    public void testEvaluate_infrastructureDistinctByInstanceIdCompOk() {
+        List<InfrastructureScan> infrastructureScans = getInfraScansWithInstances();
+        infrastructureScans.stream().map(InfrastructureScan::getVulnerabilities).flatMap(Collection::stream).forEach(v -> v.setContextualizedRiskLabel("MEDIUM"));
+        when(infrastructureScanRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(infrastructureScans);
+        InfrastructureAuditResponse response = infrastructureEvaluator.evaluate(getCollectorItem(), 123450000, 123457777, getBusinessItemsMap("testService", "testComponent"));
+        Assert.assertEquals(true, response.getAuditStatuses().toString().contains(InfrastructureAuditStatus.INFRA_SCAN_BUSS_COMP_OK.name()));
+        Assert.assertEquals(1, response.getAuditStatuses().size());
+        Assert.assertEquals(3, response.getInfrastructureScans().size());
+    }
+
+    private CollectorItem getCollectorItem() {
         CollectorItem collectorItem = new CollectorItem();
         collectorItem.getOptions().put("businessApplication", "testService");
         collectorItem.getOptions().put("businessComponent", "testComponent");
-        InfrastructureAuditResponse response = infrastructureEvaluator.evaluate(collectorItem, 125634436, 125634636, getBusinessItemsMap("testService", "testComponent"));
-        Assert.assertEquals(true, response.getAuditStatuses().toString().contains(InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_NOT_FOUND.name()));
-        Assert.assertEquals(true, response.getAuditStatuses().toString().contains(InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_COMP_NOT_FOUND.name()));
+        return collectorItem;
     }
 
     private List<InfrastructureScan> getInfraScanData(String service, String component, String riskLevel) {
@@ -158,6 +187,28 @@ public class InfrastructureEvaluatorTest {
         infrastructureScan.setBusinessService(service);
         infrastructureScan.setBusinessApplication(component);
         return Arrays.asList(infrastructureScan);
+    }
+
+    private List<InfrastructureScan> getInfraScansWithInstances() {
+        List<InfrastructureScan> infrastructureScans = new ArrayList<>();
+        infrastructureScans.add(getInfrastructureScan("CRITICAL", "instance1", 123451111));
+        infrastructureScans.add(getInfrastructureScan("HIGH", "instance2", 123455555));
+        infrastructureScans.add(getInfrastructureScan("MEDIUM", "instance3", 123451111));
+        infrastructureScans.add(getInfrastructureScan("CRITICAL", "instance2", 123456666));
+        infrastructureScans.add(getInfrastructureScan("HIGH", "instance1", 123452222));
+        return infrastructureScans;
+    }
+
+    private InfrastructureScan getInfrastructureScan(String riskLevel, String instanceId, long timestamp) {
+        InfrastructureScan infrastructureScan = new InfrastructureScan();
+        infrastructureScan.setInstanceId(instanceId);
+        infrastructureScan.setTimestamp(timestamp);
+        Vulnerability vulnerability = new Vulnerability();
+        vulnerability.setContextualizedRiskLabel(riskLevel);
+        infrastructureScan.setVulnerabilities(Arrays.asList(vulnerability));
+        infrastructureScan.setBusinessService("testService");
+        infrastructureScan.setBusinessApplication("testComponent");
+        return infrastructureScan;
     }
 
     private Map<?,?> getBusinessItemsMap(String service, String component) {
