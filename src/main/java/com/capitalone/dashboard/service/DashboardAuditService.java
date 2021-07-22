@@ -7,6 +7,7 @@ import com.capitalone.dashboard.model.CollectorItem;
 import com.capitalone.dashboard.model.DashboardType;
 import com.capitalone.dashboard.request.DashboardAuditRequest;
 import com.capitalone.dashboard.response.DashboardReviewResponse;
+import org.json.simple.JSONObject;
 
 import java.util.List;
 import java.util.Set;
@@ -18,4 +19,6 @@ public interface DashboardAuditService {
     DashboardReviewResponse getDashboardReviewResponseNextGen(DashboardAuditRequest dashboardAuditRequest) throws AuditException;
 
     List<CollectorItem> getSonarProjects(String name);
+
+    List<JSONObject> getAuditReports(DashboardAuditRequest dashboardAuditRequest) throws AuditException;
 }

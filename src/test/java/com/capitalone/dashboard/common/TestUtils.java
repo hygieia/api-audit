@@ -13,6 +13,7 @@ import com.capitalone.dashboard.model.TestResult;
 import com.capitalone.dashboard.model.Feature;
 import com.capitalone.dashboard.model.Cmdb;
 import com.capitalone.dashboard.model.Build;
+import com.capitalone.dashboard.model.AuditReport;
 import com.capitalone.dashboard.repository.BinaryArtifactRepository;
 import com.capitalone.dashboard.repository.TestResultRepository;
 import com.capitalone.dashboard.repository.FeatureRepository;
@@ -26,6 +27,7 @@ import com.capitalone.dashboard.repository.GitRequestRepository;
 import com.capitalone.dashboard.repository.LibraryPolicyResultsRepository;
 import com.capitalone.dashboard.repository.CmdbRepository;
 import com.capitalone.dashboard.repository.BuildRepository;
+import com.capitalone.dashboard.repository.AuditReportRepository;
 import com.capitalone.dashboard.testutil.GsonUtil;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
@@ -136,4 +138,10 @@ public class TestUtils {
     }
 
 
+    public static void loadAuditReports(AuditReportRepository auditReportRepository) throws IOException {
+        Gson gson = GsonUtil.getGson();
+        String json = IOUtils.toString(Resources.getResource("./audit_reports/audit_reports.json"));
+        List<AuditReport> auditReports = gson.fromJson(json,new TypeToken<List<AuditReport>>(){}.getType());
+        auditReportRepository.save(auditReports.get(0));
+    }
 }
