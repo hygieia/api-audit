@@ -11,9 +11,11 @@ import com.capitalone.dashboard.model.CollectorItem;
 import com.capitalone.dashboard.model.Dashboard;
 import com.capitalone.dashboard.model.DashboardAuditModel;
 import com.capitalone.dashboard.model.DashboardType;
+import com.capitalone.dashboard.model.AuditReport;
 import com.capitalone.dashboard.repository.CmdbRepository;
 import com.capitalone.dashboard.repository.CollectorItemRepository;
 import com.capitalone.dashboard.repository.DashboardRepository;
+import com.capitalone.dashboard.repository.AuditReportRepository;
 import com.capitalone.dashboard.request.ArtifactAuditRequest;
 import com.capitalone.dashboard.request.DashboardAuditRequest;
 import com.capitalone.dashboard.response.AuditReviewResponse;
@@ -25,13 +27,14 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -46,19 +49,21 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
     private final DashboardAuditModel auditModel;
     private final ApiSettings apiSettings;
     private final CollectorItemRepository collectorItemRepository;
+    private final AuditReportRepository auditReportRepository;
 
 
 //    private static final Log LOGGER = LogFactory.getLog(DashboardAuditServiceImpl.class);
 
     @Autowired
     public DashboardAuditServiceImpl(DashboardRepository dashboardRepository, CmdbRepository cmdbRepository, DashboardAuditModel auditModel,
-                                     CollectorItemRepository collectorItemRepository,ApiSettings apiSettings) {
+                                     CollectorItemRepository collectorItemRepository, AuditReportRepository auditReportRepository, ApiSettings apiSettings) {
 
         this.dashboardRepository = dashboardRepository;
         this.cmdbRepository = cmdbRepository;
         this.auditModel = auditModel;
         this.apiSettings = apiSettings;
         this.collectorItemRepository = collectorItemRepository;
+        this.auditReportRepository = auditReportRepository;
     }
 
     /**
@@ -277,6 +282,31 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
     public List<CollectorItem> getSonarProjects(String description) {
 
         return collectorItemRepository.findByDescription(description);
+    }
+
+    @Override
+    public List<JSONObject> getAuditReports(DashboardAuditRequest dashboardAuditRequest) throws AuditException {
+        String businessService = dashboardAuditRequest.getBusinessService();
+        String businessApplication = dashboardAuditRequest.getBusinessApplication();
+        String identifierName = dashboardAuditRequest.getIdentifierName();
+        String identifierVersion = dashboardAuditRequest.getIdentifierVersion();
+        String identifierUrl = dashboardAuditRequest.getIdentifierUrl();
+        Set<AuditType> auditTypes = dashboardAuditRequest.getAuditType();
+
+        if (auditTypes.contains(AuditType.ALL)) {
+            auditTypes.addAll(Sets.newHashSet(AuditType.ARTIFACT));
+            auditTypes.remove(AuditType.ALL);
+        }
+
+        List<JSONObject> auditResponses = new ArrayList<>();
+        auditTypes.forEach(auditType -> {
+            AuditReport auditReport = auditReportRepository.findTop1ByBusinessApplicationAndBusinessServiceAndAuditTypeAndIdentifierNameAndIdentifierVersionAndIdentifierUrlOrderByTimestampDesc(
+                    businessApplication, businessService, auditType, identifierName, identifierVersion, identifierUrl);
+            if (Objects.nonNull(auditReport) && Objects.nonNull(auditReport.getAuditResponse())) {
+                auditResponses.add((JSONObject) auditReport.getAuditResponse());
+            }
+        });
+        return auditResponses;
     }
 
     private void validateParameters(String dashboardTitle, DashboardType dashboardType, String businessService, String businessApp, long beginDate, long endDate) throws AuditException{

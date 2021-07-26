@@ -15,8 +15,11 @@ public class DashboardAuditRequest extends AuditReviewRequest {
 	private Set<AuditType> auditType;
     @ApiModelProperty(value = "Auto discover audit type has one of these values: ALL, CODE_REVIEW, BUILD_REVIEW, CODE_QUALITY, TEST_RESULT, PERF_TEST,ARTIFACT", example = "ALL")
     private AutoDiscoverAuditType autoDiscoverAuditType;
-
     private ArtifactAuditRequest artifactAuditRequest;
+    private String altIdentifier;
+    private String identifierName;
+    private String identifierVersion;
+    private String identifierUrl;
 
     public String getTitle() {
         return title;
@@ -64,5 +67,37 @@ public class DashboardAuditRequest extends AuditReviewRequest {
 
     public void setAutoDiscoverAuditType(AutoDiscoverAuditType autoDiscoverAuditType) {
         this.autoDiscoverAuditType = autoDiscoverAuditType;
+    }
+
+    public String getAltIdentifier() {
+        return altIdentifier;
+    }
+
+    public void setAltIdentifier(String altIdentifier) {
+        this.altIdentifier = altIdentifier;
+    }
+
+    public String getIdentifierName() {
+        return identifierName;
+    }
+
+    public void setIdentifierName(String identifierName) {
+        this.identifierName = identifierName;
+    }
+
+    public String getIdentifierVersion() {
+        return identifierVersion;
+    }
+
+    public void setIdentifierVersion(String identifierVersion) {
+        this.identifierVersion = identifierVersion;
+    }
+
+    public String getIdentifierUrl() {
+        return identifierUrl;
+    }
+
+    public void setIdentifierUrl(String identifierUrl) {
+        this.identifierUrl = identifierUrl;
     }
 }

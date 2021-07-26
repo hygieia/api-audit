@@ -27,6 +27,8 @@ import com.capitalone.dashboard.repository.GitRequestRepository;
 import com.capitalone.dashboard.repository.LibraryPolicyResultsRepository;
 import com.capitalone.dashboard.repository.TestResultRepository;
 import com.capitalone.dashboard.repository.FeatureRepository;
+import com.capitalone.dashboard.repository.AuditReportRepository;
+import com.capitalone.dashboard.request.DashboardAuditRequest;
 import com.capitalone.dashboard.response.ArtifactAuditResponse;
 import com.capitalone.dashboard.response.AuditReviewResponse;
 import com.capitalone.dashboard.response.CodeReviewAuditResponse;
@@ -48,6 +50,7 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.bson.types.ObjectId;
+import org.json.simple.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -63,7 +66,6 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.IntStream;
@@ -115,6 +117,9 @@ public class DashboardAuditServiceTest {
     private BinaryArtifactRepository binaryArtifactRepository;
 
     @Autowired
+    private AuditReportRepository auditReportRepository;
+
+    @Autowired
     private ApiSettings apiSettings;
 
 
@@ -131,6 +136,7 @@ public class DashboardAuditServiceTest {
         TestUtils.loadCodeQuality(codeQualityRepository);
         TestUtils.loadFeature(featureRepository);
         TestUtils.loadArtifacts(binaryArtifactRepository);
+        TestUtils.loadAuditReports(auditReportRepository);
         apiSettings.setServiceAccountRegEx("/./g");
         apiSettings.setThirdPartyRegex("(?i:.*third)");
     }
@@ -443,6 +449,26 @@ public class DashboardAuditServiceTest {
                     compareCommits(lhsCommits, rhsCommits);
 
                 });
+    }
+
+    @Test
+    public void test_auditReports() throws AuditException {
+        List<JSONObject> auditReports = dashboardAuditService.getAuditReports(getDashboardAuditRequest());
+        JSONObject auditReport = auditReports.get(0);
+        Assert.assertEquals("TestBusServ", auditReport.get("businessService"));
+        Assert.assertEquals("confItem", auditReport.get("businessApplication"));
+        Assert.assertTrue(auditReport.get("review").toString().contains(AuditType.STATIC_SECURITY_ANALYSIS.name()));
+    }
+
+    private DashboardAuditRequest getDashboardAuditRequest() {
+        DashboardAuditRequest dashboardAuditRequest = new DashboardAuditRequest();
+        dashboardAuditRequest.setBusinessApplication("confItem");
+        dashboardAuditRequest.setBusinessService("TestBusServ");
+        dashboardAuditRequest.setAuditType(Sets.newHashSet(AuditType.STATIC_SECURITY_ANALYSIS));
+        dashboardAuditRequest.setIdentifierName("confItem-api");
+        dashboardAuditRequest.setIdentifierVersion("1.02.03");
+        dashboardAuditRequest.setIdentifierUrl("https://confItem/api/");
+        return dashboardAuditRequest;
     }
 
     private void compareComments(List<Comment> lhsPRComments, List<Comment> rhsPRComments) {

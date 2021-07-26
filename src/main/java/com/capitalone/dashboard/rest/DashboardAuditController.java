@@ -10,6 +10,7 @@ import com.capitalone.dashboard.service.DashboardAuditService;
 import com.capitalone.dashboard.util.CommonConstants;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.collections.CollectionUtils;
+import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,6 +93,19 @@ public class DashboardAuditController {
         return ResponseEntity
                 .ok()
                 .body(sonarProjects);
+    }
+
+    /**
+     * LookUp audit reports
+     * @param request incoming request
+     * @return response entity
+     * @throws AuditException audit exception
+     */
+    @RequestMapping(value = "/lookUp", method = GET, produces = APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Audit LookUp", notes = "Audit LookUp", response = JSONObject.class, responseContainer = "List")
+    public ResponseEntity<List<JSONObject>> lookUp(@Valid DashboardAuditRequest request) throws AuditException {
+        List<JSONObject> auditResponses = dashboardAuditService.getAuditReports(request);
+        return ResponseEntity.ok().body(auditResponses);
     }
 
 }

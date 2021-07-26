@@ -1,0 +1,40 @@
+[{
+  "_id" : "60f9a1ebd0e6604b42be4e94",
+  "auditType" : "STATIC_SECURITY_ANALYSIS",
+  "identifierType" : "artifact",
+  "identifierName" : "confItem-api",
+  "identifierVersion" : "1.02.03",
+  "identifierUrl" : "https://confItem/api/",
+  "auditRequest" : "audit request abc",
+  "businessService" : "TestBusServ",
+  "businessApplication" : "confItem",
+  "source" : "https://source/artifact/api/",
+  "timestamp" : 1623423638000,
+  "auditResponse" : {
+    "auditStatuses" : [
+      "DASHBOARD_STATIC_SECURITY_ANALYSIS_CONFIGURED"
+    ],
+    "lastUpdated" : 0,
+    "dashboardTitle" : "confItem",
+    "businessService" : "TestBusServ",
+    "businessApplication" : "confItem",
+    "review" : {
+      "STATIC_SECURITY_ANALYSIS" : [
+        {
+          "auditStatuses" : [
+            "STATIC_SECURITY_SCAN_MISSING"
+          ],
+          "lastUpdated" : 1619038989077,
+          "auditEntity" : {
+            "reportUrl" : "https://report123.com",
+            "applicationID" : "app12345",
+            "projectName" : "apiTest",
+            "applicationName" : "apiTestApp",
+            "instanceUrl" : "https://instance123.com"
+          },
+          "lastExecutionTime" : 0
+        }
+      ]
+    }
+  }
+}]
