@@ -294,8 +294,9 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
         Set<AuditType> auditTypes = dashboardAuditRequest.getAuditType();
 
         if (auditTypes.contains(AuditType.ALL)) {
-            auditTypes.addAll(Sets.newHashSet(AuditType.ARTIFACT));
+            auditTypes.addAll(Sets.newHashSet(AuditType.values()));
             auditTypes.remove(AuditType.ALL);
+            auditTypes.remove(AuditType.BUILD_REVIEW);
         }
 
         List<JSONObject> auditResponses = new ArrayList<>();
