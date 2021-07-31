@@ -17,6 +17,7 @@ import com.capitalone.dashboard.response.BuildAuditResponse;
 import com.capitalone.dashboard.status.BuildAuditStatus;
 import com.capitalone.dashboard.util.GitHubParsedUrl;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -44,9 +45,10 @@ public class BuildEvaluator extends Evaluator<BuildAuditResponse> {
 
 
     @Override
-    public Collection<BuildAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data) throws AuditException {
-        List<CollectorItem> buildItems = getCollectorItems(dashboard, CollectorType.Build);
-        List<CollectorItem> repoItems = getCollectorItems(dashboard, CollectorType.SCM);
+    public Collection<BuildAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier) throws AuditException {
+
+        List<CollectorItem> buildItems = StringUtils.isNotEmpty(altIdentifier)?getCollectorItems(dashboard, CollectorType.Build):getCollectorItemsByAltIdentifier(dashboard, CollectorType.Build,altIdentifier);
+        List<CollectorItem> repoItems = StringUtils.isNotEmpty(altIdentifier)?getCollectorItems(dashboard, CollectorType.SCM):getCollectorItemsByAltIdentifier(dashboard, CollectorType.SCM,altIdentifier);
 
         if (CollectionUtils.isEmpty(buildItems)) {
             throw new AuditException("No code repository configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);

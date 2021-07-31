@@ -58,14 +58,16 @@ public class CodeQualityEvaluator extends Evaluator<CodeQualityAuditResponse> {
     }
 
     @Override
-    public Collection<CodeQualityAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data) throws AuditException {
+    public Collection<CodeQualityAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier) throws AuditException {
 
-        List<CollectorItem> codeQualityItems = getCollectorItems(dashboard, CollectorType.CodeQuality);
+        List<CollectorItem> codeQualityItems = StringUtils.isNotEmpty(altIdentifier)?getCollectorItems(dashboard, CollectorType.CodeQuality):getCollectorItemsByAltIdentifier(dashboard, CollectorType.CodeQuality,altIdentifier);
+
         if (CollectionUtils.isEmpty(codeQualityItems)) {
             throw new AuditException("No code quality job configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
         }
 
-        List<CollectorItem> repoItems = getCollectorItems(dashboard, CollectorType.SCM);
+        List<CollectorItem> repoItems = StringUtils.isNotEmpty(altIdentifier)?getCollectorItems(dashboard, CollectorType.SCM):getCollectorItemsByAltIdentifier(dashboard, CollectorType.SCM,altIdentifier);
+
 
         Map<String, List<CollectorItem>> repoData = new HashMap<>();
         repoData.put("repos", repoItems);
