@@ -47,8 +47,8 @@ public class BuildEvaluator extends Evaluator<BuildAuditResponse> {
     @Override
     public Collection<BuildAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier) throws AuditException {
 
-        List<CollectorItem> buildItems = StringUtils.isNotEmpty(altIdentifier)?getCollectorItems(dashboard, CollectorType.Build):getCollectorItemsByAltIdentifier(dashboard, CollectorType.Build,altIdentifier);
-        List<CollectorItem> repoItems = StringUtils.isNotEmpty(altIdentifier)?getCollectorItems(dashboard, CollectorType.SCM):getCollectorItemsByAltIdentifier(dashboard, CollectorType.SCM,altIdentifier);
+        List<CollectorItem> buildItems = StringUtils.isNotEmpty(altIdentifier)?getCollectorItemsByAltIdentifier(dashboard, CollectorType.Build,altIdentifier):getCollectorItems(dashboard, CollectorType.Build);
+        List<CollectorItem> repoItems = StringUtils.isNotEmpty(altIdentifier)?getCollectorItemsByAltIdentifier(dashboard, CollectorType.SCM,altIdentifier):getCollectorItems(dashboard, CollectorType.SCM);
 
         if (CollectionUtils.isEmpty(buildItems)) {
             throw new AuditException("No code repository configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);

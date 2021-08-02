@@ -47,7 +47,7 @@ public class ArtifactEvaluator extends Evaluator<ArtifactAuditResponse> {
     @Override
     public Collection<ArtifactAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data , String altIdentifier) throws AuditException {
 
-        List<CollectorItem> artifactCollectorItems = StringUtils.isNotEmpty(altIdentifier)?getCollectorItems(dashboard, CollectorType.Artifact):getCollectorItemsByAltIdentifier(dashboard, CollectorType.Artifact,altIdentifier);
+        List<CollectorItem> artifactCollectorItems = StringUtils.isNotEmpty(altIdentifier)?getCollectorItemsByAltIdentifier(dashboard, CollectorType.Artifact,altIdentifier):getCollectorItems(dashboard, CollectorType.Artifact);
         if (CollectionUtils.isEmpty(artifactCollectorItems)) {
             throw new AuditException("No artifacts are available", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
         }

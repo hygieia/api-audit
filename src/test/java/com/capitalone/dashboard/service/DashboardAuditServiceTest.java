@@ -148,7 +148,7 @@ public class DashboardAuditServiceTest {
                 DashboardType.Team,
                 "TestBusServ",
                 "confItem", 1519728000000L, 1523180525854L,
-                Sets.newHashSet(AuditType.STATIC_SECURITY_ANALYSIS), AutoDiscoverAuditType.ALL,null), SecurityReviewAuditResponse.class);
+                Sets.newHashSet(AuditType.STATIC_SECURITY_ANALYSIS), AutoDiscoverAuditType.ALL,""), SecurityReviewAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("StaticSecurityAnalysisAudit.json", SecurityReviewAuditResponse.class);
         assertDashboardAudit(actual, expected);
         assertThat(actual.getReview()).isNotEmpty();
@@ -174,7 +174,7 @@ public class DashboardAuditServiceTest {
                 "TestBusServ",
                 "confItem",
                 1522623841000L, 1526505798000L,
-                Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL,null), LibraryPolicyAuditResponse.class);
+                Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL,""), LibraryPolicyAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("LibraryPolicyAudit.json", LibraryPolicyAuditResponse.class);
 
         assertDashboardAudit(actual, expected);
@@ -198,7 +198,7 @@ public class DashboardAuditServiceTest {
                 "TestBusServ",
                 "confItem",
                 1522623841000L, 1526505798000L,
-                Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL,null), LibraryPolicyAuditResponse.class);
+                Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL,""), LibraryPolicyAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("LibraryPolicyAuditWithDisposition-ok.json", LibraryPolicyAuditResponse.class);
 
         assertDashboardAudit(actual, expected);
@@ -221,7 +221,7 @@ public class DashboardAuditServiceTest {
                 "TestBusServ",
                 "confItem",
                 1522623841000L, 1526505798000L,
-                Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL,null), LibraryPolicyAuditResponse.class);
+                Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL,""), LibraryPolicyAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("LibraryPolicyAuditWithDisposition-fail.json", LibraryPolicyAuditResponse.class);
 
         assertDashboardAudit(actual, expected);
@@ -244,7 +244,7 @@ public class DashboardAuditServiceTest {
                 "TestBusServ",
                 "confItem",
                 1522623841000L, 1526505798000L,
-                 Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL,null), LibraryPolicyAuditResponse.class);
+                 Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL,""), LibraryPolicyAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("LibraryPolicyAuditNoFindings.json", LibraryPolicyAuditResponse.class);
 
         assertDashboardAudit(actual, expected);
@@ -267,7 +267,7 @@ public class DashboardAuditServiceTest {
                 "TestBusServ",
                 "confItem",
                 1522623841000L, 1526505798000L,
-                Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL,null), LibraryPolicyAuditResponse.class);
+                Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL,""), LibraryPolicyAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("LibraryPolicyInvalidScan.json", LibraryPolicyAuditResponse.class);
 
         assertDashboardAudit(actual, expected);
@@ -288,7 +288,7 @@ public class DashboardAuditServiceTest {
                 "TestBusServ",
                 "confItem",
                 1522623841000L, 1526505798000L,
-                Sets.newHashSet(AuditType.PERF_TEST), AutoDiscoverAuditType.ALL,null), PerformanceTestAuditResponse.class);
+                Sets.newHashSet(AuditType.PERF_TEST), AutoDiscoverAuditType.ALL,""), PerformanceTestAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("Performance.json", PerformanceTestAuditResponse.class);
         assertDashboardAudit(actual, expected);
         assertThat(actual.getReview()).isNotEmpty();
@@ -308,7 +308,7 @@ public class DashboardAuditServiceTest {
                 "TestBusServ",
                 "confItem",
                 1473860406000L, 1478983206000L,
-                Sets.newHashSet(AuditType.CODE_QUALITY), AutoDiscoverAuditType.ALL,null), CodeQualityAuditResponse.class);
+                Sets.newHashSet(AuditType.CODE_QUALITY), AutoDiscoverAuditType.ALL,""), CodeQualityAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("CodeQuality.json", CodeQualityAuditResponse.class);
 
         assertDashboardAudit(actual, expected);
@@ -328,7 +328,7 @@ public class DashboardAuditServiceTest {
                 "TestBusServ",
                 "confItem",
                 1554140676000L, 1554831876000L,
-                Sets.newHashSet(AuditType.ARTIFACT), AutoDiscoverAuditType.ALL,null), ArtifactAuditResponse.class);
+                Sets.newHashSet(AuditType.ARTIFACT), AutoDiscoverAuditType.ALL,""), ArtifactAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("Artifact.json", ArtifactAuditResponse.class);
 
         assertThat(actual.getReview()).isNotEmpty();
@@ -348,7 +348,7 @@ public class DashboardAuditServiceTest {
                 "TestBusServ",
                 "confItem",
                 1473885606000L, 1478983206000L,
-                Sets.newHashSet(AuditType.TEST_RESULT), AutoDiscoverAuditType.ALL,null), TestResultsAuditResponse.class);
+                Sets.newHashSet(AuditType.TEST_RESULT), AutoDiscoverAuditType.ALL,""), TestResultsAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("TestResults.json", TestResultsAuditResponse.class);
         assertDashboardAudit(actual, expected);
         assertThat(actual.getReview()).isNotEmpty();
