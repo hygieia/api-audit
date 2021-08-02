@@ -76,7 +76,7 @@ public class RegressionTestResultEvaluator extends Evaluator<TestResultsAuditRes
     }
 
     @Override
-    public Collection<TestResultsAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> dummy) throws AuditException {
+    public Collection<TestResultsAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> dummy,  String altIdentifier) throws AuditException {
         this.beginDate = beginDate-1;
         this.endDate = endDate+1;
         this.dashboard = getDashboard(dashboard.getTitle(), DashboardType.Team);

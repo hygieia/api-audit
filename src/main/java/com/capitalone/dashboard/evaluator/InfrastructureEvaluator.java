@@ -11,9 +11,9 @@ import com.capitalone.dashboard.request.ArtifactAuditRequest;
 import com.capitalone.dashboard.response.InfrastructureAuditResponse;
 import com.capitalone.dashboard.status.InfrastructureAuditStatus;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -43,9 +43,10 @@ public class InfrastructureEvaluator extends Evaluator<InfrastructureAuditRespon
     }
 
     @Override
-    public Collection<InfrastructureAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data) throws AuditException {
+    public Collection<InfrastructureAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier) throws AuditException {
 
-        List<CollectorItem> infrastructureScanItems = getCollectorItems(dashboard, CollectorType.InfrastructureScan);
+        List<CollectorItem> infrastructureScanItems = StringUtils.isNotEmpty(altIdentifier)?getCollectorItemsByAltIdentifier(dashboard, CollectorType.InfrastructureScan,altIdentifier):getCollectorItems(dashboard, CollectorType.InfrastructureScan);
+
         if (CollectionUtils.isEmpty(infrastructureScanItems)) {
             throw new AuditException("No Infrastructure scan items configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
         }

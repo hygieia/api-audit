@@ -17,6 +17,7 @@ import com.capitalone.dashboard.status.DeployAuditStatus;
 import com.google.common.collect.Iterables;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -54,8 +55,9 @@ public class DeployEvaluator extends Evaluator<DeployAuditResponse> {
 
 
     @Override
-    public Collection<DeployAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data) throws AuditException {
-        List<CollectorItem> deployItems = getCollectorItems(dashboard, CollectorType.Deployment);
+    public Collection<DeployAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data, String altIdentifier) throws AuditException {
+
+        List<CollectorItem> deployItems = StringUtils.isNotEmpty(altIdentifier)?getCollectorItemsByAltIdentifier(dashboard, CollectorType.Deployment,altIdentifier):getCollectorItems(dashboard, CollectorType.Deployment);
         if (CollectionUtils.isEmpty(deployItems)) {
             return Arrays.asList(getErrorResponse(DeployAuditStatus.COLLECTOR_ITEM_ERROR, null));
         }

@@ -37,9 +37,9 @@ public class StaticSecurityAnalysisEvaluator extends Evaluator<SecurityReviewAud
     }
 
     @Override
-    public Collection<SecurityReviewAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data) throws AuditException {
+    public Collection<SecurityReviewAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier) throws AuditException {
 
-        List<CollectorItem> staticSecurityScanItems = getCollectorItems(dashboard, CollectorType.StaticSecurityScan);
+        List<CollectorItem> staticSecurityScanItems = StringUtils.isNotEmpty(altIdentifier)?getCollectorItemsByAltIdentifier(dashboard, CollectorType.StaticSecurityScan,altIdentifier):getCollectorItems(dashboard, CollectorType.StaticSecurityScan);
         if (CollectionUtils.isEmpty(staticSecurityScanItems)) {
             throw new AuditException("No code quality job configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
         }

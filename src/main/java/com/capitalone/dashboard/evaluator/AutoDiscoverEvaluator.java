@@ -32,7 +32,7 @@ public class AutoDiscoverEvaluator extends Evaluator<AutoDiscoverAuditResponse> 
     }
 
     @Override
-    public Collection<AutoDiscoverAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data) throws AuditException {
+    public Collection<AutoDiscoverAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier) throws AuditException {
         String title = dashboard.getTitle();
         List<AutoDiscovery> autoDiscoveries = autoDiscoveryRepository.findByMetaDataTitle(title);
         if (CollectionUtils.isEmpty(autoDiscoveries)) {
