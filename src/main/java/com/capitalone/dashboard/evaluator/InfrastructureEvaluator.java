@@ -45,8 +45,7 @@ public class InfrastructureEvaluator extends Evaluator<InfrastructureAuditRespon
     @Override
     public Collection<InfrastructureAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier) throws AuditException {
 
-        List<CollectorItem> infrastructureScanItems = StringUtils.isNotEmpty(altIdentifier)?getCollectorItemsByAltIdentifier(dashboard, CollectorType.InfrastructureScan,altIdentifier):getCollectorItems(dashboard, CollectorType.InfrastructureScan);
-
+        List<CollectorItem> infrastructureScanItems = getCollectorItemsByAltIdentifier(dashboard, CollectorType.InfrastructureScan,altIdentifier);
         if (CollectionUtils.isEmpty(infrastructureScanItems)) {
             throw new AuditException("No Infrastructure scan items configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
         }

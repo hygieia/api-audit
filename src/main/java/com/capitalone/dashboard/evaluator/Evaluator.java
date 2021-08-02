@@ -15,6 +15,7 @@ import com.capitalone.dashboard.request.ArtifactAuditRequest;
 import com.capitalone.dashboard.request.DashboardAuditRequest;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -65,12 +66,18 @@ public abstract class Evaluator<T> {
 
 
     List<CollectorItem> getCollectorItemsByAltIdentifier(Dashboard dashboard, CollectorType collectorType, String altIdentifier) {
-        Optional<ObjectId> componentIdOpt = dashboard.getWidgets().stream().findFirst().map(Widget::getComponentId);
-        Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findOne(componentIdOpt.get())) : Optional.empty();
-        // This collector items from component is stale. So, need the id's to look up current state of collector items.
-        List<ObjectId> collectorItemIds = componentOpt.map(component ->
-                component.getCollectorItems(collectorType).stream().filter(c -> isEqualsAltIdentifier(c,altIdentifier)).map(CollectorItem::getId).collect(Collectors.toList())).orElse(Collections.emptyList());
-        return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : Collections.emptyList();
+        if(StringUtils.isNotEmpty(altIdentifier)) {
+            Optional<ObjectId> componentIdOpt = dashboard.getWidgets().stream().findFirst().map(Widget::getComponentId);
+            Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findOne(componentIdOpt.get())) : Optional.empty();
+            // This collector items from component is stale. So, need the id's to look up current state of collector items.
+            List<ObjectId> collectorItemIds = componentOpt.map(component ->
+                    component.getCollectorItems(collectorType).stream().filter(c -> isEqualsAltIdentifier(c, altIdentifier)).map(CollectorItem::getId).collect(Collectors.toList())).orElse(Collections.emptyList());
+            return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : Collections.emptyList();
+        }
+        else{
+            return getCollectorItems(dashboard,collectorType);
+        }
+
     }
 
 
@@ -90,8 +97,8 @@ public abstract class Evaluator<T> {
     }
 
     private boolean isEqualsAltIdentifier(CollectorItem c,String altIdentifier) {
-        if(Objects.isNull(c.getAltIdentifier())) return false;
-        return c.getAltIdentifier().equals(altIdentifier);
+        if (Objects.isNull(c.getAltIdentifier())) return false;
+        return c.getAltIdentifier().equalsIgnoreCase(altIdentifier);
     }
 
     public Dashboard getDashboard(String businessService, String businessComponent) {
