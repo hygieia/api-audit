@@ -69,7 +69,6 @@ public abstract class Evaluator<T> {
         if(StringUtils.isNotEmpty(altIdentifier)) {
             Optional<ObjectId> componentIdOpt = dashboard.getWidgets().stream().findFirst().map(Widget::getComponentId);
             Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findOne(componentIdOpt.get())) : Optional.empty();
-            // This collector items from component is stale. So, need the id's to look up current state of collector items.
             List<ObjectId> collectorItemIds = componentOpt.map(component ->
                     component.getCollectorItems(collectorType).stream().filter(c -> isEqualsAltIdentifier(c, altIdentifier)).map(CollectorItem::getId).collect(Collectors.toList())).orElse(Collections.emptyList());
             return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : Collections.emptyList();
