@@ -77,6 +77,7 @@ public abstract class Evaluator<T> {
         else{
             return getCollectorItems(dashboard,collectorType);
         }
+
     }
 
 
@@ -96,7 +97,7 @@ public abstract class Evaluator<T> {
     }
 
     private boolean isEqualsAltIdentifier(CollectorItem c,String altIdentifier) {
-        if(Objects.isNull(c.getAltIdentifier())) return false;
+        if (Objects.isNull(c.getAltIdentifier())) return false;
         return c.getAltIdentifier().equalsIgnoreCase(altIdentifier);
     }
 
