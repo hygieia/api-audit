@@ -452,9 +452,8 @@ public class DashboardAuditServiceTest {
     }
 
     @Test
-    public void test_auditReports() throws AuditException {
-        List<JSONObject> auditReports = dashboardAuditService.getAuditReports(getDashboardAuditRequest());
-        JSONObject auditReport = auditReports.get(0);
+    public void test_auditReport() throws AuditException {
+        JSONObject auditReport = dashboardAuditService.getAuditReport(getDashboardAuditRequest());
         Assert.assertEquals("TestBusServ", auditReport.get("businessService"));
         Assert.assertEquals("confItem", auditReport.get("businessApplication"));
         Assert.assertTrue(auditReport.get("review").toString().contains(AuditType.STATIC_SECURITY_ANALYSIS.name()));

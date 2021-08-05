@@ -102,10 +102,10 @@ public class DashboardAuditController {
      * @throws AuditException audit exception
      */
     @RequestMapping(value = "/lookUp", method = GET, produces = APPLICATION_JSON_VALUE)
-    @ApiOperation(value = "Audit LookUp", notes = "Audit LookUp", response = JSONObject.class, responseContainer = "List")
-    public ResponseEntity<List<JSONObject>> lookUp(@Valid DashboardAuditRequest request) throws AuditException {
-        List<JSONObject> auditResponses = dashboardAuditService.getAuditReports(request);
-        return ResponseEntity.ok().body(auditResponses);
+    @ApiOperation(value = "Audit LookUp", notes = "Audit LookUp", response = JSONObject.class, responseContainer = "JSONObject")
+    public ResponseEntity<JSONObject> lookUp(@Valid DashboardAuditRequest request) throws AuditException {
+        JSONObject auditResponse = dashboardAuditService.getAuditReport(request);
+        return ResponseEntity.ok().body(auditResponse);
     }
 
 }
