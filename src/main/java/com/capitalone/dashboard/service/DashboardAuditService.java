@@ -20,5 +20,5 @@ public interface DashboardAuditService {
 
     List<CollectorItem> getSonarProjects(String name);
 
-    List<JSONObject> getAuditReports(DashboardAuditRequest dashboardAuditRequest) throws AuditException;
+    JSONObject getAuditReport(DashboardAuditRequest dashboardAuditRequest) throws AuditException;
 }

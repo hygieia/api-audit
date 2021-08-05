@@ -34,7 +34,6 @@ import org.springframework.stereotype.Component;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.ArrayList;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -285,29 +284,20 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
     }
 
     @Override
-    public List<JSONObject> getAuditReports(DashboardAuditRequest dashboardAuditRequest) throws AuditException {
+    public JSONObject getAuditReport(DashboardAuditRequest dashboardAuditRequest) {
         String businessService = dashboardAuditRequest.getBusinessService();
         String businessApplication = dashboardAuditRequest.getBusinessApplication();
         String identifierName = dashboardAuditRequest.getIdentifierName();
         String identifierVersion = dashboardAuditRequest.getIdentifierVersion();
         String identifierUrl = dashboardAuditRequest.getIdentifierUrl();
-        Set<AuditType> auditTypes = dashboardAuditRequest.getAuditType();
+        AuditType auditType = dashboardAuditRequest.getAuditType().iterator().next();
 
-        if (auditTypes.contains(AuditType.ALL)) {
-            auditTypes.addAll(Sets.newHashSet(AuditType.values()));
-            auditTypes.remove(AuditType.ALL);
-            auditTypes.remove(AuditType.BUILD_REVIEW);
+        AuditReport auditReport = auditReportRepository.findTop1ByBusinessApplicationAndBusinessServiceAndAuditTypeAndIdentifierNameAndIdentifierVersionAndIdentifierUrlOrderByTimestampDesc(
+                businessApplication, businessService, auditType, identifierName, identifierVersion, identifierUrl);
+        if (Objects.nonNull(auditReport) && Objects.nonNull(auditReport.getAuditResponse())) {
+            return (JSONObject) auditReport.getAuditResponse();
         }
-
-        List<JSONObject> auditResponses = new ArrayList<>();
-        auditTypes.forEach(auditType -> {
-            AuditReport auditReport = auditReportRepository.findTop1ByBusinessApplicationAndBusinessServiceAndAuditTypeAndIdentifierNameAndIdentifierVersionAndIdentifierUrlOrderByTimestampDesc(
-                    businessApplication, businessService, auditType, identifierName, identifierVersion, identifierUrl);
-            if (Objects.nonNull(auditReport) && Objects.nonNull(auditReport.getAuditResponse())) {
-                auditResponses.add((JSONObject) auditReport.getAuditResponse());
-            }
-        });
-        return auditResponses;
+        return new JSONObject();
     }
 
     private void validateParameters(String dashboardTitle, DashboardType dashboardType, String businessService, String businessApp, long beginDate, long endDate) throws AuditException{
