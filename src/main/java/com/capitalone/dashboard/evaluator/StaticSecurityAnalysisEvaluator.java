@@ -67,7 +67,7 @@ public class StaticSecurityAnalysisEvaluator extends Evaluator<SecurityReviewAud
      * @return SecurityReviewAuditResponse
      */
     private SecurityReviewAuditResponse getStaticSecurityScanResponse(CollectorItem collectorItem, long beginDate, long endDate) {
-        List<CodeQuality> codeQualities = codeQualityRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(collectorItem.getId(), beginDate - 1, endDate + 1);
+        List<CodeQuality> codeQualities = codeQualityRepository.findByCollectorItemIdOrderByTimestampDesc(collectorItem.getId());
 
         SecurityReviewAuditResponse securityReviewAuditResponse = new SecurityReviewAuditResponse();
         securityReviewAuditResponse.setAuditEntity(collectorItem.getOptions());

@@ -49,7 +49,7 @@ public class StaticSecurityAnalysisEvaluatorTest {
     public void testEvaluate_StaticSecurityCritical(){
 
         List<CodeQuality> codeQualitiesCritical = getSecurityCodeQualityData("Critical", CodeQualityMetricStatus.Alert, "1");
-        when(codeQualityRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class),any(Long.class),any(Long.class))).thenReturn(codeQualitiesCritical);
+        when(codeQualityRepository.findByCollectorItemIdOrderByTimestampDesc(any(ObjectId.class))).thenReturn(codeQualitiesCritical);
         CollectorItem collectorItem = new CollectorItem();
         collectorItem.getOptions().put("reportUrl", "");
         SecurityReviewAuditResponse response = staticSecurityAnalysisEvaluator.evaluate(collectorItem, 125634436, 125634636, null);
@@ -60,7 +60,7 @@ public class StaticSecurityAnalysisEvaluatorTest {
     public void testEvaluate_StaticSecurityHigh(){
 
         List<CodeQuality> codeQualitiesCritical = getSecurityCodeQualityData("High", CodeQualityMetricStatus.Alert, "1");
-        when(codeQualityRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class),any(Long.class),any(Long.class))).thenReturn(codeQualitiesCritical);
+        when(codeQualityRepository.findByCollectorItemIdOrderByTimestampDesc(any(ObjectId.class))).thenReturn(codeQualitiesCritical);
         CollectorItem collectorItem = new CollectorItem();
         collectorItem.getOptions().put("reportUrl", "");
         SecurityReviewAuditResponse response = staticSecurityAnalysisEvaluator.evaluate(collectorItem, 125634436, 125634636, null);
@@ -71,7 +71,7 @@ public class StaticSecurityAnalysisEvaluatorTest {
     public void testEvaluate_StaticSecurityOk(){
 
         List<CodeQuality> codeQualitiesCritical = getSecurityCodeQualityData("Score", CodeQualityMetricStatus.Ok, "5");
-        when(codeQualityRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class),any(Long.class),any(Long.class))).thenReturn(codeQualitiesCritical);
+        when(codeQualityRepository.findByCollectorItemIdOrderByTimestampDesc(any(ObjectId.class))).thenReturn(codeQualitiesCritical);
         CollectorItem collectorItem = new CollectorItem();
         collectorItem.getOptions().put("reportUrl", "");
         SecurityReviewAuditResponse response = staticSecurityAnalysisEvaluator.evaluate(collectorItem, 125634436, 125634636, null);
@@ -82,7 +82,7 @@ public class StaticSecurityAnalysisEvaluatorTest {
     public void testEvaluate_StaticSecurityFail(){
 
         List<CodeQuality> codeQualitiesCritical = getSecurityCodeQualityData("Score", CodeQualityMetricStatus.Alert, "0");
-        when(codeQualityRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class),any(Long.class),any(Long.class))).thenReturn(codeQualitiesCritical);
+        when(codeQualityRepository.findByCollectorItemIdOrderByTimestampDesc(any(ObjectId.class))).thenReturn(codeQualitiesCritical);
         CollectorItem collectorItem = new CollectorItem();
         collectorItem.getOptions().put("reportUrl", "");
         SecurityReviewAuditResponse response = staticSecurityAnalysisEvaluator.evaluate(collectorItem, 125634436, 125634636, null);
@@ -93,7 +93,7 @@ public class StaticSecurityAnalysisEvaluatorTest {
     public void testEvaluate_StaticSecurityNoClosedFindings(){
 
         List<CodeQuality> codeQualitiesCritical = getSecurityCodeQualityData("Score", CodeQualityMetricStatus.Warning, "100");
-        when(codeQualityRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class),any(Long.class),any(Long.class))).thenReturn(codeQualitiesCritical);
+        when(codeQualityRepository.findByCollectorItemIdOrderByTimestampDesc(any(ObjectId.class))).thenReturn(codeQualitiesCritical);
         CollectorItem collectorItem = new CollectorItem();
         collectorItem.getOptions().put("reportUrl", "");
         SecurityReviewAuditResponse response = staticSecurityAnalysisEvaluator.evaluate(collectorItem, 125634436, 125634636, null);
@@ -104,7 +104,7 @@ public class StaticSecurityAnalysisEvaluatorTest {
     public void testEvaluate_auditEntity(){
 
         List<CodeQuality> codeQuality = getSecurityCodeQualityData("Score", CodeQualityMetricStatus.Warning, "90");
-        when(codeQualityRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(any(ObjectId.class),any(Long.class),any(Long.class))).thenReturn(codeQuality);
+        when(codeQualityRepository.findByCollectorItemIdOrderByTimestampDesc(any(ObjectId.class))).thenReturn(codeQuality);
         CollectorItem collectorItem = new CollectorItem();
         collectorItem.getOptions().put("instanceUrl", "https://sample.com/");
         collectorItem.getOptions().put("applicationName", "sampleApp");
