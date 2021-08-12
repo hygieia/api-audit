@@ -80,7 +80,7 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
      */
     @SuppressWarnings("PMD.NPathComplexity")
     @Override
-    public DashboardReviewResponse getDashboardReviewResponse(String dashboardTitle, DashboardType dashboardType, String businessService, String businessApp, long beginDate, long endDate ,Set<AuditType> auditTypes, AutoDiscoverAuditType autoDiscoverAuditType, String altIdentifier) throws AuditException {
+    public DashboardReviewResponse getDashboardReviewResponse(String dashboardTitle, DashboardType dashboardType, String businessService, String businessApp, long beginDate, long endDate ,Set<AuditType> auditTypes, AutoDiscoverAuditType autoDiscoverAuditType, String altIdentifier, String identifierName) throws AuditException {
 
         validateParameters(dashboardTitle,dashboardType, businessService, businessApp, beginDate, endDate);
 
@@ -106,7 +106,7 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
             Evaluator evaluator = auditModel.evaluatorMap().get(auditType);
             try {
 
-                Collection<AuditReviewResponse> auditResponse = evaluator.evaluate(dashboard, beginDate, endDate, null, altIdentifier);
+                Collection<AuditReviewResponse> auditResponse = evaluator.evaluate(dashboard, beginDate, endDate, null, altIdentifier, identifierName);
                 if(auditType == AuditType.AUTO_DISCOVER){
                     setAutoDiscoverAuditResponse(autoDiscoverAuditType, dashboardReviewResponse, auditType, auditResponse);
                 }else{

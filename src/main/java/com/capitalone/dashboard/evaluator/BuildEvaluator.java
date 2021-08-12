@@ -45,7 +45,7 @@ public class BuildEvaluator extends Evaluator<BuildAuditResponse> {
 
 
     @Override
-    public Collection<BuildAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier) throws AuditException {
+    public Collection<BuildAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier, String identifierName) throws AuditException {
 
         List<CollectorItem> buildItems = getCollectorItemsByAltIdentifier(dashboard, CollectorType.Build,altIdentifier);
         List<CollectorItem> repoItems = getCollectorItemsByAltIdentifier(dashboard, CollectorType.SCM,altIdentifier);

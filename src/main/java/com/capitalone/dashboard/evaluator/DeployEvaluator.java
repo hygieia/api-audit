@@ -55,7 +55,7 @@ public class DeployEvaluator extends Evaluator<DeployAuditResponse> {
 
 
     @Override
-    public Collection<DeployAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data, String altIdentifier) throws AuditException {
+    public Collection<DeployAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data, String altIdentifier, String identifierName) throws AuditException {
 
         List<CollectorItem> deployItems = getCollectorItemsByAltIdentifier(dashboard, CollectorType.Deployment,altIdentifier);
         if (CollectionUtils.isEmpty(deployItems)) {

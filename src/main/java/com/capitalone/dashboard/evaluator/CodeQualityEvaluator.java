@@ -58,7 +58,7 @@ public class CodeQualityEvaluator extends Evaluator<CodeQualityAuditResponse> {
     }
 
     @Override
-    public Collection<CodeQualityAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier) throws AuditException {
+    public Collection<CodeQualityAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier, String identifierName) throws AuditException {
 
         List<CollectorItem> codeQualityItems = getCollectorItemsByAltIdentifier(dashboard, CollectorType.CodeQuality,altIdentifier);
 
