@@ -85,7 +85,7 @@ public abstract class Evaluator<T> {
             Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findOne(componentIdOpt.get())) : Optional.empty();
             List<ObjectId> collectorItemIds = componentOpt.map(component ->
                     component.getCollectorItems(collectorType).stream().filter(c -> isEqualsAltIdentifierAndIdentifierName(c, altIdentifier, identifierName)).map(CollectorItem::getId).collect(Collectors.toList())).orElse(Collections.emptyList());
-            return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : Collections.emptyList();
+            return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : getCollectorItemsByAltIdentifier(dashboard, collectorType, altIdentifier);
         } if (StringUtils.isNotEmpty(altIdentifier)) {
             return getCollectorItemsByAltIdentifier(dashboard, collectorType, altIdentifier);
         } else {
