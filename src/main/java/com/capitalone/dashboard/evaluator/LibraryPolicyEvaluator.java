@@ -40,7 +40,7 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
     }
 
     @Override
-    public Collection<LibraryPolicyAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier) throws AuditException {
+    public Collection<LibraryPolicyAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier, String identifierName) throws AuditException {
 
         List<CollectorItem> libraryPolicyItems = getCollectorItemsByAltIdentifier(dashboard, CollectorType.LibraryPolicy,altIdentifier);
         if (CollectionUtils.isEmpty(libraryPolicyItems)) {

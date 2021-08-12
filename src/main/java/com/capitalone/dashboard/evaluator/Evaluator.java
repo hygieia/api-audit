@@ -12,7 +12,6 @@ import com.capitalone.dashboard.repository.CollectorItemRepository;
 import com.capitalone.dashboard.repository.ComponentRepository;
 import com.capitalone.dashboard.repository.DashboardRepository;
 import com.capitalone.dashboard.request.ArtifactAuditRequest;
-import com.capitalone.dashboard.request.DashboardAuditRequest;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +29,7 @@ import java.util.stream.Collectors;
 public abstract class Evaluator<T> {
 
     public static final String TEST_TYPE = "testType";
+    public static final String ARTIFACT_NAME = "artifactName";
 
     @Autowired
     protected ComponentRepository componentRepository;
@@ -43,8 +43,7 @@ public abstract class Evaluator<T> {
     @Autowired
     protected ApiSettings settings;
 
-
-    public abstract Collection<T> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data, String altIdentifier) throws AuditException;
+    public abstract Collection<T> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data, String altIdentifier, String identifierName) throws AuditException;
 
     public abstract Collection<T> evaluateNextGen(ArtifactAuditRequest artifactAuditRequest, Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data) throws AuditException;
 
@@ -79,6 +78,20 @@ public abstract class Evaluator<T> {
         }
     }
 
+    List<CollectorItem> getCollectorItemsByIdentifierName(Dashboard dashboard, CollectorType collectorType, String altIdentifier, String identifierName) {
+        if (StringUtils.isNotEmpty(identifierName)) {
+            Optional<ObjectId> componentIdOpt = dashboard.getWidgets().stream().findFirst().map(Widget::getComponentId);
+            Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findOne(componentIdOpt.get())) : Optional.empty();
+            List<ObjectId> collectorItemIds = componentOpt.map(component ->
+                    component.getCollectorItems(collectorType).stream().filter(c -> isEqualsIdentifierName(c, identifierName)).map(CollectorItem::getId).collect(Collectors.toList())).orElse(Collections.emptyList());
+            return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : getCollectorItemsByAltIdentifier(dashboard, collectorType, altIdentifier);
+        } else if (StringUtils.isNotEmpty(altIdentifier)) {
+            return getCollectorItemsByAltIdentifier(dashboard, collectorType, altIdentifier);
+        } else {
+            return getCollectorItems(dashboard,collectorType);
+        }
+    }
+
 
 
     List<CollectorItem> getCollectorItems(Dashboard dashboard, CollectorType collectorType, String testType) {
@@ -98,6 +111,10 @@ public abstract class Evaluator<T> {
     private boolean isEqualsAltIdentifier(CollectorItem c,String altIdentifier) {
         if (Objects.isNull(c.getAltIdentifier())) return false;
         return c.getAltIdentifier().equalsIgnoreCase(altIdentifier);
+    }
+
+    private boolean isEqualsIdentifierName(CollectorItem c, String identifierName) {
+        return (Objects.nonNull(identifierName) && Objects.nonNull(c.getOptions())) ? identifierName.equalsIgnoreCase((String)c.getOptions().get(ARTIFACT_NAME)) : false;
     }
 
     public Dashboard getDashboard(String businessService, String businessComponent) {

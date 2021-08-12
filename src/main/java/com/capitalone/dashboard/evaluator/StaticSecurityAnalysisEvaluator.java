@@ -37,7 +37,7 @@ public class StaticSecurityAnalysisEvaluator extends Evaluator<SecurityReviewAud
     }
 
     @Override
-    public Collection<SecurityReviewAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier) throws AuditException {
+    public Collection<SecurityReviewAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier, String identifierName) throws AuditException {
 
         List<CollectorItem> staticSecurityScanItems = getCollectorItemsByAltIdentifier(dashboard, CollectorType.StaticSecurityScan,altIdentifier);
         if (CollectionUtils.isEmpty(staticSecurityScanItems)) {

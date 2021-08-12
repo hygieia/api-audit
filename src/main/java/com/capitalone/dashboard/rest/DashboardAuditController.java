@@ -59,7 +59,7 @@ public class DashboardAuditController {
         String requester = httpServletRequest.getHeader(CommonConstants.HEADER_API_USER);
         DashboardReviewResponse dashboardReviewResponse = dashboardAuditService.getDashboardReviewResponse(request.getTitle(), DashboardType.Team,
                 request.getBusinessService(), request.getBusinessApplication(),
-                request.getBeginDate(), request.getEndDate(), request.getAuditType(), Objects.nonNull(request.getAutoDiscoverAuditType())? request.getAutoDiscoverAuditType() : AutoDiscoverAuditType.ALL, request.getAltIdentifier());
+                request.getBeginDate(), request.getEndDate(), request.getAuditType(), Objects.nonNull(request.getAutoDiscoverAuditType())? request.getAutoDiscoverAuditType() : AutoDiscoverAuditType.ALL, request.getAltIdentifier(), request.getIdentifierName());
         String request_audit_types =  CollectionUtils.isEmpty(request.getAuditType()) ? "[ALL]" : request.getAuditType().toString();
         String response_message = "auditStatuses:"+dashboardReviewResponse.getAuditStatuses().toString();
         LOGGER.info("correlation_id="+request.getClientReference() +", application=hygieia, service=api-audit, uri=" + httpServletRequest.getRequestURI() +

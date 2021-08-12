@@ -43,7 +43,7 @@ public class InfrastructureEvaluator extends Evaluator<InfrastructureAuditRespon
     }
 
     @Override
-    public Collection<InfrastructureAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier) throws AuditException {
+    public Collection<InfrastructureAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier, String identifierName) throws AuditException {
 
         List<CollectorItem> infrastructureScanItems = getCollectorItemsByAltIdentifier(dashboard, CollectorType.InfrastructureScan,altIdentifier);
         if (CollectionUtils.isEmpty(infrastructureScanItems)) {

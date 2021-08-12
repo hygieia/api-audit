@@ -65,7 +65,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
 
 
     @Override
-    public Collection<CodeReviewAuditResponseV2> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data, String altIdentifier) throws AuditException {
+    public Collection<CodeReviewAuditResponseV2> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data, String altIdentifier, String identifierName) throws AuditException {
         List<CodeReviewAuditResponseV2> responseV2s = new ArrayList<>();
         List<CollectorItem> repoItems = getCollectorItemsByAltIdentifier(dashboard, CollectorType.SCM,altIdentifier);
         if (CollectionUtils.isEmpty(repoItems)) {
