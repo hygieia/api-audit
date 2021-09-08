@@ -1,5 +1,6 @@
 package com.capitalone.dashboard.evaluator;
 
+import com.capitalone.dashboard.ApiSettings;
 import com.capitalone.dashboard.model.AuditException;
 import com.capitalone.dashboard.model.CollectorItem;
 import com.capitalone.dashboard.model.CollectorType;
@@ -73,7 +74,7 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
         LibraryPolicyAuditResponse libraryPolicyAuditResponse = new LibraryPolicyAuditResponse();
         libraryPolicyAuditResponse.setAuditEntity(collectorItem.getOptions());
 
-        if(Objects.isNull(returnPolicyResult) || MapUtils.isEmpty(returnPolicyResult.getThreats())){
+        if(Objects.isNull(returnPolicyResult)){
             libraryPolicyAuditResponse.addAuditStatus(LibraryPolicyAuditStatus.LIBRARY_POLICY_INVALID_SCAN);
             libraryPolicyAuditResponse.setLibraryPolicyResult(returnPolicyResult);
             libraryPolicyAuditResponse.setLastExecutionTime(Objects.nonNull(returnPolicyResult) ? returnPolicyResult.getEvaluationTimestamp() : 0L );
@@ -123,5 +124,9 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
         }
         return threat.getDispositionCounts().containsKey(LibraryPolicyThreatDisposition.Open) &&
                 (threat.getDispositionCounts().get(LibraryPolicyThreatDisposition.Open) > 0) && (threat.getMaxAge() > age);
+    }
+
+    public void setSettings(ApiSettings settings) {
+        this.settings = settings;
     }
 }
