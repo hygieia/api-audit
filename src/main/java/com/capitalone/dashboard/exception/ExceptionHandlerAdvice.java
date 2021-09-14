@@ -1,6 +1,5 @@
 package com.capitalone.dashboard.exception;
 
-import com.capitalone.dashboard.model.AuditException;
 import com.capitalone.dashboard.util.CommonConstants;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -23,8 +22,8 @@ public class ExceptionHandlerAdvice {
     private static final String API_USER_KEY = "apiUser";
     private static final String UNKNOWN_USER = "unknown";
 
-    @ExceptionHandler(AuditException.class)
-    public ResponseEntity<String> handleException(HttpServletRequest request, AuditException e) {
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleException(HttpServletRequest request, Exception e) {
         String correlation_id = request.getHeader(CommonConstants.HEADER_CLIENT_CORRELATION_ID);
         String apiUser = request.getHeader(API_USER_KEY);
         apiUser = (StringUtils.isEmpty(apiUser) ? UNKNOWN_USER : apiUser);
