@@ -27,6 +27,8 @@ public class ApiSettings {
     private String commitLogIgnoreAuditRegEx;
     @Value("${maxDaysRangeForQuery:60}") // 60 days max
     private long maxDaysRangeForQuery;
+
+    @Value("${logRequest:false}")
     private boolean logRequest;
     private String featureIDPattern;
     @Value("${traceabilityThreshold:80.0}")
