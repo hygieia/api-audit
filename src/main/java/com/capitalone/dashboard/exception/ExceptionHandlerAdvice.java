@@ -34,8 +34,8 @@ public class ExceptionHandlerAdvice {
                         .collect(Collectors.joining(","));
 
         String responseStatusMessage = ((e instanceof AuditException) ? ("Bad request: ") : "") + e.getMessage();
-
         int responseCode = (e instanceof AuditException) ? HttpStatus.BAD_REQUEST.value() : HttpStatus.INTERNAL_SERVER_ERROR.value();
+        HttpStatus httpStatus = (e instanceof AuditException) ? HttpStatus.BAD_REQUEST : HttpStatus.INTERNAL_SERVER_ERROR;
 
         LOGGER.error("correlation_id=" + correlation_id
                 + ", requester=" + apiUser
@@ -48,7 +48,7 @@ public class ExceptionHandlerAdvice {
                 + ", client_ip=" + request.getRemoteAddr()
                 + (StringUtils.equalsIgnoreCase(request.getMethod(), "GET") ? ", request_params="+parameters :  StringUtils.EMPTY ));
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
+                .status(httpStatus)
                 .body(responseStatusMessage);
     }
 }
