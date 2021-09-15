@@ -4,7 +4,6 @@ import com.capitalone.dashboard.ApiSettings;
 import com.capitalone.dashboard.model.AuditRequestLog;
 import com.capitalone.dashboard.repository.AuditRequestLogRepository;
 import com.capitalone.dashboard.util.CommonConstants;
-import com.mongodb.util.JSON;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.commons.lang3.StringUtils;
@@ -80,17 +79,14 @@ public class LoggingFilter implements Filter {
         HttpServletRequest httpServletRequest = (HttpServletRequest) request;
         HttpServletResponse httpServletResponse = (HttpServletResponse) response;
 
-        Map<String, String> requestMap = this.getTypesafeRequestMap(httpServletRequest);
-        BufferedRequestWrapper bufferedRequest = new BufferedRequestWrapper(httpServletRequest);
-        BufferedResponseWrapper bufferedResponse = new BufferedResponseWrapper(httpServletResponse);
-
         //no need for further action for ping
         if(StringUtils.containsIgnoreCase(httpServletRequest.getRequestURI(), PING)) {
-            chain.doFilter(bufferedRequest, bufferedResponse);
+            chain.doFilter(httpServletRequest, httpServletResponse);
             return;
         }
 
-        String apiUser = bufferedRequest.getHeader(API_USER_KEY);
+        Map<String, String> requestMap = this.getTypesafeRequestMap(httpServletRequest);
+        String apiUser = httpServletRequest.getHeader(API_USER_KEY);
         apiUser = (StringUtils.isEmpty(apiUser) ? UNKNOWN_USER : apiUser);
         //retrieve header value from request and set it to response
         String correlation_id = httpServletRequest.getHeader(CommonConstants.HEADER_CLIENT_CORRELATION_ID);
@@ -102,31 +98,35 @@ public class LoggingFilter implements Filter {
                         .collect(Collectors.joining(","));
 
         long startTime = System.currentTimeMillis();
+        if (settings.checkIgnoreEndPoint(httpServletRequest.getRequestURI()) || settings.checkIgnoreApiUser(apiUser) || !settings.isLogRequest()) {
+            chain.doFilter(httpServletRequest, httpServletResponse);
+            int response_code = httpServletResponse.getStatus();
+            boolean success = (response_code >=200 && response_code <=399) ;
+            LOGGER.info("correlation_id=" + correlation_id
+                    + ", application=hygieia, service=api-audit"
+                    + ", uri=" + httpServletRequest.getRequestURI()
+                    + ", requester=" + apiUser
+                    + ", request_method=" + httpServletRequest.getMethod()
+                    + ", duration=" + (System.currentTimeMillis() - startTime)
+                    + ", response_status=" + (success ? "success" : "failed")
+                    + ", response_code=" + httpServletResponse.getStatus()
+                    + ", client_ip=" + httpServletRequest.getRemoteAddr()
+                    + (StringUtils.equalsIgnoreCase(httpServletRequest.getMethod(), "GET") ? ", request_params="+parameters :  StringUtils.EMPTY ));
+            return;
+        }
+
+        // Execute the below code only if logRequest is true
+        BufferedRequestWrapper bufferedRequest = new BufferedRequestWrapper(httpServletRequest);
+        BufferedResponseWrapper bufferedResponse = new BufferedResponseWrapper(httpServletResponse);
+
         AuditRequestLog requestLog = new AuditRequestLog();
         requestLog.setClient(httpServletRequest.getRemoteAddr());
         requestLog.setEndpoint(httpServletRequest.getRequestURI());
         requestLog.setMethod(httpServletRequest.getMethod());
         requestLog.setParameter(requestMap.toString());
         requestLog.setApiUser(apiUser);
-        if(StringUtils.isNotEmpty(correlation_id)) {
+        if (StringUtils.isNotEmpty(correlation_id)) {
             requestLog.setClientReference(correlation_id);
-        }
-
-        if(settings.checkIgnoreEndPoint(httpServletRequest.getRequestURI()) || settings.checkIgnoreApiUser(requestLog.getApiUser())) {
-            chain.doFilter(bufferedRequest, bufferedResponse);
-            int response_code = bufferedResponse.getStatus();
-            boolean success = (response_code >=200 && response_code <=399) ;
-            LOGGER.info("correlation_id=" + correlation_id
-                    + ", application=hygieia, service=api-audit"
-                    + ", uri=" + bufferedRequest.getRequestURI()
-                    + ", requester=" + apiUser
-                    + ", request_method=" + bufferedRequest.getMethod()
-                    + ", duration=" + (System.currentTimeMillis() - startTime)
-                    + ", response_status=" + (success ? "success" : "failed")
-                    + ", response_code=" + bufferedResponse.getStatus()
-                    + ", client_ip=" + httpServletRequest.getRemoteAddr()
-                    + (StringUtils.equalsIgnoreCase(httpServletRequest.getMethod(), "GET") ? ", request_params="+parameters :  StringUtils.EMPTY ));
-            return;
         }
 
         requestLog.setRequestSize(httpServletRequest.getContentLengthLong());
