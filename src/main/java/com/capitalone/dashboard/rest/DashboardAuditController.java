@@ -8,6 +8,7 @@ import com.capitalone.dashboard.request.DashboardAuditRequest;
 import com.capitalone.dashboard.response.DashboardReviewResponse;
 import com.capitalone.dashboard.service.DashboardAuditService;
 import com.capitalone.dashboard.util.CommonConstants;
+import com.capitalone.dashboard.util.ConversionUtils;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.collections.CollectionUtils;
 import org.json.simple.JSONObject;
@@ -64,7 +65,7 @@ public class DashboardAuditController {
         String response_message = "auditStatuses:"+dashboardReviewResponse.getAuditStatuses().toString();
         LOGGER.info("correlation_id="+request.getClientReference() +", application=hygieia, service=api-audit, uri=" + httpServletRequest.getRequestURI() +
                 ", requester=" + requester + ", response_status=success, response_code=" + HttpStatus.OK.value()+", response_status_message="+response_message +", businessService="+request.getBusinessService()+
-                ", businessApplication="+request.getBusinessApplication() + ", auditType="+request_audit_types);
+                ", businessApplication=" + request.getBusinessApplication() + ", auditType=" + request_audit_types + ", " + ConversionUtils.flattenMap(httpServletRequest.getParameterMap()));
         dashboardReviewResponse.setClientReference(request.getClientReference());
         return ResponseEntity.ok().body(dashboardReviewResponse);
     }

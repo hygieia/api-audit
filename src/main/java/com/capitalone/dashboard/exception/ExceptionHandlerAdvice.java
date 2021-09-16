@@ -2,7 +2,7 @@ package com.capitalone.dashboard.exception;
 
 import com.capitalone.dashboard.model.AuditException;
 import com.capitalone.dashboard.util.CommonConstants;
-import org.apache.commons.collections4.MapUtils;
+import com.capitalone.dashboard.util.ConversionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,9 +12,6 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class ExceptionHandlerAdvice {
@@ -28,10 +25,7 @@ public class ExceptionHandlerAdvice {
         String correlation_id = request.getHeader(CommonConstants.HEADER_CLIENT_CORRELATION_ID);
         String apiUser = request.getHeader(API_USER_KEY);
         apiUser = (StringUtils.isEmpty(apiUser) ? UNKNOWN_USER : apiUser);
-        String parameters = MapUtils.isEmpty(request.getParameterMap())? "NONE" :
-                Collections.list(request.getParameterNames()).stream()
-                        .map(p -> p + ":" + Arrays.asList( request.getParameterValues(p)) )
-                        .collect(Collectors.joining(","));
+        String parameters = ConversionUtils.flattenMap(request.getParameterMap());
 
         String responseStatusMessage = ((e instanceof AuditException) ? ("Bad request: ") : "") + e.getMessage();
         int responseCode = (e instanceof AuditException) ? HttpStatus.BAD_REQUEST.value() : HttpStatus.INTERNAL_SERVER_ERROR.value();
@@ -46,7 +40,7 @@ public class ExceptionHandlerAdvice {
                 + ", response_status_message=" + responseStatusMessage
                 + ", response_status=failed"
                 + ", client_ip=" + request.getRemoteAddr()
-                + (StringUtils.equalsIgnoreCase(request.getMethod(), "GET") ? ", request_params="+parameters :  StringUtils.EMPTY ));
+                + (StringUtils.equalsIgnoreCase(request.getMethod(), "GET") ? ", " + parameters : StringUtils.EMPTY));
         return ResponseEntity
                 .status(httpStatus)
                 .body(responseStatusMessage);

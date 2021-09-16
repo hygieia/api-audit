@@ -4,7 +4,7 @@ import com.capitalone.dashboard.ApiSettings;
 import com.capitalone.dashboard.model.AuditRequestLog;
 import com.capitalone.dashboard.repository.AuditRequestLogRepository;
 import com.capitalone.dashboard.util.CommonConstants;
-import org.apache.commons.collections4.MapUtils;
+import com.capitalone.dashboard.util.ConversionUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -39,14 +39,11 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -92,10 +89,7 @@ public class LoggingFilter implements Filter {
         String correlation_id = httpServletRequest.getHeader(CommonConstants.HEADER_CLIENT_CORRELATION_ID);
         httpServletResponse.setHeader(CommonConstants.HEADER_CLIENT_CORRELATION_ID, correlation_id);
 
-        String parameters = MapUtils.isEmpty(request.getParameterMap())? "NONE" :
-                Collections.list(request.getParameterNames()).stream()
-                        .map(p -> p + ":" + Arrays.asList( request.getParameterValues(p)) )
-                        .collect(Collectors.joining(","));
+        String parameters = ConversionUtils.flattenMap(request.getParameterMap());
 
         long startTime = System.currentTimeMillis();
         if (settings.checkIgnoreEndPoint(httpServletRequest.getRequestURI()) || settings.checkIgnoreApiUser(apiUser) || !settings.isLogRequest()) {
@@ -111,7 +105,7 @@ public class LoggingFilter implements Filter {
                     + ", response_status=" + (success ? "success" : "failed")
                     + ", response_code=" + httpServletResponse.getStatus()
                     + ", client_ip=" + httpServletRequest.getRemoteAddr()
-                    + (StringUtils.equalsIgnoreCase(httpServletRequest.getMethod(), "GET") ? ", request_params="+parameters :  StringUtils.EMPTY ));
+                    + (StringUtils.equalsIgnoreCase(httpServletRequest.getMethod(), "GET") ? ", " + parameters : StringUtils.EMPTY));
             return;
         }
 
@@ -156,7 +150,7 @@ public class LoggingFilter implements Filter {
                     + ", response_status=" + (success ? "success" : "failed")
                     + ", response_code=" + bufferedResponse.getStatus()
                     + ", client_ip=" + httpServletRequest.getRemoteAddr()
-                    + (StringUtils.equalsIgnoreCase(httpServletRequest.getMethod(), "GET") ? ", request_params="+parameters :  StringUtils.EMPTY ));
+                    + (StringUtils.equalsIgnoreCase(httpServletRequest.getMethod(), "GET") ? ", " + parameters : StringUtils.EMPTY));
         }
         requestLog.setResponseSize(bufferedResponse.getContent().length());
 

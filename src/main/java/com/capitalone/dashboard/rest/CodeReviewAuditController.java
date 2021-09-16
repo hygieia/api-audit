@@ -5,6 +5,7 @@ import com.capitalone.dashboard.request.CodeReviewAuditRequest;
 import com.capitalone.dashboard.response.CodeReviewAuditResponse;
 import com.capitalone.dashboard.service.CodeReviewAuditService;
 import com.capitalone.dashboard.util.CommonConstants;
+import com.capitalone.dashboard.util.ConversionUtils;
 import com.capitalone.dashboard.util.GitHubParsedUrl;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.collections4.CollectionUtils;
@@ -65,7 +66,7 @@ public class CodeReviewAuditController {
             String response_message="auditStatuses:" + mutatedPeerReviews.parallelStream().map(p -> p.toString()).collect(Collectors.joining(","));
             LOGGER.info("correlation_id="+request.getClientReference() +", application=hygieia, service=api-audit, uri=" + httpServletRequest.getRequestURI() +
                     ", requester=" + requester + ", response_status=success, response_code=" + HttpStatus.OK.value()+", response_status_message=" + response_message +
-                    ", auditType=[CODE_REVIEW], repo_url=" + request.getRepo());
+                    ", auditType=[CODE_REVIEW], repo_url=" + request.getRepo() + ", " + ConversionUtils.flattenMap(httpServletRequest.getParameterMap()));
         }
         return ResponseEntity.ok().body(mutatedPeerReviews);
     }
