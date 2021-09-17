@@ -8,10 +8,14 @@ import java.util.stream.Collectors;
 public class ConversionUtils {
 
     public static final String flattenMap(Map<String, String[]> input) {
+        return flattenMap(input, "", "");
+    }
+
+    public static final String flattenMap(Map<String, String[]> input, String prefix, String suffix) {
         if (MapUtils.isEmpty(input)) return "NONE";
         return input.keySet().stream()
                 .map(key -> key + "=" + arrayToString(input.get(key)))
-                .collect(Collectors.joining(", ", "", ""));
+                .collect(Collectors.joining(", ", prefix, suffix));
     }
 
     private static final String arrayToString(String[] input) {
