@@ -496,9 +496,12 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
      * Additional check for Direct Commit
      */
     private boolean checkCommitHasPR(Commit commit) {
-        List<Commit> commits = commitRepository.findAllByScmRevisionNumberAndScmAuthorIgnoreCaseAndScmCommitLogAndScmCommitTimestamp(
-                commit.getScmRevisionNumber(), commit.getScmAuthor(), commit.getScmCommitLog(), commit.getScmCommitTimestamp());
-        return commits.stream().anyMatch(c -> StringUtils.isNotEmpty(commit.getPullNumber()));
+        if (Objects.nonNull(commit)) {
+            List<Commit> commits = commitRepository.findAllByScmRevisionNumberAndScmAuthorIgnoreCaseAndScmCommitLogAndScmCommitTimestamp(
+                    commit.getScmRevisionNumber(), commit.getScmAuthor(), commit.getScmCommitLog(), commit.getScmCommitTimestamp());
+            return CollectionUtils.isNotEmpty(commits) && commits.stream().anyMatch(c -> StringUtils.isNotEmpty(commit.getPullNumber()));
+        }
+        return false;
     }
 
     public Map<String,String> getAllServiceAccounts(){
