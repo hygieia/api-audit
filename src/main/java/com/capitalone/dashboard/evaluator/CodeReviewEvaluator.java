@@ -484,11 +484,25 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
     private void addDirectCommitsToBase(CodeReviewAuditResponseV2 reviewAuditResponseV2,Commit commit){
         if(commit.isFirstEverCommit()){
             reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.DIRECT_COMMITS_TO_BASE_FIRST_COMMIT );
-        }else if(StringUtils.isEmpty(commit.getPullNumber())){
+        }else if(StringUtils.isEmpty(commit.getPullNumber()) && !checkCommitHasPR(commit)){
                 reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.DIRECT_COMMITS_TO_BASE);
                 reviewAuditResponseV2.addDirectCommitsToBase(commit);
         }
    }
+
+    /**
+     * Checks whether a commit is associated with any pull request
+     * Github Default : Commit is auto merged with no PR association if it is previously merged with another PR
+     * Additional check for Direct Commit
+     */
+    private boolean checkCommitHasPR(Commit commit) {
+        if (Objects.nonNull(commit)) {
+            List<Commit> commits = commitRepository.findAllByScmRevisionNumberAndScmAuthorIgnoreCaseAndScmCommitLogAndScmCommitTimestamp(
+                    commit.getScmRevisionNumber(), commit.getScmAuthor(), commit.getScmCommitLog(), commit.getScmCommitTimestamp());
+            return CollectionUtils.isNotEmpty(commits) && commits.stream().anyMatch(c -> StringUtils.isNotEmpty(commit.getPullNumber()));
+        }
+        return false;
+    }
 
     public Map<String,String> getAllServiceAccounts(){
         List<ServiceAccount> serviceAccounts = (List<ServiceAccount>) serviceAccountRepository.findAll();
