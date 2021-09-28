@@ -176,8 +176,8 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
 
         List<GitRequest> pullRequests = gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(repoItem.getId(), beginDt-1, endDt+1);
         List<Commit> allCommits = commitRepository.findByCollectorItemIdAndScmCommitTimestampIsBetween(repoItem.getId(), beginDt-1, endDt+1);
-        //Filter empty commits
-        List<Commit> commits = allCommits.stream().filter(commit -> commit.getNumberOfChanges()>0).collect(Collectors.toList());
+        //Filter empty and auto merged commits
+        List<Commit> commits = allCommits.stream().filter(commit -> isNeitherEmptyNorAutoMerged(commit)).collect(Collectors.toList());
         commits.sort(Comparator.comparing(Commit::getScmCommitTimestamp).reversed());
         pullRequests.sort(Comparator.comparing(GitRequest::getMergedAt).reversed());
 
@@ -222,6 +222,12 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         });
 
         return reviewAuditResponseV2;
+    }
+
+    // Check if commit is neither empty nor auto merged
+    protected boolean isNeitherEmptyNorAutoMerged(Commit commit) {
+        String pullNumber = commit.getPullNumber();
+        return (commit.getNumberOfChanges()>0 && (StringUtils.isNotEmpty(pullNumber) || (StringUtils.isEmpty(pullNumber) && !isCommitHasMergedPR(commit))));
     }
 
     private boolean hasValidRepoError(CollectorItem repoItem, List<GitRequest> pullRequests, List<Commit> commits, long beginDt, long endDt) {
@@ -484,22 +490,31 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
     private void addDirectCommitsToBase(CodeReviewAuditResponseV2 reviewAuditResponseV2,Commit commit){
         if(commit.isFirstEverCommit()){
             reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.DIRECT_COMMITS_TO_BASE_FIRST_COMMIT );
-        }else if(StringUtils.isEmpty(commit.getPullNumber()) && !checkCommitHasPR(commit)){
+        }else if(StringUtils.isEmpty(commit.getPullNumber()) && !isCommitHasMergedPR(commit)){
                 reviewAuditResponseV2.addAuditStatus(CodeReviewAuditStatus.DIRECT_COMMITS_TO_BASE);
                 reviewAuditResponseV2.addDirectCommitsToBase(commit);
         }
    }
 
     /**
-     * Checks whether a commit is associated with any pull request
+     * Checks whether a commit is associated with any merged pull request
      * Github Default : Commit is auto merged with no PR association if it is previously merged with another PR
      * Additional check for Direct Commit
      */
-    private boolean checkCommitHasPR(Commit commit) {
+    private boolean isCommitHasMergedPR(Commit commit) {
         if (Objects.nonNull(commit)) {
             List<Commit> commits = commitRepository.findAllByScmRevisionNumberAndScmAuthorIgnoreCaseAndScmCommitLogAndScmCommitTimestamp(
                     commit.getScmRevisionNumber(), commit.getScmAuthor(), commit.getScmCommitLog(), commit.getScmCommitTimestamp());
-            return CollectionUtils.isNotEmpty(commits) && commits.stream().anyMatch(c -> StringUtils.isNotEmpty(commit.getPullNumber()));
+            if (CollectionUtils.isNotEmpty(commits)) {
+                for (Commit c : commits) {
+                    if (StringUtils.isNotEmpty(c.getPullNumber())) {
+                        GitRequest pr = gitRequestRepository.findByCollectorItemIdAndNumber(c.getCollectorItemId(), c.getPullNumber());
+                        if (Objects.nonNull(pr)) {
+                            return "merged".equalsIgnoreCase(pr.getState());
+                        }
+                    }
+                }
+            }
         }
         return false;
     }

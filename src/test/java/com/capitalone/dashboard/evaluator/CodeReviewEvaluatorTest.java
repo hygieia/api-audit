@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -450,6 +452,32 @@ public class CodeReviewEvaluatorTest {
             commit.setScmCommitLog(log);
             Assert.assertFalse(codeReviewEvaluator.isMergeCommitFromTargetBranch(commit, request));
         });
+    }
+
+    @Test
+    public void commitAutoMergeFilterTest() {
+        GitRequest pr = new GitRequest();
+        pr.setNumber("22");
+        pr.setState("merged");
+        List<Commit> commits = new ArrayList<>();
+        Commit commit1 = makeCommit("commit msg 1", "scmrev1111", "aaa111", "ccc111", 12345678L);
+        Commit commit2 = makeCommit("commit msg 2", "scmrev2222", "aaa222", "ccc222", 12345222L);
+        Commit commit3 = makeCommit("commit msg 3", "scmrev3333", "aaa333", "ccc333", 12345678L);
+        Commit commit4 = makeCommit("commit msg 2", "scmrev2222", "aaa222", "ccc222", 12345222L);
+
+        when(commitRepository.findAllByScmRevisionNumberAndScmAuthorIgnoreCaseAndScmCommitLogAndScmCommitTimestamp(anyString(), anyString(), anyString(), anyLong())).thenReturn(Arrays.asList(commit2, commit4));
+        when(gitRequestRepository.findByCollectorItemIdAndNumber(any(), anyString())).thenReturn(pr);
+        commit1.setPullNumber("11");
+        commit2.setPullNumber(null);
+        commit3.setPullNumber("33");
+        commit3.setNumberOfChanges(0);
+        commit4.setPullNumber("22");
+        commits.addAll(Arrays.asList(commit1, commit2, commit3, commit4));
+        List<Commit> filteredCommits = commits.stream().filter(commit -> codeReviewEvaluator.isNeitherEmptyNorAutoMerged(commit)).collect(Collectors.toList());
+        Assert.assertTrue(filteredCommits.size() == 2);
+        Assert.assertTrue(filteredCommits.get(0).getScmRevisionNumber().equalsIgnoreCase("scmrev1111"));
+        Assert.assertTrue(filteredCommits.get(1).getScmRevisionNumber().equalsIgnoreCase("scmrev2222")
+                && filteredCommits.get(1).getPullNumber().equalsIgnoreCase("22"));
     }
 
     private List<GitRequest> makePullRequests(boolean withApprovedReview) {
