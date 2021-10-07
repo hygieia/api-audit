@@ -505,15 +505,12 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         if (Objects.nonNull(commit)) {
             List<Commit> commits = commitRepository.findAllByScmRevisionNumberAndScmAuthorIgnoreCaseAndScmCommitLogAndScmCommitTimestamp(
                     commit.getScmRevisionNumber(), commit.getScmAuthor(), commit.getScmCommitLog(), commit.getScmCommitTimestamp());
-            if (CollectionUtils.isNotEmpty(commits)) {
-                for (Commit c : commits) {
-                    if (StringUtils.isNotEmpty(c.getPullNumber())) {
-                        GitRequest pr = gitRequestRepository.findByCollectorItemIdAndNumber(c.getCollectorItemId(), c.getPullNumber());
-                        if (Objects.nonNull(pr)) {
-                            return "merged".equalsIgnoreCase(pr.getState());
-                        }
-                    }
-                }
+
+            if(CollectionUtils.isNotEmpty(commits)) {
+                return commits.stream().filter(c1 -> StringUtils.isNotEmpty(c1.getPullNumber())).anyMatch(c2 -> {
+                    GitRequest pr = gitRequestRepository.findByCollectorItemIdAndNumber(c2.getCollectorItemId(), c2.getPullNumber());
+                    return (Objects.nonNull(pr) && "merged".equalsIgnoreCase(pr.getState()));
+                });
             }
         }
         return false;
