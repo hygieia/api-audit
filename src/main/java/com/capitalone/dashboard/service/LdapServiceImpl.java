@@ -43,7 +43,7 @@ public class LdapServiceImpl implements LdapService {
     public String getLdapDN(String userName) {
         String result = "";
         if(StringUtils.isEmpty(userName)) return result;
-
+        userName = StringUtils.lowerCase(userName);
         UserEntitlements entitlements = userEntitlementsRepository.findTopByAuthTypeAndEntitlementTypeAndUsername(AuthType.LDAP, ENTITLEMENT_TYPE, userName);
         if(entitlements != null) return entitlements.getEntitlements();
         try {
@@ -56,7 +56,6 @@ public class LdapServiceImpl implements LdapService {
             newEntitlement.setEntitlementType(ENTITLEMENT_TYPE);
             newEntitlement.setAuthType(AuthType.LDAP);
             userEntitlementsRepository.save(newEntitlement);
-
             return entitlementValue;
 
         } catch (AuthenticationException ae) {
@@ -80,8 +79,12 @@ public class LdapServiceImpl implements LdapService {
             searchFilter = "(&(objectClass=user)(userPrincipalName=" + searchId + "@" + authProperties.getAdDomain() + "))";
 
             NamingEnumeration<SearchResult> results = context.search(searchBase, searchFilter, ctrls);
+            LOGGER.info(String.format("Searching LDAP searchBase=%s searchFilter=%s userKey=%s", searchBase, searchFilter, searchId));
             // if searchId cannot be found in service accounts, then search in users
-            results = (!results.hasMore()) ? context.search(authProperties.getAdUserRootDn(), searchFilter, ctrls) : results;
+            if(!results.hasMore()) {
+                results = context.search(authProperties.getAdUserRootDn(), searchFilter, ctrls);
+                LOGGER.info(String.format("retrying LDAP searchBase=%s searchFilter=%s userKey=%s", authProperties.getAdUserRootDn(), searchFilter, searchId));
+            }
 
             if (!results.hasMore()) {
                 return "";
