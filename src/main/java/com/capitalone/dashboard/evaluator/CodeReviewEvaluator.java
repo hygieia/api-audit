@@ -2,6 +2,8 @@ package com.capitalone.dashboard.evaluator;
 
 import com.capitalone.dashboard.ApiSettings;
 import com.capitalone.dashboard.common.CommonCodeReview;
+import com.capitalone.dashboard.model.AuditException;
+import com.capitalone.dashboard.model.CollectionError;
 import com.capitalone.dashboard.model.Collector;
 import com.capitalone.dashboard.model.CollectorItem;
 import com.capitalone.dashboard.model.CollectorType;
@@ -11,14 +13,14 @@ import com.capitalone.dashboard.model.Dashboard;
 import com.capitalone.dashboard.model.GitRequest;
 import com.capitalone.dashboard.model.Review;
 import com.capitalone.dashboard.model.SCM;
-import com.capitalone.dashboard.model.CollectionError;
-import com.capitalone.dashboard.repository.CollectorRepository;
 import com.capitalone.dashboard.model.ServiceAccount;
-import com.capitalone.dashboard.model.AuditException;
+import com.capitalone.dashboard.repository.CollectorRepository;
 import com.capitalone.dashboard.repository.CommitRepository;
 import com.capitalone.dashboard.repository.GitRequestRepository;
+import com.capitalone.dashboard.repository.ServiceAccountRepository;
 import com.capitalone.dashboard.request.ArtifactAuditRequest;
 import com.capitalone.dashboard.response.CodeReviewAuditResponseV2;
+import com.capitalone.dashboard.service.LdapService;
 import com.capitalone.dashboard.status.CodeReviewAuditStatus;
 import com.capitalone.dashboard.util.GitHubParsedUrl;
 import org.apache.commons.collections.CollectionUtils;
@@ -26,7 +28,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import com.capitalone.dashboard.repository.ServiceAccountRepository;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,8 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -47,6 +48,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         private final GitRequestRepository gitRequestRepository;
         private final CollectorRepository collectorRepository;
         private final ServiceAccountRepository serviceAccountRepository;
+    private final LdapService ldapService;
 
         protected ApiSettings settings;
         private static final String BRANCH = "branch";
@@ -54,13 +56,14 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
 
     @Autowired
     public CodeReviewEvaluator(CommitRepository commitRepository, GitRequestRepository gitRequestRepository,
-                                CollectorRepository collectorRepository, ServiceAccountRepository serviceAccountRepository,
-                                ApiSettings settings) {
+                               CollectorRepository collectorRepository, ServiceAccountRepository serviceAccountRepository,
+                               ApiSettings settings, LdapService ldapService) {
         this.commitRepository = commitRepository;
         this.gitRequestRepository = gitRequestRepository;
         this.collectorRepository = collectorRepository;
         this.settings = settings;
         this.serviceAccountRepository = serviceAccountRepository;
+        this.ldapService = ldapService;
     }
 
 
@@ -179,6 +182,10 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         //Filter empty and auto merged commits
         List<Commit> commits = allCommits.stream().filter(commit -> isNeitherEmptyNorAutoMerged(commit)).collect(Collectors.toList());
         commits.sort(Comparator.comparing(Commit::getScmCommitTimestamp).reversed());
+        if (settings.isEnrichCommits()) {
+            commits = enrichCommits(commits);
+        }
+        List<Commit> inputCommits = commits.stream().collect(Collectors.toList());
         pullRequests.sort(Comparator.comparing(GitRequest::getMergedAt).reversed());
 
         if (hasValidRepoError(repoItem, pullRequests, commits, beginDt, endDt)) {
@@ -199,7 +206,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
 
         List<String> allPrCommitShas = new ArrayList<>();
         pullRequests.stream().filter(pr -> "merged".equalsIgnoreCase(pr.getState())).forEach(pr -> {
-            auditPullRequest(repoItem, pr, commits, allPrCommitShas, reviewAuditResponseV2);
+            auditPullRequest(repoItem, pr, inputCommits, allPrCommitShas, reviewAuditResponseV2);
         });
 
         //check any commits not directly tied to pr
@@ -223,6 +230,19 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
 
         return reviewAuditResponseV2;
     }
+
+    private List<Commit> enrichCommits(List<Commit> commits) {
+        if (CollectionUtils.isEmpty(commits)) return commits;
+        List<Commit> result = new ArrayList<>();
+        for (Commit commit : commits) {
+            if (StringUtils.isEmpty(commit.getScmAuthorLDAPDN())) {
+                commit.setScmAuthorLDAPDN(ldapService.getLdapDN(commit.getScmAuthorLogin()));
+            }
+            result.add(commit);
+        }
+        return result;
+    }
+
 
     // Check if commit is neither empty nor auto merged
     protected boolean isNeitherEmptyNorAutoMerged(Commit commit) {
