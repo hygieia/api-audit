@@ -1,6 +1,9 @@
 package com.capitalone.dashboard.service;
 
 import com.capitalone.dashboard.ApiSettings;
+import com.capitalone.dashboard.model.AuthType;
+import com.capitalone.dashboard.model.UserEntitlements;
+import com.capitalone.dashboard.repository.UserEntitlementsRepository;
 import com.capitalone.dashboard.settings.AuthProperties;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -22,22 +25,40 @@ public class LdapServiceImpl implements LdapService {
 
     private static final Logger LOGGER = Logger.getLogger(LdapServiceImpl.class);
 
-    private AuthProperties authProperties;
+    private final AuthProperties authProperties;
+    private final ApiSettings apiSettings;
+    private final UserEntitlementsRepository userEntitlementsRepository;
 
-    private ApiSettings apiSettings;
+    private static final String ENTITLEMENT_TYPE = "distinguishedName";
 
     @Autowired
-    public LdapServiceImpl(AuthProperties authProperties, ApiSettings apiSettings) {
+    public LdapServiceImpl(AuthProperties authProperties, ApiSettings apiSettings,
+                           UserEntitlementsRepository userEntitlementsRepository) {
         this.authProperties = authProperties;
         this.apiSettings = apiSettings;
+        this.userEntitlementsRepository = userEntitlementsRepository;
     }
 
     @Override
     public String getLdapDN(String userName) {
         String result = "";
+        if(StringUtils.isEmpty(userName)) return result;
+
+        UserEntitlements entitlements = userEntitlementsRepository.findTopByAuthTypeAndEntitlementTypeAndUsername(AuthType.LDAP, ENTITLEMENT_TYPE, userName);
+        if(entitlements != null) return entitlements.getEntitlements();
         try {
             InitialDirContext context = createContext(setProperties());
-            return getLdapDNValue(userName, context);
+            String entitlementValue = getLdapDNValue(userName, context);
+
+            UserEntitlements newEntitlement = new UserEntitlements();
+            newEntitlement.setUsername(userName);
+            newEntitlement.setEntitlements(entitlementValue);
+            newEntitlement.setEntitlementType(ENTITLEMENT_TYPE);
+            newEntitlement.setAuthType(AuthType.LDAP);
+            userEntitlementsRepository.save(newEntitlement);
+
+            return entitlementValue;
+
         } catch (AuthenticationException ae) {
             LOGGER.error("LDAP bind credentials are incorrect", ae);
             return result;
