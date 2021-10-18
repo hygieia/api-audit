@@ -58,6 +58,20 @@ public class ApiSettings {
     private List<String> ignoreApiUsers = new ArrayList();
     private List<String> mergeCommitFromTargetBranchRegEx;
     private List<String> validStaticSecurityScanTypes = new ArrayList<>();
+    @Value("${contextFactory:com.sun.jndi.ldap.LdapCtxFactory}")
+    private String contextFactory;
+
+    @Value("${contextProtocol:ssl}")
+    private String contextProtocol;
+
+    @Value("${contextSecurityAuthentication:simple}")
+    private String contextSecurityAuthentication;
+
+    @Value("${contextConnectTimeout:15000}")
+    private String contextConnectTimeout;
+
+    @Value("${enrichCommits:false}")
+    private boolean enrichCommits;
 
     public String getKey() {
         return key;
@@ -279,4 +293,44 @@ public class ApiSettings {
     public List<String> getValidStaticSecurityScanTypes() { return validStaticSecurityScanTypes; }
 
     public void setValidStaticSecurityScanTypes(List<String> validStaticSecurityScanTypes) { this.validStaticSecurityScanTypes = validStaticSecurityScanTypes; }
+
+    public String getContextFactory() {
+        return contextFactory;
+    }
+
+    public void setContextFactory(String contextFactory) {
+        this.contextFactory = contextFactory;
+    }
+
+    public String getContextProtocol() {
+        return contextProtocol;
+    }
+
+    public void setContextProtocol(String contextProtocol) {
+        this.contextProtocol = contextProtocol;
+    }
+
+    public String getContextSecurityAuthentication() {
+        return contextSecurityAuthentication;
+    }
+
+    public void setContextSecurityAuthentication(String contextSecurityAuthentication) {
+        this.contextSecurityAuthentication = contextSecurityAuthentication;
+    }
+
+    public boolean isEnrichCommits() {
+        return enrichCommits;
+    }
+
+    public void setEnrichCommits(boolean enrichCommits) {
+        this.enrichCommits = enrichCommits;
+    }
+
+    public String getContextConnectTimeout() {
+        return contextConnectTimeout;
+    }
+
+    public void setContextConnectTimeout(String contextConnectTimeout) {
+        this.contextConnectTimeout = contextConnectTimeout;
+    }
 }

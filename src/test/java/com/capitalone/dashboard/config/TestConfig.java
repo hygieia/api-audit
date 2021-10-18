@@ -3,6 +3,7 @@ package com.capitalone.dashboard.config;
 import com.capitalone.dashboard.ApiSettings;
 import com.capitalone.dashboard.repository.CustomRepositoryQuery;
 import com.capitalone.dashboard.service.CollectorService;
+import com.capitalone.dashboard.settings.AuthProperties;
 import org.mockito.Mockito;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -39,6 +40,11 @@ public class TestConfig {
 
     @Bean
     public CustomRepositoryQuery customRepositoryQuery() { return Mockito.mock(CustomRepositoryQuery.class); }
+
+    @Bean
+    public AuthProperties authProperties() {
+        return new AuthProperties();
+    }
 
 /*    @Bean
     public DashboardAuditService dashboardAuditService() {
