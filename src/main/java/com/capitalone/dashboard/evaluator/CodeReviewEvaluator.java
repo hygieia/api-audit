@@ -236,7 +236,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         List<Commit> result = new ArrayList<>();
         for (Commit commit : commits) {
             if (StringUtils.isEmpty(commit.getScmAuthorLDAPDN())) {
-                String loginKey = StringUtils.isEmpty(commit.getScmAuthorName()) ? commit.getScmAuthorLogin() : commit.getScmAuthorName();
+                String loginKey = commit.getScmAuthorLogin();
                 commit.setScmAuthorLDAPDN(ldapService.getLdapDN(loginKey));
             }
             result.add(commit);
