@@ -43,13 +43,12 @@ public class LdapServiceImpl implements LdapService {
     public String getLdapDN(String userName) {
         String result = "";
         if(StringUtils.isEmpty(userName)) return result;
-        userName = StringUtils.lowerCase(userName);
         UserEntitlements entitlements = userEntitlementsRepository.findTopByAuthTypeAndEntitlementTypeAndUsername(AuthType.LDAP, ENTITLEMENT_TYPE, userName);
         if(entitlements != null) return entitlements.getEntitlements();
         try {
             InitialDirContext context = createContext(setProperties());
             String entitlementValue = getLdapDNValue(userName, context);
-
+            if(StringUtils.isEmpty(entitlementValue)) return entitlementValue; // avoid empty entitlements in DB
             UserEntitlements newEntitlement = new UserEntitlements();
             newEntitlement.setUsername(userName);
             newEntitlement.setEntitlements(entitlementValue);
@@ -84,11 +83,12 @@ public class LdapServiceImpl implements LdapService {
             if(!results.hasMore()) {
                 results = context.search(authProperties.getAdUserRootDn(), searchFilter, ctrls);
                 LOGGER.info(String.format("retrying LDAP searchBase=%s searchFilter=%s userKey=%s", authProperties.getAdUserRootDn(), searchFilter, searchId));
+                if (!results.hasMore()) {
+                    LOGGER.warn(String.format("no result found LDAP searchBase=%s searchFilter=%s userKey=%s", authProperties.getAdUserRootDn(), searchFilter, searchId));
+                    return "";
+                }
             }
 
-            if (!results.hasMore()) {
-                return "";
-            }
             SearchResult result = results.next();
             Attribute distNameAttr = result.getAttributes().get("distinguishedName");
             if (distNameAttr == null) return "";
