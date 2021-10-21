@@ -513,7 +513,7 @@ public class DashboardAuditServiceTest {
             assertThat(lhsCommits.size()).isEqualByComparingTo(rhsCommits.size());
             lhsCommits.sort(Comparator.comparing(Commit::getScmRevisionNumber));
             rhsCommits.sort(Comparator.comparing(Commit::getScmRevisionNumber));
-            IntStream.range(0, lhsCommits.size()).forEach(j -> assertThat(lhsCommits.get(j)).isEqualToIgnoringGivenFields(rhsCommits.get(j), "id", "timestamp","numberOfChanges"));
+            IntStream.range(0, lhsCommits.size()).forEach(j -> assertThat(lhsCommits.get(j)).isEqualToIgnoringGivenFields(rhsCommits.get(j), "id", "timestamp","numberOfChanges","upsertTime"));
         }
     }
 
