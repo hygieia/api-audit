@@ -71,7 +71,9 @@ public abstract class Evaluator<T> {
             Optional<ObjectId> componentIdOpt = dashboard.getApplication().getComponents().stream().findFirst().map(Component::getId);
             Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findOne(componentIdOpt.get())) : Optional.empty();
             List<ObjectId> collectorItemIds = componentOpt.map(component ->
-                    component.getCollectorItems(collectorType).stream().filter(c -> ConversionUtils.matchAltIdentifier(c, altIdentifier)).map(CollectorItem::getId).collect(Collectors.toList())).orElse(Collections.emptyList());
+                    component.getCollectorItems(collectorType).stream().filter(Objects::nonNull)
+                            .filter(c-> StringUtils.isNotEmpty(c.getAltIdentifier()))
+                            .filter(c -> ConversionUtils.matchAltIdentifier(c, altIdentifier)).map(CollectorItem::getId).collect(Collectors.toList())).orElse(Collections.emptyList());
             return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : Collections.emptyList();
         }
         else{
