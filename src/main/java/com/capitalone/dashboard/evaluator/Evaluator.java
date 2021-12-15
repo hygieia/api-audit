@@ -12,6 +12,7 @@ import com.capitalone.dashboard.repository.CollectorItemRepository;
 import com.capitalone.dashboard.repository.ComponentRepository;
 import com.capitalone.dashboard.repository.DashboardRepository;
 import com.capitalone.dashboard.request.ArtifactAuditRequest;
+import com.capitalone.dashboard.util.ConversionUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -67,11 +68,13 @@ public abstract class Evaluator<T> {
     List<CollectorItem> getCollectorItemsByAltIdentifier(Dashboard dashboard, CollectorType collectorType, String altIdentifier) {
 
         if(StringUtils.isNotEmpty(altIdentifier)) {
-            Optional<ObjectId> componentIdOpt = dashboard.getWidgets().stream().findFirst().map(Widget::getComponentId);
+            Optional<ObjectId> componentIdOpt = dashboard.getApplication().getComponents().stream().findFirst().map(Component::getId);
             Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findOne(componentIdOpt.get())) : Optional.empty();
             List<ObjectId> collectorItemIds = componentOpt.map(component ->
-                    component.getCollectorItems(collectorType).stream().filter(c -> isEqualsAltIdentifier(c, altIdentifier)).map(CollectorItem::getId).collect(Collectors.toList())).orElse(Collections.emptyList());
-            return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : getCollectorItems(dashboard,collectorType);
+                    component.getCollectorItems(collectorType).stream().filter(Objects::nonNull)
+                            .filter(c-> StringUtils.isNotEmpty(c.getAltIdentifier()))
+                            .filter(c -> ConversionUtils.matchAltIdentifier(c, altIdentifier)).map(CollectorItem::getId).collect(Collectors.toList())).orElse(Collections.emptyList());
+            return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : Collections.emptyList();
         }
         else{
             return getCollectorItems(dashboard,collectorType);
@@ -108,10 +111,6 @@ public abstract class Evaluator<T> {
         return c.getOptions().get(TEST_TYPE).equals(testType);
     }
 
-    private boolean isEqualsAltIdentifier(CollectorItem c,String altIdentifier) {
-        if (Objects.isNull(c.getAltIdentifier())) return false;
-        return c.getAltIdentifier().equalsIgnoreCase(altIdentifier);
-    }
 
     private boolean isEqualsIdentifierName(CollectorItem c, String identifierName) {
         return (Objects.nonNull(identifierName) && Objects.nonNull(c.getOptions())) ? identifierName.equalsIgnoreCase((String)c.getOptions().get(ARTIFACT_NAME)) : false;
