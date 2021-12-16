@@ -13,6 +13,7 @@ public class ConversionUtilsTest {
 
         Assert.assertTrue(ConversionUtils.matchAltIdentifier(makeCollectorItem("https://github.com/test-org/test-project/tree/master"),"https://github.com/test-org/test-project/tree/master"));
         Assert.assertTrue(ConversionUtils.matchAltIdentifier(makeCollectorItem("https://github.com/test-org/test-project/tree/master"),"https://github.com/test-org/Test-project/tree/master"));
+        Assert.assertTrue(ConversionUtils.matchAltIdentifier(makeCollectorItem("https://github.test.com/test-org/test-project/tree/master"),"https://github.test1.com/test-org/Test-project/tree/master"));
         Assert.assertTrue(ConversionUtils.matchAltIdentifier(makeCollectorItem("https://github1.test.com/test-org/test-project/tree/master"),"https://github.com/test-org/Test-project/tree/master"));
         Assert.assertFalse(ConversionUtils.matchAltIdentifier(makeCollectorItem("https://github.com/test-org/test-project/tree/master"),"https://github.com/test-org/test-project"));
         Assert.assertFalse(ConversionUtils.matchAltIdentifier(makeCollectorItem(null),"https://github.com/test-org/test-project"));
