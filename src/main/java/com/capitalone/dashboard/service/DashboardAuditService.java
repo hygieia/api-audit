@@ -14,7 +14,9 @@ import java.util.Set;
 
 public interface DashboardAuditService {
 
-    DashboardReviewResponse getDashboardReviewResponse(String dashboardTitle, DashboardType dashboardType, String businessService, String businessApp, long beginDate, long endDate, Set<AuditType> auditTypes, AutoDiscoverAuditType autoDiscoverAuditTypes, String altIdentifier, String identifierName) throws AuditException;
+    DashboardReviewResponse getDashboardReviewResponse(String dashboardTitle, DashboardType dashboardType, String businessService, String businessApp, long beginDate, long endDate, Set<AuditType> auditTypes, AutoDiscoverAuditType autoDiscoverAuditTypes, String altIdentifier, String identifierName, boolean enforceTimestamp) throws AuditException;
+
+    DashboardReviewResponse getDashboardReviewResponseV2(DashboardAuditRequest request) throws AuditException;
 
     DashboardReviewResponse getDashboardReviewResponseNextGen(DashboardAuditRequest dashboardAuditRequest) throws AuditException;
 

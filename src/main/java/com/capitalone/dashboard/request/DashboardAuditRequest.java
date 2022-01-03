@@ -20,6 +20,7 @@ public class DashboardAuditRequest extends AuditReviewRequest {
     private String identifierName;
     private String identifierVersion;
     private String identifierUrl;
+    private boolean enforceTimestamp;
 
     public String getTitle() {
         return title;
@@ -99,5 +100,13 @@ public class DashboardAuditRequest extends AuditReviewRequest {
 
     public void setIdentifierUrl(String identifierUrl) {
         this.identifierUrl = identifierUrl;
+    }
+
+    public boolean isEnforceTimestamp() {
+        return enforceTimestamp;
+    }
+
+    public void setEnforceTimestamp(boolean enforceTimestamp) {
+        this.enforceTimestamp = enforceTimestamp;
     }
 }

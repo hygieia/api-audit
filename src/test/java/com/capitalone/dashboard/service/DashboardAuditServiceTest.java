@@ -16,6 +16,7 @@ import com.capitalone.dashboard.model.Commit;
 import com.capitalone.dashboard.model.DashboardType;
 import com.capitalone.dashboard.model.GitRequest;
 import com.capitalone.dashboard.model.Review;
+import com.capitalone.dashboard.repository.AuditReportRepository;
 import com.capitalone.dashboard.repository.BinaryArtifactRepository;
 import com.capitalone.dashboard.repository.CodeQualityRepository;
 import com.capitalone.dashboard.repository.CollectorItemRepository;
@@ -23,20 +24,19 @@ import com.capitalone.dashboard.repository.CollectorRepository;
 import com.capitalone.dashboard.repository.CommitRepository;
 import com.capitalone.dashboard.repository.ComponentRepository;
 import com.capitalone.dashboard.repository.DashboardRepository;
+import com.capitalone.dashboard.repository.FeatureRepository;
 import com.capitalone.dashboard.repository.GitRequestRepository;
 import com.capitalone.dashboard.repository.LibraryPolicyResultsRepository;
 import com.capitalone.dashboard.repository.TestResultRepository;
-import com.capitalone.dashboard.repository.FeatureRepository;
-import com.capitalone.dashboard.repository.AuditReportRepository;
 import com.capitalone.dashboard.request.DashboardAuditRequest;
 import com.capitalone.dashboard.response.ArtifactAuditResponse;
 import com.capitalone.dashboard.response.AuditReviewResponse;
+import com.capitalone.dashboard.response.CodeQualityAuditResponse;
 import com.capitalone.dashboard.response.CodeReviewAuditResponse;
 import com.capitalone.dashboard.response.DashboardReviewResponse;
 import com.capitalone.dashboard.response.LibraryPolicyAuditResponse;
-import com.capitalone.dashboard.response.SecurityReviewAuditResponse;
 import com.capitalone.dashboard.response.PerformanceTestAuditResponse;
-import com.capitalone.dashboard.response.CodeQualityAuditResponse;
+import com.capitalone.dashboard.response.SecurityReviewAuditResponse;
 import com.capitalone.dashboard.response.TestResultsAuditResponse;
 import com.capitalone.dashboard.testutil.GsonUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -148,7 +148,7 @@ public class DashboardAuditServiceTest {
                 DashboardType.Team,
                 "TestBusServ",
                 "confItem", 1519728000000L, 1523180525854L,
-                Sets.newHashSet(AuditType.STATIC_SECURITY_ANALYSIS), AutoDiscoverAuditType.ALL,"" ,""), SecurityReviewAuditResponse.class);
+                Sets.newHashSet(AuditType.STATIC_SECURITY_ANALYSIS), AutoDiscoverAuditType.ALL, "", "", false), SecurityReviewAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("StaticSecurityAnalysisAudit.json", SecurityReviewAuditResponse.class);
         assertDashboardAudit(actual, expected);
         assertThat(actual.getReview()).isNotEmpty();
@@ -174,7 +174,7 @@ public class DashboardAuditServiceTest {
                 "TestBusServ",
                 "confItem",
                 1522623841000L, 1526505798000L,
-                Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL,"", ""), LibraryPolicyAuditResponse.class);
+                Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL, "", "", false), LibraryPolicyAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("LibraryPolicyAudit.json", LibraryPolicyAuditResponse.class);
 
         assertDashboardAudit(actual, expected);
@@ -198,7 +198,7 @@ public class DashboardAuditServiceTest {
                 "TestBusServ",
                 "confItem",
                 1522623841000L, 1526505798000L,
-                Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL,"", ""), LibraryPolicyAuditResponse.class);
+                Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL, "", "", false), LibraryPolicyAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("LibraryPolicyAuditWithDisposition-ok.json", LibraryPolicyAuditResponse.class);
 
         assertDashboardAudit(actual, expected);
@@ -221,7 +221,7 @@ public class DashboardAuditServiceTest {
                 "TestBusServ",
                 "confItem",
                 1522623841000L, 1526505798000L,
-                Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL,"", ""), LibraryPolicyAuditResponse.class);
+                Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL, "", "", false), LibraryPolicyAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("LibraryPolicyAuditWithDisposition-fail.json", LibraryPolicyAuditResponse.class);
 
         assertDashboardAudit(actual, expected);
@@ -244,7 +244,7 @@ public class DashboardAuditServiceTest {
                 "TestBusServ",
                 "confItem",
                 1522623841000L, 1526505798000L,
-                 Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL,"", ""), LibraryPolicyAuditResponse.class);
+                Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL, "", "", false), LibraryPolicyAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("LibraryPolicyAuditNoFindings.json", LibraryPolicyAuditResponse.class);
 
         assertDashboardAudit(actual, expected);
@@ -267,7 +267,7 @@ public class DashboardAuditServiceTest {
                 "TestBusServ",
                 "confItem",
                 1522623841000L, 1526505798000L,
-                Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL,"", ""), LibraryPolicyAuditResponse.class);
+                Sets.newHashSet(AuditType.LIBRARY_POLICY), AutoDiscoverAuditType.ALL, "", "", false), LibraryPolicyAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("LibraryPolicyInvalidScan.json", LibraryPolicyAuditResponse.class);
 
         assertDashboardAudit(actual, expected);
@@ -288,7 +288,7 @@ public class DashboardAuditServiceTest {
                 "TestBusServ",
                 "confItem",
                 1522623841000L, 1526505798000L,
-                Sets.newHashSet(AuditType.PERF_TEST), AutoDiscoverAuditType.ALL,"", ""), PerformanceTestAuditResponse.class);
+                Sets.newHashSet(AuditType.PERF_TEST), AutoDiscoverAuditType.ALL, "", "", false), PerformanceTestAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("Performance.json", PerformanceTestAuditResponse.class);
         assertDashboardAudit(actual, expected);
         assertThat(actual.getReview()).isNotEmpty();
@@ -308,7 +308,7 @@ public class DashboardAuditServiceTest {
                 "TestBusServ",
                 "confItem",
                 1473860406000L, 1478983206000L,
-                Sets.newHashSet(AuditType.CODE_QUALITY), AutoDiscoverAuditType.ALL,"", ""), CodeQualityAuditResponse.class);
+                Sets.newHashSet(AuditType.CODE_QUALITY), AutoDiscoverAuditType.ALL, "", "", false), CodeQualityAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("CodeQuality.json", CodeQualityAuditResponse.class);
 
         assertDashboardAudit(actual, expected);
@@ -328,7 +328,7 @@ public class DashboardAuditServiceTest {
                 "TestBusServ",
                 "confItem",
                 1554140676000L, 1554831876000L,
-                Sets.newHashSet(AuditType.ARTIFACT), AutoDiscoverAuditType.ALL,"", ""), ArtifactAuditResponse.class);
+                Sets.newHashSet(AuditType.ARTIFACT), AutoDiscoverAuditType.ALL, "", "", false), ArtifactAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("Artifact.json", ArtifactAuditResponse.class);
 
         assertThat(actual.getReview()).isNotEmpty();
@@ -347,7 +347,7 @@ public class DashboardAuditServiceTest {
                 "TestBusServ",
                 "confItem",
                 1554140676000L, 1554831876000L,
-                Sets.newHashSet(AuditType.ARTIFACT), AutoDiscoverAuditType.ALL,"https://gitrepo/artifactName2/tree/master", "artifactName2"), ArtifactAuditResponse.class);
+                Sets.newHashSet(AuditType.ARTIFACT), AutoDiscoverAuditType.ALL, "https://gitrepo/artifactName2/tree/master", "artifactName2", false), ArtifactAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("Artifact.json", ArtifactAuditResponse.class);
 
         assertThat(actual.getReview()).isNotEmpty();
@@ -367,7 +367,7 @@ public class DashboardAuditServiceTest {
                 "TestBusServ",
                 "confItem",
                 1473885606000L, 1478983206000L,
-                Sets.newHashSet(AuditType.TEST_RESULT), AutoDiscoverAuditType.ALL,"", ""), TestResultsAuditResponse.class);
+                Sets.newHashSet(AuditType.TEST_RESULT), AutoDiscoverAuditType.ALL, "", "", false), TestResultsAuditResponse.class);
         DashboardReviewResponse expected = getExpectedReviewResponse("TestResults.json", TestResultsAuditResponse.class);
         assertDashboardAudit(actual, expected);
         assertThat(actual.getReview()).isNotEmpty();

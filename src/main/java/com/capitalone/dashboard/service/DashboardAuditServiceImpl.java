@@ -3,6 +3,7 @@ package com.capitalone.dashboard.service;
 import com.capitalone.dashboard.ApiSettings;
 import com.capitalone.dashboard.evaluator.Evaluator;
 import com.capitalone.dashboard.model.AuditException;
+import com.capitalone.dashboard.model.AuditReport;
 import com.capitalone.dashboard.model.AuditType;
 import com.capitalone.dashboard.model.AutoDiscoverAuditType;
 import com.capitalone.dashboard.model.AutoDiscovery;
@@ -11,11 +12,10 @@ import com.capitalone.dashboard.model.CollectorItem;
 import com.capitalone.dashboard.model.Dashboard;
 import com.capitalone.dashboard.model.DashboardAuditModel;
 import com.capitalone.dashboard.model.DashboardType;
-import com.capitalone.dashboard.model.AuditReport;
+import com.capitalone.dashboard.repository.AuditReportRepository;
 import com.capitalone.dashboard.repository.CmdbRepository;
 import com.capitalone.dashboard.repository.CollectorItemRepository;
 import com.capitalone.dashboard.repository.DashboardRepository;
-import com.capitalone.dashboard.repository.AuditReportRepository;
 import com.capitalone.dashboard.request.ArtifactAuditRequest;
 import com.capitalone.dashboard.request.DashboardAuditRequest;
 import com.capitalone.dashboard.response.AuditReviewResponse;
@@ -32,7 +32,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -80,7 +82,63 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
      */
     @SuppressWarnings("PMD.NPathComplexity")
     @Override
-    public DashboardReviewResponse getDashboardReviewResponse(String dashboardTitle, DashboardType dashboardType, String businessService, String businessApp, long beginDate, long endDate ,Set<AuditType> auditTypes, AutoDiscoverAuditType autoDiscoverAuditType, String altIdentifier, String identifierName) throws AuditException {
+    public DashboardReviewResponse getDashboardReviewResponse(String dashboardTitle, DashboardType dashboardType, String businessService, String businessApp, long beginDate, long endDate, Set<AuditType> auditTypes, AutoDiscoverAuditType autoDiscoverAuditType, String altIdentifier, String identifierName, boolean enforceTimestamp) throws AuditException {
+
+        validateParameters(dashboardTitle, dashboardType, businessService, businessApp, beginDate, endDate);
+
+        DashboardReviewResponse dashboardReviewResponse = new DashboardReviewResponse();
+
+        Dashboard dashboard = getDashboard(dashboardTitle, dashboardType, businessService, businessApp);
+        if (dashboard == null) {
+            dashboardReviewResponse.addAuditStatus(DashboardAuditStatus.DASHBOARD_NOT_REGISTERED);
+            return dashboardReviewResponse;
+        }
+
+        dashboardReviewResponse.setDashboardTitle(dashboard.getTitle());
+        dashboardReviewResponse.setBusinessApplication(StringUtils.isEmpty(businessApp) ? dashboard.getConfigurationItemBusAppName() : businessApp);
+        dashboardReviewResponse.setBusinessService(StringUtils.isEmpty(businessService) ? dashboard.getConfigurationItemBusServName() : businessService);
+        dashboardReviewResponse.setAuditEntity(null);
+
+        if (auditTypes.contains(AuditType.ALL)) {
+            auditTypes.addAll(Sets.newHashSet(AuditType.values()));
+            auditTypes.remove(AuditType.ALL);
+        }
+        Map<String, Object> data = new HashMap<>();
+        data.put("enforceTimestamp", enforceTimestamp);
+        auditTypes.forEach(auditType -> {
+            Evaluator evaluator = auditModel.evaluatorMap().get(auditType);
+            try {
+
+                Collection<AuditReviewResponse> auditResponse = evaluator.evaluate(dashboard, beginDate, endDate, data, altIdentifier, identifierName);
+                if (auditType == AuditType.AUTO_DISCOVER) {
+                    setAutoDiscoverAuditResponse(autoDiscoverAuditType, dashboardReviewResponse, auditType, auditResponse);
+                } else {
+                    dashboardReviewResponse.addReview(auditType, auditResponse);
+                    dashboardReviewResponse.addAuditStatus(auditModel.successStatusMap().get(auditType));
+                }
+
+            } catch (AuditException e) {
+                if (e.getErrorCode() == AuditException.NO_COLLECTOR_ITEM_CONFIGURED) {
+                    dashboardReviewResponse.addAuditStatus(auditModel.errorStatusMap().get(auditType));
+                }
+            }
+        });
+        return dashboardReviewResponse;
+    }
+
+    @Override
+    public DashboardReviewResponse getDashboardReviewResponseV2(DashboardAuditRequest request) throws AuditException {
+        String dashboardTitle = request.getTitle();
+        DashboardType dashboardType = DashboardType.Team;
+        String businessService = request.getBusinessService();
+        String businessApp = request.getBusinessApplication();
+        long beginDate = request.getBeginDate();
+        long endDate = request.getEndDate();
+        Set<AuditType> auditTypes = request.getAuditType();
+        AutoDiscoverAuditType autoDiscoverAuditType = request.getAutoDiscoverAuditType();
+        String altIdentifier = request.getAltIdentifier();
+        String identifierName = request.getIdentifierName();
+        boolean enforceTimestamp = request.isEnforceTimestamp();
 
         validateParameters(dashboardTitle,dashboardType, businessService, businessApp, beginDate, endDate);
 
@@ -101,12 +159,13 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
             auditTypes.addAll(Sets.newHashSet(AuditType.values()));
             auditTypes.remove(AuditType.ALL);
         }
-
+        Map<String, Object> data = new HashMap<>();
+        data.put("enforceTimestamp", enforceTimestamp);
         auditTypes.forEach(auditType -> {
             Evaluator evaluator = auditModel.evaluatorMap().get(auditType);
             try {
 
-                Collection<AuditReviewResponse> auditResponse = evaluator.evaluate(dashboard, beginDate, endDate, null, altIdentifier, identifierName);
+                Collection<AuditReviewResponse> auditResponse = evaluator.evaluate(dashboard, beginDate, endDate, data, altIdentifier, identifierName);
                 if(auditType == AuditType.AUTO_DISCOVER){
                     setAutoDiscoverAuditResponse(autoDiscoverAuditType, dashboardReviewResponse, auditType, auditResponse);
                 }else{

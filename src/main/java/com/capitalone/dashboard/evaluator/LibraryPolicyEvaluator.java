@@ -9,7 +9,6 @@ import com.capitalone.dashboard.model.LibraryPolicyResult;
 import com.capitalone.dashboard.model.LibraryPolicyThreatDisposition;
 import com.capitalone.dashboard.model.LibraryPolicyThreatLevel;
 import com.capitalone.dashboard.model.LibraryPolicyType;
-import com.capitalone.dashboard.model.ScanState;
 import com.capitalone.dashboard.repository.LibraryPolicyResultsRepository;
 import com.capitalone.dashboard.request.ArtifactAuditRequest;
 import com.capitalone.dashboard.response.LibraryPolicyAuditResponse;
@@ -17,12 +16,11 @@ import com.capitalone.dashboard.status.LibraryPolicyAuditStatus;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.collections.SetUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +46,7 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
             throw new AuditException("No library policy project configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
         }
 
-        return libraryPolicyItems.stream().map(item -> evaluate(item, beginDate, endDate, null)).collect(Collectors.toList());
+        return libraryPolicyItems.stream().map(item -> evaluate(item, beginDate, endDate, data)).collect(Collectors.toList());
     }
 
     @Override
@@ -59,7 +57,13 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
 
     @Override
     public LibraryPolicyAuditResponse evaluate(CollectorItem collectorItem, long beginDate, long endDate, Map<?, ?> data) {
-        return getLibraryPolicyAuditResponse(collectorItem);
+        boolean enforceTimestamp = false;
+        if (org.apache.commons.collections4.MapUtils.isNotEmpty(data)) {
+            try {
+                enforceTimestamp = BooleanUtils.isTrue((Boolean) data.get("enforceTimestamp"));
+            } catch (Exception e) {/* do nothing */}
+        }
+        return getLibraryPolicyAuditResponse(collectorItem, enforceTimestamp, beginDate, endDate);
     }
 
     /**
@@ -68,8 +72,9 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
      * @param collectorItem Collector item
      * @return SecurityReviewAuditResponse
      */
-    private LibraryPolicyAuditResponse getLibraryPolicyAuditResponse(CollectorItem collectorItem) {
-        LibraryPolicyResult returnPolicyResult = libraryPolicyResultsRepository.findTopByCollectorItemIdOrderByEvaluationTimestampDesc(collectorItem.getId());
+    private LibraryPolicyAuditResponse getLibraryPolicyAuditResponse(CollectorItem collectorItem, boolean enforceTimestamp, long beginDate, long endDate) {
+        LibraryPolicyResult returnPolicyResult = enforceTimestamp ? getResultByTimestamp(collectorItem, beginDate, endDate) :
+                libraryPolicyResultsRepository.findTopByCollectorItemIdOrderByEvaluationTimestampDesc(collectorItem.getId());
 
         LibraryPolicyAuditResponse libraryPolicyAuditResponse = new LibraryPolicyAuditResponse();
         libraryPolicyAuditResponse.setAuditEntity(collectorItem.getOptions());
@@ -117,6 +122,14 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
         return libraryPolicyAuditResponse;
     }
 
+    private LibraryPolicyResult getResultByTimestamp(CollectorItem collectorItem, long beginDate, long endDate) {
+        LibraryPolicyResult libraryPolicyResult = null;
+        if (Objects.isNull(collectorItem)) return libraryPolicyResult;
+        List<LibraryPolicyResult> libraryPolicyResults = libraryPolicyResultsRepository.findByCollectorItemIdAndEvaluationTimestampIsBetweenOrderByTimestampDesc(collectorItem.getId(), beginDate - 1, endDate + 1);
+        if (CollectionUtils.isEmpty(libraryPolicyResults)) return libraryPolicyResult;
+        libraryPolicyResults.sort(Comparator.comparing(LibraryPolicyResult::getEvaluationTimestamp).reversed());
+        return libraryPolicyResults.get(0);
+    }
 
     private boolean hasViolations(LibraryPolicyResult.Threat threat, int age) {
         if (MapUtils.isEmpty(threat.getDispositionCounts())) {
