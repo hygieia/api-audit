@@ -73,6 +73,9 @@ public class ApiSettings {
     @Value("${enrichCommits:false}")
     private boolean enrichCommits;
 
+    @Value("${ignoreBeginDateForLibraryPolicy:false}")
+    private boolean ignoreBeginDateForLibraryPolicy;
+
     public String getKey() {
         return key;
     }
@@ -332,5 +335,13 @@ public class ApiSettings {
 
     public void setContextConnectTimeout(String contextConnectTimeout) {
         this.contextConnectTimeout = contextConnectTimeout;
+    }
+
+    public boolean isIgnoreBeginDateForLibraryPolicy() {
+        return ignoreBeginDateForLibraryPolicy;
+    }
+
+    public void setIgnoreBeginDateForLibraryPolicy(boolean ignoreBeginDateForLibraryPolicy) {
+        this.ignoreBeginDateForLibraryPolicy = ignoreBeginDateForLibraryPolicy;
     }
 }

@@ -33,9 +33,14 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
 
     private final LibraryPolicyResultsRepository libraryPolicyResultsRepository;
 
+    private final ApiSettings apiSettings;
+
+    private final long DEFAULT_BEGIN_DATE = 0;
+
     @Autowired
-    public LibraryPolicyEvaluator(LibraryPolicyResultsRepository libraryPolicyResultsRepository) {
+    public LibraryPolicyEvaluator(LibraryPolicyResultsRepository libraryPolicyResultsRepository, ApiSettings apiSettings) {
         this.libraryPolicyResultsRepository = libraryPolicyResultsRepository;
+        this.apiSettings = apiSettings;
     }
 
     @Override
@@ -125,7 +130,8 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
     private LibraryPolicyResult getResultByTimestamp(CollectorItem collectorItem, long beginDate, long endDate) {
         LibraryPolicyResult libraryPolicyResult = null;
         if (Objects.isNull(collectorItem)) return libraryPolicyResult;
-        List<LibraryPolicyResult> libraryPolicyResults = libraryPolicyResultsRepository.findByCollectorItemIdAndEvaluationTimestampIsBetweenOrderByTimestampDesc(collectorItem.getId(), beginDate - 1, endDate + 1);
+        beginDate = (apiSettings.isIgnoreBeginDateForLibraryPolicy() || beginDate == DEFAULT_BEGIN_DATE) ? DEFAULT_BEGIN_DATE : beginDate - 1;
+        List<LibraryPolicyResult> libraryPolicyResults = libraryPolicyResultsRepository.findByCollectorItemIdAndEvaluationTimestampIsBetweenOrderByTimestampDesc(collectorItem.getId(), beginDate, endDate);
         if (CollectionUtils.isEmpty(libraryPolicyResults)) return libraryPolicyResult;
         libraryPolicyResults.sort(Comparator.comparing(LibraryPolicyResult::getEvaluationTimestamp).reversed());
         return libraryPolicyResults.get(0);
