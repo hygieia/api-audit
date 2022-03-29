@@ -7,6 +7,7 @@ import com.capitalone.dashboard.evaluator.CodeQualityEvaluator;
 import com.capitalone.dashboard.evaluator.CodeReviewEvaluator;
 import com.capitalone.dashboard.evaluator.DeployEvaluator;
 import com.capitalone.dashboard.evaluator.Evaluator;
+import com.capitalone.dashboard.evaluator.FeatureTestEvaluator;
 import com.capitalone.dashboard.evaluator.InfrastructureEvaluator;
 import com.capitalone.dashboard.evaluator.LibraryPolicyEvaluator;
 import com.capitalone.dashboard.evaluator.PerformanceTestResultEvaluator;
@@ -37,6 +38,7 @@ public class DashboardAuditModel {
     private final DeployEvaluator deployEvaluator;
     private final AutoDiscoverEvaluator autoDiscoverEvaluator;
     private final InfrastructureEvaluator infrastructureEvaluator;
+    private final FeatureTestEvaluator featureTestEvaluator;
 
 
 
@@ -50,7 +52,7 @@ public class DashboardAuditModel {
                                LibraryPolicyEvaluator libraryPolicyEvaluator,ArtifactEvaluator artifactEvaluator,
                                DeployEvaluator deployEvaluator,
                                AutoDiscoverEvaluator autoDiscoverEvaluator,
-                               InfrastructureEvaluator infrastructureEvaluator) {
+                               InfrastructureEvaluator infrastructureEvaluator, FeatureTestEvaluator featureTestEvaluator) {
         this.codeReviewEvaluator = codeReviewEvaluator;
         this.buildEvaluator = buildEvaluator;
         this.codeQualityEvaluator = codeQualityEvaluator;
@@ -62,6 +64,7 @@ public class DashboardAuditModel {
         this.deployEvaluator = deployEvaluator;
         this.autoDiscoverEvaluator = autoDiscoverEvaluator;
         this.infrastructureEvaluator = infrastructureEvaluator;
+        this.featureTestEvaluator = featureTestEvaluator;
     }
 
 
@@ -77,7 +80,8 @@ public class DashboardAuditModel {
                 new SimpleEntry<>(AuditType.ARTIFACT,(Evaluator)artifactEvaluator),
                 new SimpleEntry<>(AuditType.DEPLOY,(Evaluator)deployEvaluator),
                 new SimpleEntry<>(AuditType.AUTO_DISCOVER,(Evaluator)autoDiscoverEvaluator),
-                new SimpleEntry<>(AuditType.INFRASTRUCTURE_SCAN, (Evaluator)infrastructureEvaluator))
+                new SimpleEntry<>(AuditType.INFRASTRUCTURE_SCAN, (Evaluator)infrastructureEvaluator),
+                new SimpleEntry<>(AuditType.FEATURE_TEST, (Evaluator)featureTestEvaluator))
                 .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue)));
     }
 
@@ -90,6 +94,7 @@ public class DashboardAuditModel {
                 new SimpleEntry<>(AuditType.LIBRARY_POLICY, DashboardAuditStatus.DASHBOARD_LIBRARY_POLICY_ANALYSIS_CONFIGURED),
                 new SimpleEntry<>(AuditType.BUILD_REVIEW, DashboardAuditStatus.DASHBOARD_BUILD_CONFIGURED),
                 new SimpleEntry<>(AuditType.TEST_RESULT, DashboardAuditStatus.DASHBOARD_TEST_CONFIGURED),
+                new SimpleEntry<>(AuditType.FEATURE_TEST, DashboardAuditStatus.DASHBOARD_TEST_CONFIGURED),
                 new SimpleEntry<>(AuditType.PERF_TEST, DashboardAuditStatus.DASHBOARD_PERFORMANCE_TEST_CONFIGURED),
                 new SimpleEntry<>(AuditType.STATIC_SECURITY_ANALYSIS, DashboardAuditStatus.DASHBOARD_STATIC_SECURITY_ANALYSIS_CONFIGURED),
                 new SimpleEntry<>(AuditType.ARTIFACT, DashboardAuditStatus.DASHBOARD_ARTIFACT_CONFIGURED),
@@ -107,6 +112,7 @@ public class DashboardAuditModel {
                 new SimpleEntry<>(AuditType.LIBRARY_POLICY, DashboardAuditStatus.DASHBOARD_LIBRARY_POLICY_ANALYSIS_NOT_CONFIGURED),
                 new SimpleEntry<>(AuditType.BUILD_REVIEW, DashboardAuditStatus.DASHBOARD_BUILD_NOT_CONFIGURED),
                 new SimpleEntry<>(AuditType.TEST_RESULT, DashboardAuditStatus.DASHBOARD_TEST_NOT_CONFIGURED),
+                new SimpleEntry<>(AuditType.FEATURE_TEST, DashboardAuditStatus.DASHBOARD_TEST_NOT_CONFIGURED),
                 new SimpleEntry<>(AuditType.PERF_TEST, DashboardAuditStatus.DASHBOARD_PERFORMANCE_TEST_NOT_CONFIGURED),
                 new SimpleEntry<>(AuditType.STATIC_SECURITY_ANALYSIS, DashboardAuditStatus.DASHBOARD_STATIC_SECURITY_ANALYSIS_NOT_CONFIGURED),
                 new SimpleEntry<>(AuditType.ARTIFACT, DashboardAuditStatus.DASHBOARD_ARTIFACT_NOT_CONFIGURED),
