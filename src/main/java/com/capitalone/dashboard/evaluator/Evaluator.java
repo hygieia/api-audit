@@ -118,7 +118,11 @@ public abstract class Evaluator<T> {
     }
 
     public Dashboard getDashboard(String businessService, String businessComponent) {
-        return dashboardRepository.findByConfigurationItemBusServNameIgnoreCaseAndConfigurationItemBusAppNameIgnoreCase(businessService, businessComponent);
+        Iterable<Dashboard> dashboards = dashboardRepository.findAllByConfigurationItemBusServNameAndConfigurationItemBusAppName(businessService, businessComponent);
+        if (!IterableUtils.isEmpty(dashboards)) {
+            return dashboards.iterator().next();
+        }
+        return null;
     }
 
     List<CollectorItem> getCollectorItemsNextGen(Dashboard dashboard, CollectorType collectorType) {
