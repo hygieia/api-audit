@@ -26,6 +26,7 @@ import com.capitalone.dashboard.status.DashboardAuditStatus;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -352,7 +353,10 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
             if (busAppItem == null)
                 throw new AuditException("Invalid Business Application Name.", AuditException.BAD_INPUT_DATA);
 
-            return dashboardRepository.findByConfigurationItemBusServNameIgnoreCaseAndConfigurationItemBusAppNameIgnoreCase(busServItem.getConfigurationItem(), busAppItem.getConfigurationItem());
+            Iterable<Dashboard> dashboards = dashboardRepository.findAllByConfigurationItemBusServNameAndConfigurationItemBusAppName(busServItem.getConfigurationItem(), busAppItem.getConfigurationItem());
+            if (!IterableUtils.isEmpty(dashboards)) {
+                return dashboards.iterator().next();
+            }
         }
         return null;
     }
