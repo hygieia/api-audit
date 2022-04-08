@@ -7,7 +7,7 @@ import com.capitalone.dashboard.evaluator.CodeQualityEvaluator;
 import com.capitalone.dashboard.evaluator.CodeReviewEvaluator;
 import com.capitalone.dashboard.evaluator.DeployEvaluator;
 import com.capitalone.dashboard.evaluator.Evaluator;
-import com.capitalone.dashboard.evaluator.FeatureTestEvaluator;
+import com.capitalone.dashboard.evaluator.FeatureTestResultEvaluator;
 import com.capitalone.dashboard.evaluator.InfrastructureEvaluator;
 import com.capitalone.dashboard.evaluator.LibraryPolicyEvaluator;
 import com.capitalone.dashboard.evaluator.PerformanceTestResultEvaluator;
@@ -38,7 +38,7 @@ public class DashboardAuditModel {
     private final DeployEvaluator deployEvaluator;
     private final AutoDiscoverEvaluator autoDiscoverEvaluator;
     private final InfrastructureEvaluator infrastructureEvaluator;
-    private final FeatureTestEvaluator featureTestEvaluator;
+    private final FeatureTestResultEvaluator featureTestResultEvaluator;
 
 
 
@@ -52,7 +52,7 @@ public class DashboardAuditModel {
                                LibraryPolicyEvaluator libraryPolicyEvaluator,ArtifactEvaluator artifactEvaluator,
                                DeployEvaluator deployEvaluator,
                                AutoDiscoverEvaluator autoDiscoverEvaluator,
-                               InfrastructureEvaluator infrastructureEvaluator, FeatureTestEvaluator featureTestEvaluator) {
+                               InfrastructureEvaluator infrastructureEvaluator, FeatureTestResultEvaluator featureTestResultEvaluator) {
         this.codeReviewEvaluator = codeReviewEvaluator;
         this.buildEvaluator = buildEvaluator;
         this.codeQualityEvaluator = codeQualityEvaluator;
@@ -64,7 +64,7 @@ public class DashboardAuditModel {
         this.deployEvaluator = deployEvaluator;
         this.autoDiscoverEvaluator = autoDiscoverEvaluator;
         this.infrastructureEvaluator = infrastructureEvaluator;
-        this.featureTestEvaluator = featureTestEvaluator;
+        this.featureTestResultEvaluator = featureTestResultEvaluator;
     }
 
 
@@ -81,7 +81,7 @@ public class DashboardAuditModel {
                 new SimpleEntry<>(AuditType.DEPLOY,(Evaluator)deployEvaluator),
                 new SimpleEntry<>(AuditType.AUTO_DISCOVER,(Evaluator)autoDiscoverEvaluator),
                 new SimpleEntry<>(AuditType.INFRASTRUCTURE_SCAN, (Evaluator)infrastructureEvaluator),
-                new SimpleEntry<>(AuditType.FEATURE_TEST, (Evaluator)featureTestEvaluator))
+                new SimpleEntry<>(AuditType.FEATURE_TEST, (Evaluator)featureTestResultEvaluator))
                 .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue)));
     }
 

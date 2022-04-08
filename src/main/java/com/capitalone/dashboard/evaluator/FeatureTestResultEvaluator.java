@@ -18,10 +18,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
-public class FeatureTestEvaluator extends Evaluator<TestResultsAuditResponse>{
+public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditResponse>{
 
     private final TestResultRepository testResultRepository;
-    private static final Logger LOGGER = LoggerFactory.getLogger(FeatureTestEvaluator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FeatureTestResultEvaluator.class);
 
     private Dashboard dashboard;
     public static final String FUNCTIONAL = "Functional";
@@ -39,7 +39,7 @@ public class FeatureTestEvaluator extends Evaluator<TestResultsAuditResponse>{
 
 
     @Autowired
-    public FeatureTestEvaluator(TestResultRepository testResultRepository, CollectorItemRepository collectorItemRepository) {
+    public FeatureTestResultEvaluator(TestResultRepository testResultRepository, CollectorItemRepository collectorItemRepository) {
         this.testResultRepository = testResultRepository;
         this.collectorItemRepository = collectorItemRepository;
     }
@@ -48,11 +48,10 @@ public class FeatureTestEvaluator extends Evaluator<TestResultsAuditResponse>{
     @Override
     public Collection<TestResultsAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data, String altIdentifier, String identifierName) throws AuditException {
         this.dashboard = getDashboard(dashboard.getTitle(), DashboardType.Team);
-        System.out.println(this.dashboard.getConfigurationItemBusAppName());
         Map<String, Object> collItemOptions = new HashMap<>();
         collItemOptions.put("artifactName", identifierName);
         collItemOptions.put("artifactVersion", data.get("identifierVersion"));
-        CollectorItem testItem = getCollectorItemForIdentifierVersion(this.dashboard, CollectorType.Test, FUNCTIONAL, collItemOptions);
+        CollectorItem testItem = getCollectorItemForIdentifierVersion(this.dashboard, collItemOptions);
         if (testItem == null) {
             throw new AuditException("No tests configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
         }
@@ -64,14 +63,23 @@ public class FeatureTestEvaluator extends Evaluator<TestResultsAuditResponse>{
         testResultsAuditResponse.setAuditEntity(testItem.getOptions());
         testResultsAuditResponse.setLastUpdated(testItem.getLastUpdated());
 
-        // If not test results, set status to TEST_RESULT_MISSING and return
+        // If no test results, set status to TEST_RESULT_MISSING and return
         if (CollectionUtils.isEmpty(testResultList)){
             testResultsAuditResponse.addAuditStatus(TestResultAuditStatus.TEST_RESULT_MISSING);
             testResultsAuditResponseCollection.add(testResultsAuditResponse);
             return testResultsAuditResponseCollection;
         }
 
-        double  threshold = 50.0;
+        Double featureTestThreshold;
+        try{
+            featureTestThreshold = Double.parseDouble((String)data.get("featureTestThreshold"));
+        }catch(NumberFormatException e){
+            LOGGER.warn("Could not parse double from featureTestThreshold. Setting to default value of 90%");
+            featureTestThreshold = 100.0;
+        }
+
+        // Value needs to be final to be used in lambda
+        Double threshold = featureTestThreshold;
 
         testResultList.forEach(testResult -> testResultsAuditResponseCollection.add(getFeatureTestResultAudit(testResultsAuditResponse ,testResult, threshold)));
 
@@ -79,7 +87,7 @@ public class FeatureTestEvaluator extends Evaluator<TestResultsAuditResponse>{
         return testResultsAuditResponseCollection;
     }
 
-    private TestResultsAuditResponse getFeatureTestResultAudit(TestResultsAuditResponse baseTestResultsAuditResponse, TestResult testResult, Double threshold){
+    protected TestResultsAuditResponse getFeatureTestResultAudit(TestResultsAuditResponse baseTestResultsAuditResponse, TestResult testResult, Double threshold){
         TestResultsAuditResponse testResultsAuditResponse = new TestResultsAuditResponse();
         testResultsAuditResponse.setAuditEntity(baseTestResultsAuditResponse.getAuditEntity());
         testResultsAuditResponse.setLastUpdated(baseTestResultsAuditResponse.getLastUpdated());
@@ -171,8 +179,8 @@ public class FeatureTestEvaluator extends Evaluator<TestResultsAuditResponse>{
         return featureTestResultMap;
     }
 
-    private CollectorItem getCollectorItemForIdentifierVersion(Dashboard dashboard, CollectorType test, String functional, Map<String, Object> collItemOptions) {
-        List<CollectorItem> testItems = getCollectorItems(this.dashboard, CollectorType.Test, FUNCTIONAL);
+    protected CollectorItem getCollectorItemForIdentifierVersion(Dashboard dashboard, Map<String, Object> collItemOptions) {
+        List<CollectorItem> testItems = getCollectorItems(dashboard, CollectorType.Test, FUNCTIONAL);
         for(CollectorItem testItem : testItems){
             if(isEqualsIdentifierName(testItem, (String) collItemOptions.get(ARTIFACT_NAME)) && isEqualsIdentifierVersion(testItem, (String) collItemOptions.get(ARTIFACT_VERSION))){
                CollectorItem testCollItem = testItem;
@@ -209,7 +217,7 @@ public class FeatureTestEvaluator extends Evaluator<TestResultsAuditResponse>{
      * @param dashboardType
      * @return
      */
-    private Dashboard getDashboard(String title, DashboardType dashboardType) {
+    protected Dashboard getDashboard(String title, DashboardType dashboardType) {
         return dashboardRepository.findByTitleAndType(title, dashboardType);
     }
 

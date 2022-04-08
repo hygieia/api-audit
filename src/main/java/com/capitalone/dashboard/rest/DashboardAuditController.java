@@ -62,6 +62,7 @@ public class DashboardAuditController {
         String requester = httpServletRequest.getHeader(CommonConstants.HEADER_API_USER);
         Map<String, String> data = new HashMap<>();
         data.put("identifierVersion", request.getIdentifierVersion());
+        data.put("featureTestThreshold", request.getFeatureTestThreshold());
         DashboardReviewResponse dashboardReviewResponse = dashboardAuditService.getDashboardReviewResponse(request.getTitle(), DashboardType.Team,
                 request.getBusinessService(), request.getBusinessApplication(),
                 request.getBeginDate(), request.getEndDate(), request.getAuditType(), Objects.nonNull(request.getAutoDiscoverAuditType())? request.getAutoDiscoverAuditType() : AutoDiscoverAuditType.ALL, request.getAltIdentifier(), request.getIdentifierName(), data);

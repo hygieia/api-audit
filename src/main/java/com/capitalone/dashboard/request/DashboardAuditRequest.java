@@ -11,7 +11,7 @@ public class DashboardAuditRequest extends AuditReviewRequest {
 	private String title;
     private String businessService;
     private String businessApplication;
-    @ApiModelProperty(value = "Audit Type has one of these values: ALL, CODE_REVIEW, BUILD_REVIEW, CODE_QUALITY, TEST_RESULT, PERF_TEST,ARTIFACT", example = "ALL")
+    @ApiModelProperty(value = "Audit Type has one of these values: ALL, CODE_REVIEW, BUILD_REVIEW, CODE_QUALITY, TEST_RESULT, PERF_TEST, ARTIFACT, FEATURE_TEST", example = "ALL")
 	private Set<AuditType> auditType;
     @ApiModelProperty(value = "Auto discover audit type has one of these values: ALL, CODE_REVIEW, BUILD_REVIEW, CODE_QUALITY, TEST_RESULT, PERF_TEST,ARTIFACT", example = "ALL")
     private AutoDiscoverAuditType autoDiscoverAuditType;
@@ -20,6 +20,7 @@ public class DashboardAuditRequest extends AuditReviewRequest {
     private String identifierName;
     private String identifierVersion;
     private String identifierUrl;
+    private String featureTestThreshold;
 
     public String getTitle() {
         return title;
@@ -99,5 +100,13 @@ public class DashboardAuditRequest extends AuditReviewRequest {
 
     public void setIdentifierUrl(String identifierUrl) {
         this.identifierUrl = identifierUrl;
+    }
+
+    public void setFeatureTestThreshold(String featureTestThreshold) {
+        this.featureTestThreshold = featureTestThreshold;
+    }
+
+    public String getFeatureTestThreshold() {
+        return featureTestThreshold;
     }
 }

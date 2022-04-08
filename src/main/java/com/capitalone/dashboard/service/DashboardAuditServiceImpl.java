@@ -105,6 +105,7 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
                 Map<String, String> evaluatorData = new HashMap<>();
                 if(auditType == AuditType.FEATURE_TEST){
                     evaluatorData.put("identifierVersion", (String)data.get("identifierVersion"));
+                    evaluatorData.put("featureTestThreshold",(String)data.get("featureTestThreshold"));
                 }
                 Collection<AuditReviewResponse> auditResponse = evaluator.evaluate(dashboard, beginDate, endDate, evaluatorData, altIdentifier, identifierName);
                 if(auditType == AuditType.AUTO_DISCOVER){
