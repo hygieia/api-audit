@@ -9,6 +9,7 @@ import com.capitalone.dashboard.request.ArtifactAuditRequest;
 import com.capitalone.dashboard.response.TestResultsAuditResponse;
 import com.capitalone.dashboard.status.TestResultAuditStatus;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,18 +56,40 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
     public Collection<TestResultsAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data, String altIdentifier, String identifierName) throws AuditException {
         this.dashboard = getDashboard(dashboard.getTitle(), DashboardType.Team);
         Map<String, Object> collItemOptions = new HashMap<>();
+
+        if (StringUtils.isEmpty((String)data.get("identifierVersion")) || StringUtils.isEmpty(identifierName)){
+            throw new AuditException("identifierVersion or identifierName missing.", AuditException.MISSING_DETAILS);
+        }
+
         collItemOptions.put("artifactName", identifierName);
         collItemOptions.put("artifactVersion", data.get("identifierVersion"));
+
         CollectorItem testItem = getCollectorItemForIdentifierVersion(this.dashboard, collItemOptions);
         if (testItem == null) {
             throw new AuditException("No tests configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
         }
 
+
+        Double featureTestThreshold;
+        try{
+            featureTestThreshold = Double.parseDouble((String)data.get("featureTestThreshold"));
+        }catch(NumberFormatException e){
+            LOGGER.warn("Could not parse double from featureTestThreshold. Setting to default value.");
+            // additional try catch?
+            featureTestThreshold = Double.parseDouble(settings.getFeatureTestResultThreshold());
+        }
+
+        // Value needs to be final to be used in lambda
+        Double threshold = featureTestThreshold;
+
         Collection<TestResultsAuditResponse> testResultsAuditResponseCollection = new ArrayList<>();
 
         List<TestResult> testResultList = testResultRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(testItem.getId(), 0, System.currentTimeMillis());
         TestResultsAuditResponse testResultsAuditResponse = new TestResultsAuditResponse();
-        testResultsAuditResponse.setAuditEntity(testItem.getOptions());
+        Map<String, Object> auditEntity = new HashMap<>();
+        auditEntity.putAll(testItem.getOptions());
+        auditEntity.put("testingThreshold", threshold);
+        testResultsAuditResponse.setAuditEntity(auditEntity);
         testResultsAuditResponse.setLastUpdated(testItem.getLastUpdated());
 
         // If no test results, set status to TEST_RESULT_MISSING and return
@@ -76,16 +99,6 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
             return testResultsAuditResponseCollection;
         }
 
-        Double featureTestThreshold;
-        try{
-            featureTestThreshold = Double.parseDouble((String)data.get("featureTestThreshold"));
-        }catch(NumberFormatException e){
-            LOGGER.warn("Could not parse double from featureTestThreshold. Setting to default value.");
-            featureTestThreshold = Double.parseDouble(settings.getFeatureTestResultThreshold());
-        }
-
-        // Value needs to be final to be used in lambda
-        Double threshold = featureTestThreshold;
 
         testResultList.forEach(testResult -> testResultsAuditResponseCollection.add(getFeatureTestResultAudit(testResultsAuditResponse ,testResult, threshold)));
 
@@ -224,7 +237,9 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
      * @param dashboardType
      * @return
      */
+    // Instead of getting by title, get by
     protected Dashboard getDashboard(String title, DashboardType dashboardType) {
+//        dashboardRepository.findByConfigurationItemBusA
         return dashboardRepository.findByTitleAndType(title, dashboardType);
     }
 
