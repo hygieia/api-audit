@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import sun.rmi.runtime.Log;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,7 +55,6 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
 
     @Override
     public Collection<TestResultsAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data, String altIdentifier, String identifierName) throws AuditException {
-        this.dashboard = getDashboard(dashboard.getTitle(), DashboardType.Team);
         Map<String, Object> collItemOptions = new HashMap<>();
 
         if (StringUtils.isEmpty((String)data.get("identifierVersion")) || StringUtils.isEmpty(identifierName)){
@@ -64,7 +64,7 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
         collItemOptions.put("artifactName", identifierName);
         collItemOptions.put("artifactVersion", data.get("identifierVersion"));
 
-        CollectorItem testItem = getCollectorItemForIdentifierVersion(this.dashboard, collItemOptions);
+        CollectorItem testItem = getCollectorItemForIdentifierVersion(dashboard, collItemOptions);
         if (testItem == null) {
             throw new AuditException("No tests configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
         }
@@ -72,25 +72,31 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
 
         Double featureTestThreshold;
         try{
-            featureTestThreshold = Double.parseDouble((String)data.get("featureTestThreshold"));
-        }catch(NumberFormatException e){
-            LOGGER.warn("Could not parse double from featureTestThreshold. Setting to default value.");
-            // additional try catch?
-            featureTestThreshold = Double.parseDouble(settings.getFeatureTestResultThreshold());
+            try{
+                featureTestThreshold = Double.parseDouble((String)data.get("featureTestThreshold"));
+            }catch(Exception e){
+                LOGGER.warn("Could not parse double from featureTestThreshold. Setting to default value.");
+                featureTestThreshold = Double.parseDouble(settings.getFeatureTestResultThreshold());
+            }
+        }catch(Exception e){
+            throw new AuditException("testingThreshold unavailable. Cannot perform audit.", AuditException.BAD_INPUT_DATA);
         }
+
 
         // Value needs to be final to be used in lambda
         Double threshold = featureTestThreshold;
 
         Collection<TestResultsAuditResponse> testResultsAuditResponseCollection = new ArrayList<>();
 
-        List<TestResult> testResultList = testResultRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(testItem.getId(), 0, System.currentTimeMillis());
+        List<TestResult> testResultList = testResultRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(testItem.getId(), beginDate, endDate);
         TestResultsAuditResponse testResultsAuditResponse = new TestResultsAuditResponse();
         Map<String, Object> auditEntity = new HashMap<>();
         auditEntity.putAll(testItem.getOptions());
         auditEntity.put("testingThreshold", threshold);
         testResultsAuditResponse.setAuditEntity(auditEntity);
         testResultsAuditResponse.setLastUpdated(testItem.getLastUpdated());
+        System.out.println("CollItem ID: " + testItem.getId());
+        testResultsAuditResponse.setCollectorItemId(testItem.getId());
 
         // If no test results, set status to TEST_RESULT_MISSING and return
         if (CollectionUtils.isEmpty(testResultList)){
@@ -110,6 +116,7 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
         TestResultsAuditResponse testResultsAuditResponse = new TestResultsAuditResponse();
         testResultsAuditResponse.setAuditEntity(baseTestResultsAuditResponse.getAuditEntity());
         testResultsAuditResponse.setLastUpdated(baseTestResultsAuditResponse.getLastUpdated());
+        testResultsAuditResponse.setCollectorItemId(baseTestResultsAuditResponse.getCollectorItemId());
         testResultsAuditResponse.setBuildArtifact(testResult.getBuildArtifact());
         testResultsAuditResponse.setLastExecutionTime(testResult.getStartTime());
         testResultsAuditResponse.setType(testResult.getType().toString());
@@ -231,17 +238,6 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
         return null;
     }
 
-    /**
-     * Get dashboard by title and type
-     * @param title
-     * @param dashboardType
-     * @return
-     */
-    // Instead of getting by title, get by
-    protected Dashboard getDashboard(String title, DashboardType dashboardType) {
-//        dashboardRepository.findByConfigurationItemBusA
-        return dashboardRepository.findByTitleAndType(title, dashboardType);
-    }
 
     public void setSettings(ApiSettings settings) {
         this.settings = settings;
@@ -250,22 +246,28 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
     /**
      * Check if all the test cases are skipped
      * @param testCapabilities
-     * @return
+     * @return boolean
      */
     public boolean isAllTestCasesSkipped(List<TestCapability> testCapabilities) {
-        int totalTestCaseCount = testCapabilities.stream().mapToInt(testCapability ->
-                testCapability.getTestSuites().parallelStream().mapToInt(TestSuite::getTotalTestCaseCount).sum()
-        ).sum();
-        int testCaseSkippedCount = testCapabilities.stream().mapToInt(testCapability ->
-                testCapability.getTestSuites().parallelStream().mapToInt(TestSuite::getSkippedTestCaseCount).sum()
-        ).sum();
+        try{
+            int totalTestCaseCount = testCapabilities.stream().mapToInt(testCapability ->
+                    testCapability.getTestSuites().parallelStream().mapToInt(TestSuite::getTotalTestCaseCount).sum()
+            ).sum();
+            int testCaseSkippedCount = testCapabilities.stream().mapToInt(testCapability ->
+                    testCapability.getTestSuites().parallelStream().mapToInt(TestSuite::getSkippedTestCaseCount).sum()
+            ).sum();
 
-        boolean isSkippedHighPriority = settings.getTestResultSkippedPriority().equalsIgnoreCase(PRIORITY_HIGH);
+            boolean isSkippedHighPriority = settings.getTestResultSkippedPriority().equalsIgnoreCase(PRIORITY_HIGH);
 
-        if ((testCaseSkippedCount >= totalTestCaseCount) && isSkippedHighPriority){
-            return true;
+            if ((testCaseSkippedCount >= totalTestCaseCount) && isSkippedHighPriority){
+                return true;
+            }
+            return false;
+        }catch(Exception e){
+            LOGGER.warn("Error during isAllTestCasesSkipped call", e);
+            return false;
+
         }
-        return false;
     }
 
 }
