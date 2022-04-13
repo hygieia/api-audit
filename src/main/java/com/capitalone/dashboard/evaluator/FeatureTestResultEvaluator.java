@@ -75,7 +75,7 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
             try{
                 featureTestThreshold = Double.parseDouble((String)data.get("featureTestThreshold"));
             }catch(Exception e){
-                LOGGER.warn("Could not parse double from featureTestThreshold. Setting to default value.");
+                LOGGER.error("Could not parse double from featureTestThreshold. Setting to default value.");
                 featureTestThreshold = Double.parseDouble(settings.getFeatureTestResultThreshold());
             }
         }catch(Exception e){
