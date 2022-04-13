@@ -14,7 +14,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
@@ -35,6 +40,7 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
     private static final String TEST_CASE_FAILURE_COUNT = "failureTestCaseCount";
     private static final String TEST_CASE_SKIPPED_COUNT = "skippedTestCaseCount";
     private static final String TEST_CASE_TOTAL_COUNT = "totalTestCaseCount";
+    private static final String PRIORITY_HIGH = "High";
 
 
 
@@ -74,8 +80,8 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
         try{
             featureTestThreshold = Double.parseDouble((String)data.get("featureTestThreshold"));
         }catch(NumberFormatException e){
-            LOGGER.warn("Could not parse double from featureTestThreshold. Setting to default value of 90%");
-            featureTestThreshold = 100.0;
+            LOGGER.warn("Could not parse double from featureTestThreshold. Setting to default value.");
+            featureTestThreshold = Double.parseDouble(settings.getFeatureTestResultThreshold());
         }
 
         // Value needs to be final to be used in lambda
@@ -117,10 +123,11 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
 
 
 
-//        if(isAllTestCasesSkipped(testCapabilities)){
-//            testResultsAuditResponse.addAuditStatus(TestResultAuditStatus.TEST_RESULT_SKIPPED);
-//            return testResultsAuditResponse;
-//        }
+        if(isAllTestCasesSkipped(testCapabilities)){
+            testResultsAuditResponse.addAuditStatus(TestResultAuditStatus.TEST_RESULT_SKIPPED);
+            return testResultsAuditResponse;
+        }
+
         double testCasePassPercent = this.getTestCasePassPercent(testCapabilities);
         if (testCasePassPercent < threshold) {
             testResultsAuditResponse.addAuditStatus(TestResultAuditStatus.TEST_RESULT_AUDIT_FAIL);
@@ -223,6 +230,27 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
 
     public void setSettings(ApiSettings settings) {
         this.settings = settings;
+    }
+
+    /**
+     * Check if all the test cases are skipped
+     * @param testCapabilities
+     * @return
+     */
+    public boolean isAllTestCasesSkipped(List<TestCapability> testCapabilities) {
+        int totalTestCaseCount = testCapabilities.stream().mapToInt(testCapability ->
+                testCapability.getTestSuites().parallelStream().mapToInt(TestSuite::getTotalTestCaseCount).sum()
+        ).sum();
+        int testCaseSkippedCount = testCapabilities.stream().mapToInt(testCapability ->
+                testCapability.getTestSuites().parallelStream().mapToInt(TestSuite::getSkippedTestCaseCount).sum()
+        ).sum();
+
+        boolean isSkippedHighPriority = settings.getTestResultSkippedPriority().equalsIgnoreCase(PRIORITY_HIGH);
+
+        if ((testCaseSkippedCount >= totalTestCaseCount) && isSkippedHighPriority){
+            return true;
+        }
+        return false;
     }
 
 }

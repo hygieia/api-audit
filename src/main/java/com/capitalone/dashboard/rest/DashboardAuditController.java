@@ -1,5 +1,6 @@
 package com.capitalone.dashboard.rest;
 
+import com.capitalone.dashboard.ApiSettings;
 import com.capitalone.dashboard.model.AuditException;
 import com.capitalone.dashboard.model.AutoDiscoverAuditType;
 import com.capitalone.dashboard.model.CollectorItem;
@@ -11,6 +12,7 @@ import com.capitalone.dashboard.util.CommonConstants;
 import com.capitalone.dashboard.util.ConversionUtils;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +43,9 @@ public class DashboardAuditController {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardAuditController.class);
 
     @Autowired
+    protected ApiSettings settings;
+
+    @Autowired
     public DashboardAuditController(HttpServletRequest httpServletRequest, DashboardAuditService dashboardAuditService) {
 
 		this.httpServletRequest = httpServletRequest;
@@ -62,7 +67,11 @@ public class DashboardAuditController {
         String requester = httpServletRequest.getHeader(CommonConstants.HEADER_API_USER);
         Map<String, String> data = new HashMap<>();
         data.put("identifierVersion", request.getIdentifierVersion());
-        data.put("featureTestThreshold", request.getFeatureTestThreshold());
+        if(StringUtils.isNotEmpty(request.getFeatureTestThreshold())){
+            data.put("featureTestThreshold", request.getFeatureTestThreshold());
+        }else{
+            data.put("featureTestThreshold", settings.getFeatureTestResultThreshold());
+        }
         DashboardReviewResponse dashboardReviewResponse = dashboardAuditService.getDashboardReviewResponse(request.getTitle(), DashboardType.Team,
                 request.getBusinessService(), request.getBusinessApplication(),
                 request.getBeginDate(), request.getEndDate(), request.getAuditType(), Objects.nonNull(request.getAutoDiscoverAuditType())? request.getAutoDiscoverAuditType() : AutoDiscoverAuditType.ALL, request.getAltIdentifier(), request.getIdentifierName(), data);
