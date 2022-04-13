@@ -21,6 +21,8 @@ public class DashboardAuditRequest extends AuditReviewRequest {
     private String identifierVersion;
     private String identifierUrl;
     private boolean enforceTimestamp;
+    private boolean enforceEndTimestamp;
+    private boolean enforceAltIdentifier;
 
     public String getTitle() {
         return title;
@@ -109,4 +111,12 @@ public class DashboardAuditRequest extends AuditReviewRequest {
     public void setEnforceTimestamp(boolean enforceTimestamp) {
         this.enforceTimestamp = enforceTimestamp;
     }
+
+    public boolean isEnforceEndTimestamp() { return enforceEndTimestamp; }
+
+    public void setEnforceEndTimestamp(boolean enforceEndTimestamp) { this.enforceEndTimestamp = enforceEndTimestamp; }
+
+    public boolean isEnforceAltIdentifier() { return enforceAltIdentifier; }
+
+    public void setEnforceAltIdentifier(boolean enforceAltIdentifier) { this.enforceAltIdentifier = enforceAltIdentifier; }
 }

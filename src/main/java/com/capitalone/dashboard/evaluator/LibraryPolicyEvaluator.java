@@ -46,7 +46,7 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
     @Override
     public Collection<LibraryPolicyAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier, String identifierName) throws AuditException {
 
-        List<CollectorItem> libraryPolicyItems = getCollectorItemsByAltIdentifier(dashboard, CollectorType.LibraryPolicy,altIdentifier);
+        List<CollectorItem> libraryPolicyItems = getCollectorItemsByAltIdentifier(dashboard, CollectorType.LibraryPolicy, altIdentifier, data);
         if (CollectionUtils.isEmpty(libraryPolicyItems)) {
             throw new AuditException("No library policy project configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
         }

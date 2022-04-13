@@ -57,8 +57,7 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
 //    private static final Log LOGGER = LogFactory.getLog(DashboardAuditServiceImpl.class);
 
     @Autowired
-    public DashboardAuditServiceImpl(DashboardRepository dashboardRepository, CmdbRepository cmdbRepository, DashboardAuditModel auditModel,
-                                     CollectorItemRepository collectorItemRepository, AuditReportRepository auditReportRepository, ApiSettings apiSettings) {
+    public DashboardAuditServiceImpl(DashboardRepository dashboardRepository, CmdbRepository cmdbRepository, DashboardAuditModel auditModel, CollectorItemRepository collectorItemRepository, AuditReportRepository auditReportRepository, ApiSettings apiSettings) {
 
         this.dashboardRepository = dashboardRepository;
         this.cmdbRepository = cmdbRepository;
@@ -83,7 +82,8 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
      */
     @SuppressWarnings("PMD.NPathComplexity")
     @Override
-    public DashboardReviewResponse getDashboardReviewResponse(String dashboardTitle, DashboardType dashboardType, String businessService, String businessApp, long beginDate, long endDate, Set<AuditType> auditTypes, AutoDiscoverAuditType autoDiscoverAuditType, String altIdentifier, String identifierName, boolean enforceTimestamp) throws AuditException {
+    public DashboardReviewResponse getDashboardReviewResponse(String dashboardTitle, DashboardType dashboardType, String businessService, String businessApp, long beginDate, long endDate, Set<AuditType> auditTypes, AutoDiscoverAuditType autoDiscoverAuditType, String altIdentifier, String identifierName, boolean enforceTimestamp,  boolean enforceEndTimestamp,
+            boolean enforceAltIdentifier) throws AuditException {
 
         validateParameters(dashboardTitle, dashboardType, businessService, businessApp, beginDate, endDate);
 
@@ -104,8 +104,12 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
             auditTypes.addAll(Sets.newHashSet(AuditType.values()));
             auditTypes.remove(AuditType.ALL);
         }
+        // TODO:The keys to this map need to be moved to hygieia-core at a later point
         Map<String, Object> data = new HashMap<>();
         data.put("enforceTimestamp", enforceTimestamp);
+        data.put("enforceEndTimestamp", enforceEndTimestamp);
+        data.put("enforceAltIdentifier", enforceAltIdentifier);
+
         auditTypes.forEach(auditType -> {
             Evaluator evaluator = auditModel.evaluatorMap().get(auditType);
             try {
@@ -140,6 +144,8 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
         String altIdentifier = request.getAltIdentifier();
         String identifierName = request.getIdentifierName();
         boolean enforceTimestamp = request.isEnforceTimestamp();
+        boolean enforceEndTimestamp = request.isEnforceEndTimestamp();
+        boolean enforceAltIdentifier = request.isEnforceAltIdentifier();
 
         validateParameters(dashboardTitle,dashboardType, businessService, businessApp, beginDate, endDate);
 
@@ -162,6 +168,8 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
         }
         Map<String, Object> data = new HashMap<>();
         data.put("enforceTimestamp", enforceTimestamp);
+        data.put("enforceEndTimestamp", enforceEndTimestamp);
+        data.put("enforceAltIdentifier", enforceAltIdentifier);
         auditTypes.forEach(auditType -> {
             Evaluator evaluator = auditModel.evaluatorMap().get(auditType);
             try {
