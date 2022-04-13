@@ -80,27 +80,26 @@ public abstract class Evaluator<T> {
             return getCollectorItems(dashboard,collectorType);
         }
     }
-
+    /*
+    * Overloaded the method to keep the old one intact
+    * */
     List<CollectorItem> getCollectorItemsByAltIdentifier(Dashboard dashboard, CollectorType collectorType, String altIdentifier, Map<?, ?> data) {
+
+        if(StringUtils.isEmpty(altIdentifier)) return getCollectorItems(dashboard,collectorType);
 
         boolean enforceAltIdentifier = false;
         if(MapUtils.isNotEmpty(data)) {
             enforceAltIdentifier = Boolean.valueOf(String.valueOf(data.get("enforceAltIdentifier")));
         }
-        if(StringUtils.isNotEmpty(altIdentifier)) {
-            Optional<ObjectId> componentIdOpt = dashboard.getWidgets().stream().findFirst().map(Widget::getComponentId);
-            Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findOne(componentIdOpt.get())) : Optional.empty();
-            List<ObjectId> collectorItemIds = componentOpt.map(component ->
-                    component.getCollectorItems(collectorType).stream().filter(c -> isEqualsAltIdentifier(c, altIdentifier)).map(CollectorItem::getId).collect(Collectors.toList())).orElse(Collections.emptyList());
+        Optional<ObjectId> componentIdOpt = dashboard.getWidgets().stream().findFirst().map(Widget::getComponentId);
+        Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findOne(componentIdOpt.get())) : Optional.empty();
+        List<ObjectId> collectorItemIds = componentOpt.map(component ->
+                component.getCollectorItems(collectorType).stream().filter(c -> isEqualsAltIdentifier(c, altIdentifier)).map(CollectorItem::getId).collect(Collectors.toList())).orElse(Collections.emptyList());
 
-            if(enforceAltIdentifier) {
-                return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : new ArrayList<>();
-            }
-            return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : getCollectorItems(dashboard,collectorType);
+        if(enforceAltIdentifier) {
+            return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : new ArrayList<>();
         }
-        else{
-            return getCollectorItems(dashboard,collectorType);
-        }
+        return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : getCollectorItems(dashboard,collectorType);
     }
 
     List<CollectorItem> getCollectorItemsByIdentifierName(Dashboard dashboard, CollectorType collectorType, String altIdentifier, String identifierName) {
