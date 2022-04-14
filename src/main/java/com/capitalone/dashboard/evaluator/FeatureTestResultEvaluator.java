@@ -159,7 +159,7 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
     /**
      * Get test case pass percent for a given set of test capabilities.
      * @param testCapabilities List of TestCapability attached to testResult being processed
-     * @return testCasePassPercent Double representing percentage of test cases that passed for given List<TestCapability>
+     * @return testCasePassPercent Double representing percentage of test cases that passed for given List of test capabilities
      */
     private double getTestCasePassPercent(List<TestCapability> testCapabilities) {
         try{
