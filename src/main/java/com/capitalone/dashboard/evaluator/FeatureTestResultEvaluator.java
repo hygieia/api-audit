@@ -133,10 +133,11 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
     }
 
     /**
-     * update test result audit statuses
+     * Updates test result audit statuses based on percentage of test cases (not suites) that exceed the threshold.
      * @param testCapabilities
      * @param testResultsAuditResponse
-     * @return
+     * @param threshold
+     * @return TestResultsAuditResponse
      */
     private TestResultsAuditResponse updateTestResultAuditStatuses(List<TestCapability> testCapabilities, TestResultsAuditResponse testResultsAuditResponse, double threshold) {
 
@@ -160,9 +161,9 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
 
 
     /**
-     * Get test result pass percent
+     * Get test case pass percent for a given set of test capabilities.
      * @param testCapabilities
-     * @return
+     * @return testCasePassPercent
      */
     private double getTestCasePassPercent(List<TestCapability> testCapabilities) {
         try{
@@ -217,6 +218,12 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
         return featureTestResultMap;
     }
 
+    /**
+     * Gets the collector item of type TEST associated with the given artifact name/version
+     * @param dashboard
+     * @param collItemOptions
+     * @return testCollectorItem
+     */
     protected CollectorItem getCollectorItemForIdentifierVersion(Dashboard dashboard, Map<String, Object> collItemOptions) {
         List<CollectorItem> testItems = getCollectorItems(dashboard, CollectorType.Test, FUNCTIONAL);
         for(CollectorItem testItem : testItems){
