@@ -133,10 +133,10 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
 
     /**
      * Updates test result audit statuses based on percentage of test cases (not suites) that exceed the threshold.
-     * @param testCapabilities
-     * @param testResultsAuditResponse
-     * @param threshold
-     * @return TestResultsAuditResponse
+     * @param testCapabilities List of testCapability attached to the testResult being processed
+     * @param testResultsAuditResponse the audit response that the audit statuses will be added to
+     * @param threshold testingThreshold from Bladerunner
+     * @return TestResultsAuditResponse updated with statuses
      */
     private TestResultsAuditResponse updateTestResultAuditStatuses(List<TestCapability> testCapabilities, TestResultsAuditResponse testResultsAuditResponse, double threshold) {
         if(isAllTestCasesSkipped(testCapabilities)){
@@ -158,8 +158,8 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
 
     /**
      * Get test case pass percent for a given set of test capabilities.
-     * @param testCapabilities
-     * @return testCasePassPercent
+     * @param testCapabilities List of TestCapability attached to testResult being processed
+     * @return testCasePassPercent Double representing percentage of test cases that passed for given List<TestCapability>
      */
     private double getTestCasePassPercent(List<TestCapability> testCapabilities) {
         try{
@@ -179,8 +179,6 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
 
     /**
      * Builds feature test result data map
-     * @param testResult
-     * @return featureTestResultMap
      */
     protected HashMap getFeatureTestResult(TestResult testResult) {
         HashMap<String,Integer> featureTestResultMap = new HashMap<>();
@@ -216,8 +214,6 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
 
     /**
      * Gets the collector item of type TEST associated with the given artifact name/version
-     * @param dashboard
-     * @param collItemOptions
      * @return testCollectorItem
      */
     protected CollectorItem getCollectorItemForIdentifierVersion(Dashboard dashboard, Map<String, Object> collItemOptions) {
@@ -259,8 +255,8 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
 
     /**
      * Check if all the test cases are skipped
-     * @param testCapabilities
-     * @return boolean
+     * @param testCapabilities set of testCapabilities attached to the testResult being reviewed
+     * @return boolean: true if all tests were skipped, false otherwise
      */
     public boolean isAllTestCasesSkipped(List<TestCapability> testCapabilities) {
         try{
