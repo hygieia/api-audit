@@ -30,7 +30,6 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
     private final TestResultRepository testResultRepository;
     private static final Logger LOGGER = LoggerFactory.getLogger(FeatureTestResultEvaluator.class);
 
-    private Dashboard dashboard;
     public static final String FUNCTIONAL = "Functional";
     public static final String ARTIFACT_NAME = "artifactName";
     public static final String ARTIFACT_VERSION = "artifactVersion";
@@ -166,14 +165,19 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
      * @return
      */
     private double getTestCasePassPercent(List<TestCapability> testCapabilities) {
-        double testCaseSuccessCount = testCapabilities.stream().mapToDouble(testCapability ->
-                testCapability.getTestSuites().parallelStream().mapToDouble(TestSuite::getSuccessTestCaseCount).sum()
-        ).sum();
-        double totalTestCaseCount = testCapabilities.stream().mapToDouble(testCapability ->
-                testCapability.getTestSuites().parallelStream().mapToDouble(TestSuite::getTotalTestCaseCount).sum()
-        ).sum();
+        try{
+            double testCaseSuccessCount = testCapabilities.stream().mapToDouble(testCapability ->
+                    testCapability.getTestSuites().parallelStream().mapToDouble(TestSuite::getSuccessTestCaseCount).sum()
+            ).sum();
+            double totalTestCaseCount = testCapabilities.stream().mapToDouble(testCapability ->
+                    testCapability.getTestSuites().parallelStream().mapToDouble(TestSuite::getTotalTestCaseCount).sum()
+            ).sum();
 
-        return (testCaseSuccessCount/totalTestCaseCount) * 100;
+            return (testCaseSuccessCount/totalTestCaseCount) * 100;
+        }catch(Exception e){
+            LOGGER.error("Could not get 'testCasePassPercent', setting to 0.0%");
+            return 0.0;
+        }
     }
 
     /**
@@ -183,25 +187,32 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
      */
     protected HashMap getFeatureTestResult(TestResult testResult) {
         HashMap<String,Integer> featureTestResultMap = new HashMap<>();
-        featureTestResultMap.put(SUCCESS_COUNT, testResult.getSuccessCount());
-        featureTestResultMap.put(FAILURE_COUNT, testResult.getFailureCount());
-        featureTestResultMap.put(SKIP_COUNT, testResult.getSkippedCount());
-        featureTestResultMap.put(TOTAL_COUNT,testResult.getTotalCount());
 
-        Collection<TestCapability> testCapabilities = testResult.getTestCapabilities();
-        int totalTestCaseCount = testCapabilities.stream().mapToInt(testCapability ->
-                testCapability.getTestSuites().parallelStream().mapToInt(TestSuite::getTotalTestCaseCount).sum()).sum();
-        int testCaseSuccessCount = testCapabilities.stream().mapToInt(testCapability ->
-                testCapability.getTestSuites().parallelStream().mapToInt(TestSuite::getSuccessTestCaseCount).sum()).sum();
-        int testCaseFailureCount = testCapabilities.stream().mapToInt(testCapability ->
-                testCapability.getTestSuites().parallelStream().mapToInt(TestSuite::getFailedTestCaseCount).sum()).sum();
-        int testCaseSkippedCount = testCapabilities.stream().mapToInt(testCapability ->
-                testCapability.getTestSuites().parallelStream().mapToInt(TestSuite::getSkippedTestCaseCount).sum()).sum();
+        //If an exception occurs an empty map will be returned.
+        try{
+            featureTestResultMap.put(SUCCESS_COUNT, testResult.getSuccessCount());
+            featureTestResultMap.put(FAILURE_COUNT, testResult.getFailureCount());
+            featureTestResultMap.put(SKIP_COUNT, testResult.getSkippedCount());
+            featureTestResultMap.put(TOTAL_COUNT,testResult.getTotalCount());
 
-        featureTestResultMap.put(TEST_CASE_TOTAL_COUNT, totalTestCaseCount);
-        featureTestResultMap.put(TEST_CASE_SUCCESS_COUNT, testCaseSuccessCount);
-        featureTestResultMap.put(TEST_CASE_FAILURE_COUNT, testCaseFailureCount);
-        featureTestResultMap.put(TEST_CASE_SKIPPED_COUNT, testCaseSkippedCount);
+            Collection<TestCapability> testCapabilities = testResult.getTestCapabilities();
+            int totalTestCaseCount = testCapabilities.stream().mapToInt(testCapability ->
+                    testCapability.getTestSuites().parallelStream().mapToInt(TestSuite::getTotalTestCaseCount).sum()).sum();
+            int testCaseSuccessCount = testCapabilities.stream().mapToInt(testCapability ->
+                    testCapability.getTestSuites().parallelStream().mapToInt(TestSuite::getSuccessTestCaseCount).sum()).sum();
+            int testCaseFailureCount = testCapabilities.stream().mapToInt(testCapability ->
+                    testCapability.getTestSuites().parallelStream().mapToInt(TestSuite::getFailedTestCaseCount).sum()).sum();
+            int testCaseSkippedCount = testCapabilities.stream().mapToInt(testCapability ->
+                    testCapability.getTestSuites().parallelStream().mapToInt(TestSuite::getSkippedTestCaseCount).sum()).sum();
+
+            featureTestResultMap.put(TEST_CASE_TOTAL_COUNT, totalTestCaseCount);
+            featureTestResultMap.put(TEST_CASE_SUCCESS_COUNT, testCaseSuccessCount);
+            featureTestResultMap.put(TEST_CASE_FAILURE_COUNT, testCaseFailureCount);
+            featureTestResultMap.put(TEST_CASE_SKIPPED_COUNT, testCaseSkippedCount);
+        }catch(Exception e){
+            LOGGER.error("Exception occurred while processing testResult " + testResult.getDescription(), e);
+        }
+
 
         return featureTestResultMap;
     }
