@@ -94,7 +94,6 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
         auditEntity.put("testingThreshold", threshold);
         testResultsAuditResponse.setAuditEntity(auditEntity);
         testResultsAuditResponse.setLastUpdated(testItem.getLastUpdated());
-        System.out.println("CollItem ID: " + testItem.getId());
         testResultsAuditResponse.setCollectorItemId(testItem.getId());
 
         // If no test results, set status to TEST_RESULT_MISSING and return
@@ -140,9 +139,6 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
      * @return TestResultsAuditResponse
      */
     private TestResultsAuditResponse updateTestResultAuditStatuses(List<TestCapability> testCapabilities, TestResultsAuditResponse testResultsAuditResponse, double threshold) {
-
-
-
         if(isAllTestCasesSkipped(testCapabilities)){
             testResultsAuditResponse.addAuditStatus(TestResultAuditStatus.TEST_RESULT_SKIPPED);
             return testResultsAuditResponse;
