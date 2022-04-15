@@ -424,6 +424,8 @@ public class CodeReviewEvaluatorTest {
         mergeCommitFromTargetBranchRegEx.add("(.*merge.)(https.*)(.into.*)");
         mergeCommitFromTargetBranchRegEx.add("(.*merge.*\\/)(.*)(.into.*)");
         mergeCommitFromTargetBranchRegEx.add("(.*merge.)(.*)(.into.*)");
+        mergeCommitFromTargetBranchRegEx.add("(.*merge branch.*')(.*)('.*of.*)");
+        mergeCommitFromTargetBranchRegEx.add("(.*merge.*'.*\\/)(.*)('.*of.*)");
 
         List<String> matchingLogs = new ArrayList<>();
         matchingLogs.add("Merge remote-tracking branch 'origin/master' into y");
@@ -432,6 +434,7 @@ public class CodeReviewEvaluatorTest {
         matchingLogs.add("Merge branch 'master' into x");
         matchingLogs.add("Merge master into y");
         matchingLogs.add("Merge https://github.com/test into y");
+
 
         GitRequest request = new GitRequest();
         request.setScmUrl("https://github.com/test");
@@ -442,6 +445,29 @@ public class CodeReviewEvaluatorTest {
             Commit commit = new Commit();
             commit.setScmCommitLog(log);
             Assert.assertTrue(codeReviewEvaluator.isMergeCommitFromTargetBranch(commit, request));
+        });
+
+
+        List<String> matchingMainLogs = new ArrayList<>();
+        matchingMainLogs.add("Merge main into testpipeline/hotfix");
+        matchingMainLogs.add("Merge main into hotfix");
+        matchingMainLogs.add("Merge branch 'origin/main' into hotfix");
+        matchingMainLogs.add("Merge branch 'origin/main' into testpipeline/hotfix");
+        matchingMainLogs.add("Merge branch refs/heads/main into hotfix");
+        matchingMainLogs.add("Merge branch refs/heads/main into testpipeline/hotfix");
+        matchingMainLogs.add("Merge branch remote-tracking branch 'origin/main' into hotfix");
+        matchingMainLogs.add("Merge branch remote-tracking branch 'origin/main' into testpipeline/hotfix");
+
+
+        GitRequest requestMain = new GitRequest();
+        requestMain.setScmUrl("https://github.com/test");
+        requestMain.setScmBranch("main");
+
+        when(apiSettings.getMergeCommitFromTargetBranchRegEx()).thenReturn(mergeCommitFromTargetBranchRegEx);
+        matchingMainLogs.forEach(log -> {
+            Commit commit = new Commit();
+            commit.setScmCommitLog(log);
+            Assert.assertTrue(codeReviewEvaluator.isMergeCommitFromTargetBranch(commit, requestMain));
         });
 
         List<String> nonMatchingLogs = new ArrayList<>();
