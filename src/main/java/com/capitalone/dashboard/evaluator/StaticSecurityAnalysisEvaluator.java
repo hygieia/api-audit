@@ -39,12 +39,12 @@ public class StaticSecurityAnalysisEvaluator extends Evaluator<SecurityReviewAud
     @Override
     public Collection<SecurityReviewAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier, String identifierName) throws AuditException {
 
-        List<CollectorItem> staticSecurityScanItems = getCollectorItemsByAltIdentifier(dashboard, CollectorType.StaticSecurityScan,altIdentifier);
+        List<CollectorItem> staticSecurityScanItems = getCollectorItemsByAltIdentifier(dashboard, CollectorType.StaticSecurityScan, altIdentifier, data);
         if (CollectionUtils.isEmpty(staticSecurityScanItems)) {
             throw new AuditException("No code quality job configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
         }
 
-        return staticSecurityScanItems.stream().map(item -> evaluate(item, beginDate, endDate, null)).collect(Collectors.toList());
+        return staticSecurityScanItems.stream().map(item -> evaluate(item, beginDate, endDate, data)).collect(Collectors.toList());
     }
 
     @Override
@@ -52,21 +52,8 @@ public class StaticSecurityAnalysisEvaluator extends Evaluator<SecurityReviewAud
         return null;
     }
 
-
     @Override
     public SecurityReviewAuditResponse evaluate(CollectorItem collectorItem, long beginDate, long endDate, Map<?, ?> data) {
-        return getStaticSecurityScanResponse(collectorItem, beginDate, endDate);
-    }
-
-    /**
-     * Reusable method for constructing the CodeQualityAuditResponse object
-     *
-     * @param collectorItem Collector Item
-     * @param beginDate Begin Date
-     * @param endDate End Date
-     * @return SecurityReviewAuditResponse
-     */
-    private SecurityReviewAuditResponse getStaticSecurityScanResponse(CollectorItem collectorItem, long beginDate, long endDate) {
         List<CodeQuality> codeQualities = codeQualityRepository.findByCollectorItemIdOrderByTimestampDesc(collectorItem.getId());
 
         SecurityReviewAuditResponse securityReviewAuditResponse = new SecurityReviewAuditResponse();
@@ -114,8 +101,6 @@ public class StaticSecurityAnalysisEvaluator extends Evaluator<SecurityReviewAud
         }
         return 0;
     }
-
-
     public void setSettings(ApiSettings settings) {
         this.settings = settings;
     }

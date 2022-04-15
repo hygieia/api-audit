@@ -43,12 +43,12 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
     @Override
     public Collection<LibraryPolicyAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data,  String altIdentifier, String identifierName) throws AuditException {
 
-        List<CollectorItem> libraryPolicyItems = getCollectorItemsByAltIdentifier(dashboard, CollectorType.LibraryPolicy,altIdentifier);
+        List<CollectorItem> libraryPolicyItems = getCollectorItemsByAltIdentifier(dashboard, CollectorType.LibraryPolicy, altIdentifier, data);
         if (CollectionUtils.isEmpty(libraryPolicyItems)) {
             throw new AuditException("No library policy project configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
         }
 
-        return libraryPolicyItems.stream().map(item -> evaluate(item, beginDate, endDate, null)).collect(Collectors.toList());
+        return libraryPolicyItems.stream().map(item -> evaluate(item, beginDate, endDate, data)).collect(Collectors.toList());
     }
 
     @Override
@@ -56,19 +56,8 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
         return null;
     }
 
-
     @Override
     public LibraryPolicyAuditResponse evaluate(CollectorItem collectorItem, long beginDate, long endDate, Map<?, ?> data) {
-        return getLibraryPolicyAuditResponse(collectorItem);
-    }
-
-    /**
-     * Reusable method for constructing the LibraryPolicyAuditResponse object
-     *
-     * @param collectorItem Collector item
-     * @return SecurityReviewAuditResponse
-     */
-    private LibraryPolicyAuditResponse getLibraryPolicyAuditResponse(CollectorItem collectorItem) {
         LibraryPolicyResult returnPolicyResult = libraryPolicyResultsRepository.findTopByCollectorItemIdOrderByEvaluationTimestampDesc(collectorItem.getId());
 
         LibraryPolicyAuditResponse libraryPolicyAuditResponse = new LibraryPolicyAuditResponse();
@@ -116,7 +105,6 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
         }
         return libraryPolicyAuditResponse;
     }
-
 
     private boolean hasViolations(LibraryPolicyResult.Threat threat, int age) {
         if (MapUtils.isEmpty(threat.getDispositionCounts())) {

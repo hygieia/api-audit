@@ -14,10 +14,13 @@ import com.capitalone.dashboard.repository.DashboardRepository;
 import com.capitalone.dashboard.request.ArtifactAuditRequest;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
+import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.List;
@@ -76,6 +79,27 @@ public abstract class Evaluator<T> {
         else{
             return getCollectorItems(dashboard,collectorType);
         }
+    }
+    /*
+    * Overloaded the method to keep the old one intact
+    * */
+    List<CollectorItem> getCollectorItemsByAltIdentifier(Dashboard dashboard, CollectorType collectorType, String altIdentifier, Map<?, ?> data) {
+
+        if(StringUtils.isEmpty(altIdentifier)) return getCollectorItems(dashboard,collectorType);
+
+        boolean enforceAltIdentifier = false;
+        if(MapUtils.isNotEmpty(data)) {
+            enforceAltIdentifier = Boolean.valueOf(String.valueOf(data.get("enforceAltIdentifier")));
+        }
+        Optional<ObjectId> componentIdOpt = dashboard.getWidgets().stream().findFirst().map(Widget::getComponentId);
+        Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findOne(componentIdOpt.get())) : Optional.empty();
+        List<ObjectId> collectorItemIds = componentOpt.map(component ->
+                component.getCollectorItems(collectorType).stream().filter(c -> isEqualsAltIdentifier(c, altIdentifier)).map(CollectorItem::getId).collect(Collectors.toList())).orElse(Collections.emptyList());
+
+        if(enforceAltIdentifier) {
+            return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : new ArrayList<>();
+        }
+        return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : getCollectorItems(dashboard,collectorType);
     }
 
     List<CollectorItem> getCollectorItemsByIdentifierName(Dashboard dashboard, CollectorType collectorType, String altIdentifier, String identifierName) {

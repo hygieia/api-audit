@@ -33,7 +33,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -81,8 +83,10 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
      */
     @SuppressWarnings("PMD.NPathComplexity")
     @Override
-    public DashboardReviewResponse getDashboardReviewResponse(String dashboardTitle, DashboardType dashboardType, String businessService, String businessApp, long beginDate, long endDate ,Set<AuditType> auditTypes, AutoDiscoverAuditType autoDiscoverAuditType, String altIdentifier, String identifierName) throws AuditException {
-
+    public DashboardReviewResponse getDashboardReviewResponse(String dashboardTitle, DashboardType dashboardType, String businessService, String businessApp,
+        long beginDate, long endDate, Set<AuditType> auditTypes, AutoDiscoverAuditType autoDiscoverAuditType,
+        String altIdentifier, String identifierName, boolean enforceTimestamp,  boolean enforceEndTimestamp, boolean enforceAltIdentifier) throws AuditException {
+        
         validateParameters(dashboardTitle,dashboardType, businessService, businessApp, beginDate, endDate);
 
         DashboardReviewResponse dashboardReviewResponse = new DashboardReviewResponse();
@@ -102,6 +106,11 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
             auditTypes.addAll(Sets.newHashSet(AuditType.values()));
             auditTypes.remove(AuditType.ALL);
         }
+        // TODO:The keys to this map need to be moved to hygieia-core at a later point
+        Map<String, Object> data = new HashMap<>();
+        data.put("enforceTimestamp", enforceTimestamp);
+        data.put("enforceEndTimestamp", enforceEndTimestamp);
+        data.put("enforceAltIdentifier", enforceAltIdentifier);
 
         auditTypes.forEach(auditType -> {
             Evaluator evaluator = auditModel.evaluatorMap().get(auditType);
