@@ -2,7 +2,13 @@ package com.capitalone.dashboard.evaluator;
 
 import com.capitalone.dashboard.ApiSettings;
 import com.capitalone.dashboard.misc.HygieiaException;
-import com.capitalone.dashboard.model.*;
+import com.capitalone.dashboard.model.AuditException;
+import com.capitalone.dashboard.model.CollectorItem;
+import com.capitalone.dashboard.model.CollectorType;
+import com.capitalone.dashboard.model.Dashboard;
+import com.capitalone.dashboard.model.TestCapability;
+import com.capitalone.dashboard.model.TestResult;
+import com.capitalone.dashboard.model.TestSuite;
 import com.capitalone.dashboard.repository.CollectorItemRepository;
 import com.capitalone.dashboard.repository.TestResultRepository;
 import com.capitalone.dashboard.request.ArtifactAuditRequest;
@@ -10,11 +16,11 @@ import com.capitalone.dashboard.response.TestResultsAuditResponse;
 import com.capitalone.dashboard.status.TestResultAuditStatus;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import sun.rmi.runtime.Log;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,6 +39,7 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
     public static final String FUNCTIONAL = "Functional";
     public static final String ARTIFACT_NAME = "artifactName";
     public static final String ARTIFACT_VERSION = "artifactVersion";
+    public static final String IDENTIFIER_VERSION = "identifierVersion";
     private static final String SUCCESS_COUNT = "successCount";
     private static final String FAILURE_COUNT = "failureCount";
     private static final String SKIP_COUNT = "skippedCount";
@@ -56,12 +63,12 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
     public Collection<TestResultsAuditResponse> evaluate(Dashboard dashboard, long beginDate, long endDate, Map<?, ?> data, String altIdentifier, String identifierName) throws AuditException {
         Map<String, Object> collItemOptions = new HashMap<>();
 
-        if (StringUtils.isEmpty((String)data.get("identifierVersion")) || StringUtils.isEmpty(identifierName)){
+        if (StringUtils.isEmpty((String)data.get(IDENTIFIER_VERSION)) || StringUtils.isEmpty(identifierName)){
             throw new AuditException("identifierVersion or identifierName missing.", AuditException.MISSING_DETAILS);
         }
 
-        collItemOptions.put("artifactName", identifierName);
-        collItemOptions.put("artifactVersion", data.get("identifierVersion"));
+        collItemOptions.put(ARTIFACT_NAME, identifierName);
+        collItemOptions.put(ARTIFACT_VERSION, data.get(IDENTIFIER_VERSION));
 
         CollectorItem testItem = getCollectorItemForIdentifierVersion(dashboard, collItemOptions);
         if (testItem == null) {
@@ -73,7 +80,7 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
         try{
             try{
                 featureTestThreshold = Double.parseDouble((String)data.get("featureTestThreshold"));
-            }catch(Exception e){
+            }catch(NumberFormatException e){
                 LOGGER.error("Could not parse double from featureTestThreshold. Setting to default value.");
                 featureTestThreshold = Double.parseDouble(settings.getFeatureTestResultThreshold());
             }
