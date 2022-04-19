@@ -10,11 +10,12 @@ import com.capitalone.dashboard.response.DashboardReviewResponse;
 import org.json.simple.JSONObject;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface DashboardAuditService {
 
-    DashboardReviewResponse getDashboardReviewResponse(String dashboardTitle, DashboardType dashboardType, String businessService, String businessApp, long beginDate, long endDate, Set<AuditType> auditTypes, AutoDiscoverAuditType autoDiscoverAuditTypes, String altIdentifier, String identifierName) throws AuditException;
+    DashboardReviewResponse getDashboardReviewResponse(String dashboardTitle, DashboardType dashboardType, String businessService, String businessApp, long beginDate, long endDate, Set<AuditType> auditTypes, AutoDiscoverAuditType autoDiscoverAuditTypes, String altIdentifier, String identifierName, Map<?,?> data) throws AuditException;
 
     DashboardReviewResponse getDashboardReviewResponseNextGen(DashboardAuditRequest dashboardAuditRequest) throws AuditException;
 

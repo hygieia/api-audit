@@ -35,6 +35,7 @@ public class ApiSettings {
     private double traceabilityThreshold;
     @Value("${testResultThreshold:95.0}")
     private double testResultThreshold;
+    private String featureTestResultThreshold;
     private List<String> validStoryStatus;
     @Value("${testResultSuccessPriority:Low}")
     public String testResultSuccessPriority;
@@ -332,5 +333,13 @@ public class ApiSettings {
 
     public void setContextConnectTimeout(String contextConnectTimeout) {
         this.contextConnectTimeout = contextConnectTimeout;
+    }
+
+    public String getFeatureTestResultThreshold() {
+        return featureTestResultThreshold;
+    }
+
+    public void setFeatureTestResultThreshold(String featureTestResultThreshold) {
+        this.featureTestResultThreshold = featureTestResultThreshold;
     }
 }

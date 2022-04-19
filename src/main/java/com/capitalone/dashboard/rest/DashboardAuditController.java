@@ -1,5 +1,6 @@
 package com.capitalone.dashboard.rest;
 
+import com.capitalone.dashboard.ApiSettings;
 import com.capitalone.dashboard.model.AuditException;
 import com.capitalone.dashboard.model.AutoDiscoverAuditType;
 import com.capitalone.dashboard.model.CollectorItem;
@@ -11,6 +12,7 @@ import com.capitalone.dashboard.util.CommonConstants;
 import com.capitalone.dashboard.util.ConversionUtils;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +25,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -37,6 +41,9 @@ public class DashboardAuditController {
     private final DashboardAuditService dashboardAuditService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardAuditController.class);
+
+    @Autowired
+    protected ApiSettings settings;
 
     @Autowired
     public DashboardAuditController(HttpServletRequest httpServletRequest, DashboardAuditService dashboardAuditService) {
@@ -58,9 +65,16 @@ public class DashboardAuditController {
     public ResponseEntity<DashboardReviewResponse> dashboardReview(@Valid DashboardAuditRequest request) throws AuditException {
         request.setClientReference(httpServletRequest.getHeader(CommonConstants.HEADER_CLIENT_CORRELATION_ID));
         String requester = httpServletRequest.getHeader(CommonConstants.HEADER_API_USER);
+        Map<String, String> data = new HashMap<>();
+        data.put("identifierVersion", request.getIdentifierVersion());
+        if(StringUtils.isNotEmpty(request.getFeatureTestThreshold())){
+            data.put("featureTestThreshold", request.getFeatureTestThreshold());
+        }else{
+            data.put("featureTestThreshold", settings.getFeatureTestResultThreshold());
+        }
         DashboardReviewResponse dashboardReviewResponse = dashboardAuditService.getDashboardReviewResponse(request.getTitle(), DashboardType.Team,
                 request.getBusinessService(), request.getBusinessApplication(),
-                request.getBeginDate(), request.getEndDate(), request.getAuditType(), Objects.nonNull(request.getAutoDiscoverAuditType())? request.getAutoDiscoverAuditType() : AutoDiscoverAuditType.ALL, request.getAltIdentifier(), request.getIdentifierName());
+                request.getBeginDate(), request.getEndDate(), request.getAuditType(), Objects.nonNull(request.getAutoDiscoverAuditType())? request.getAutoDiscoverAuditType() : AutoDiscoverAuditType.ALL, request.getAltIdentifier(), request.getIdentifierName(), data);
         String request_audit_types =  CollectionUtils.isEmpty(request.getAuditType()) ? "[ALL]" : request.getAuditType().toString();
         String response_message = "auditStatuses:"+dashboardReviewResponse.getAuditStatuses().toString();
         LOGGER.info("correlation_id="+request.getClientReference() +", application=hygieia, service=api-audit, uri=" + httpServletRequest.getRequestURI() +

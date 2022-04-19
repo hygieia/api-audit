@@ -32,10 +32,7 @@ import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -81,7 +78,7 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
      */
     @SuppressWarnings("PMD.NPathComplexity")
     @Override
-    public DashboardReviewResponse getDashboardReviewResponse(String dashboardTitle, DashboardType dashboardType, String businessService, String businessApp, long beginDate, long endDate ,Set<AuditType> auditTypes, AutoDiscoverAuditType autoDiscoverAuditType, String altIdentifier, String identifierName) throws AuditException {
+    public DashboardReviewResponse getDashboardReviewResponse(String dashboardTitle, DashboardType dashboardType, String businessService, String businessApp, long beginDate, long endDate ,Set<AuditType> auditTypes, AutoDiscoverAuditType autoDiscoverAuditType, String altIdentifier, String identifierName, Map<?,?> data) throws AuditException {
 
         validateParameters(dashboardTitle,dashboardType, businessService, businessApp, beginDate, endDate);
 
@@ -106,8 +103,12 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
         auditTypes.forEach(auditType -> {
             Evaluator evaluator = auditModel.evaluatorMap().get(auditType);
             try {
-
-                Collection<AuditReviewResponse> auditResponse = evaluator.evaluate(dashboard, beginDate, endDate, null, altIdentifier, identifierName);
+                Map<String, String> evaluatorData = new HashMap<>();
+                if(auditType == AuditType.FEATURE_TEST){
+                    evaluatorData.put("identifierVersion", (String)data.get("identifierVersion"));
+                    evaluatorData.put("featureTestThreshold",(String)data.get("featureTestThreshold"));
+                }
+                Collection<AuditReviewResponse> auditResponse = evaluator.evaluate(dashboard, beginDate, endDate, evaluatorData, altIdentifier, identifierName);
                 if(auditType == AuditType.AUTO_DISCOVER){
                     setAutoDiscoverAuditResponse(autoDiscoverAuditType, dashboardReviewResponse, auditType, auditResponse);
                 }else{

@@ -3,6 +3,7 @@ package com.capitalone.dashboard.response;
 import com.capitalone.dashboard.model.TestCapability;
 import com.capitalone.dashboard.model.Traceability;
 import com.capitalone.dashboard.status.TestResultAuditStatus;
+import org.bson.types.ObjectId;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -16,6 +17,7 @@ public class TestResultsAuditResponse extends AuditReviewResponse<TestResultAudi
     private Map featureTestResult = new HashMap();
     public Traceability traceability;
     public Object buildArtifact;
+    public ObjectId collectorItemId;
 
     public Collection<TestCapability> getTestCapabilities() { return testCapabilities; }
 
@@ -56,4 +58,13 @@ public class TestResultsAuditResponse extends AuditReviewResponse<TestResultAudi
     public void setBuildArtifact(Object buildArtifact) {
         this.buildArtifact = buildArtifact;
     }
+
+    public ObjectId getCollectorItemId() {
+        return collectorItemId;
+    }
+
+    public void  setCollectorItemId(ObjectId collectorItemId){
+        this.collectorItemId = collectorItemId;
+    }
+
 }
