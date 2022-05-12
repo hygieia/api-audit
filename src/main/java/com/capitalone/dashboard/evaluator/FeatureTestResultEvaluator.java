@@ -16,7 +16,6 @@ import com.capitalone.dashboard.response.TestResultsAuditResponse;
 import com.capitalone.dashboard.status.TestResultAuditStatus;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +23,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -226,6 +226,7 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
      */
     protected CollectorItem getCollectorItemForIdentifierVersion(Dashboard dashboard, Map<String, Object> collItemOptions) {
         List<CollectorItem> testItems = getCollectorItems(dashboard, CollectorType.Test, FUNCTIONAL);
+        testItems.sort(Comparator.comparing(CollectorItem::getUpsertTime).reversed());
         for(CollectorItem testItem : testItems){
             if(isEqualsIdentifierName(testItem, (String) collItemOptions.get(ARTIFACT_NAME)) && isEqualsIdentifierVersion(testItem, (String) collItemOptions.get(ARTIFACT_VERSION))){
                CollectorItem testCollItem = testItem;
