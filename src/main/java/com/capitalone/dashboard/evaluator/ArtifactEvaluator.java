@@ -95,7 +95,7 @@ public class ArtifactEvaluator extends Evaluator<ArtifactAuditResponse> {
         if (CollectionUtils.isEmpty(binaryArtifacts)) {
             return getErrorResponse(collectorItem, artifactAuditResponse, ArtifactAuditStatus.NO_ACTIVITY);
         }
-        artifactAuditResponse.setBinaryArtifacts(binaryArtifacts);
+        artifactAuditResponse.setBinaryArtifacts(Collections.singletonList(binaryArtifacts.get(0)));
         binaryArtifacts.sort(Comparator.comparing(BinaryArtifact::getCreatedTimeStamp));
         artifactAuditResponse.setLastUpdated(getLastUpdated(binaryArtifacts));
         boolean isBuild = binaryArtifacts.stream().anyMatch(ba-> CollectionUtils.isNotEmpty(ba.getBuildInfos()));
