@@ -95,8 +95,8 @@ public class ArtifactEvaluator extends Evaluator<ArtifactAuditResponse> {
         if (CollectionUtils.isEmpty(binaryArtifacts)) {
             return getErrorResponse(collectorItem, artifactAuditResponse, ArtifactAuditStatus.NO_ACTIVITY);
         }
-        artifactAuditResponse.setBinaryArtifacts(Collections.singletonList(binaryArtifacts.get(0)));
         binaryArtifacts.sort(Comparator.comparing(BinaryArtifact::getCreatedTimeStamp));
+        artifactAuditResponse.setBinaryArtifacts(Collections.singletonList(binaryArtifacts.get(binaryArtifacts.size()-1)));
         artifactAuditResponse.setLastUpdated(getLastUpdated(binaryArtifacts));
         boolean isBuild = binaryArtifacts.stream().anyMatch(ba-> CollectionUtils.isNotEmpty(ba.getBuildInfos()));
         boolean isDocker = binaryArtifacts.stream().anyMatch(ba-> Optional.ofNullable(ba.getVirtualRepos()).orElse(Collections.emptyList()).stream().anyMatch(repo -> repo.contains(DOCKER)));
