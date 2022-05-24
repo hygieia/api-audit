@@ -10,6 +10,7 @@ import com.capitalone.dashboard.repository.BinaryArtifactRepository;
 import com.capitalone.dashboard.request.ArtifactAuditRequest;
 import com.capitalone.dashboard.response.ArtifactAuditResponse;
 import com.capitalone.dashboard.status.ArtifactAuditStatus;
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -95,8 +96,8 @@ public class ArtifactEvaluator extends Evaluator<ArtifactAuditResponse> {
         if (CollectionUtils.isEmpty(binaryArtifacts)) {
             return getErrorResponse(collectorItem, artifactAuditResponse, ArtifactAuditStatus.NO_ACTIVITY);
         }
-        artifactAuditResponse.setBinaryArtifacts(binaryArtifacts);
         binaryArtifacts.sort(Comparator.comparing(BinaryArtifact::getCreatedTimeStamp));
+        artifactAuditResponse.setBinaryArtifacts(Collections.singletonList(binaryArtifacts.stream().max(Comparator.comparing(BinaryArtifact::getCreatedTimeStamp)).get()));
         artifactAuditResponse.setLastUpdated(getLastUpdated(binaryArtifacts));
         boolean isBuild = binaryArtifacts.stream().anyMatch(ba-> CollectionUtils.isNotEmpty(ba.getBuildInfos()));
         boolean isDocker = binaryArtifacts.stream().anyMatch(ba-> Optional.ofNullable(ba.getVirtualRepos()).orElse(Collections.emptyList()).stream().anyMatch(repo -> repo.contains(DOCKER)));
