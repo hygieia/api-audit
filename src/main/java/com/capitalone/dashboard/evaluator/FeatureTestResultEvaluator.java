@@ -226,6 +226,7 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
      */
     protected CollectorItem getCollectorItemForIdentifierVersion(Dashboard dashboard, Map<String, Object> collItemOptions) {
         List<CollectorItem> testItems = getCollectorItems(dashboard, CollectorType.Test, FUNCTIONAL);
+        // Sort so that the most recent results are audited
         testItems.sort(Comparator.comparing(CollectorItem::getUpsertTime).reversed());
         for(CollectorItem testItem : testItems){
             if(isEqualsIdentifierName(testItem, (String) collItemOptions.get(ARTIFACT_NAME)) && isEqualsIdentifierVersion(testItem, (String) collItemOptions.get(ARTIFACT_VERSION))){
