@@ -75,7 +75,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         List<CodeReviewAuditResponseV2> responseV2s = new ArrayList<>();
         List<CollectorItem> repoItems = getCollectorItemsByAltIdentifier(dashboard, CollectorType.SCM,altIdentifier);
         if (CollectionUtils.isEmpty(repoItems)) {
-            LOGGER.error("NO_COLLECTOR_ITEM_CONFIGURED for dashboard=" + dashboard.getTitle());
+            LOGGER.info("NO_COLLECTOR_ITEM_CONFIGURED for dashboard=" + dashboard.getTitle());
             throw new AuditException("No code repository configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
         }
 
