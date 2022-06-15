@@ -26,6 +26,8 @@ import com.capitalone.dashboard.util.GitHubParsedUrl;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -48,6 +50,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         private final GitRequestRepository gitRequestRepository;
         private final CollectorRepository collectorRepository;
         private final ServiceAccountRepository serviceAccountRepository;
+        private static final Logger LOGGER = LoggerFactory.getLogger(CodeReviewEvaluator.class);
     private final LdapService ldapService;
 
         protected ApiSettings settings;
@@ -72,6 +75,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         List<CodeReviewAuditResponseV2> responseV2s = new ArrayList<>();
         List<CollectorItem> repoItems = getCollectorItemsByAltIdentifier(dashboard, CollectorType.SCM,altIdentifier);
         if (CollectionUtils.isEmpty(repoItems)) {
+            LOGGER.error("NO_COLLECTOR_ITEM_CONFIGURED for dashboard=" + dashboard.getTitle());
             throw new AuditException("No code repository configured", AuditException.NO_COLLECTOR_ITEM_CONFIGURED);
         }
 
