@@ -4,11 +4,7 @@
     <artifactId>api-audit</artifactId>
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
-<<<<<<< HEAD
-    <version>3.7.18-SNAPSHOT</version>
-=======
-    <version>3.7.19-SNAPSHOT</version>
->>>>>>> 21aa9ab918a56c85a1ceebdb1bb80b482035ae07
+    <version>3.7.20-SNAPSHOT</version>
     <description>Hygieia Audit Rest API Layer</description>
     <url>https://github.com/Hygieia/${repository.name}</url>
 
