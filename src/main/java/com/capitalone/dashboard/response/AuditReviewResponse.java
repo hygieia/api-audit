@@ -20,6 +20,8 @@ public class AuditReviewResponse<T> {
         auditStatuses.add(status);
     }
 
+    public void setAuditStatus(Set<T> statuses) {auditStatuses = statuses;}
+
     public Set<T> getAuditStatuses() {
         return auditStatuses;
     }

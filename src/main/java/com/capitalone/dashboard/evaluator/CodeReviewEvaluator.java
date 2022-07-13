@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -208,10 +209,52 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         reviewAuditResponseV2.setLastPRMergeTime(CollectionUtils.isEmpty(pullRequests)? 0 : pullRequests.get(0).getMergedAt());
         reviewAuditResponseV2.setLastUpdated(repoItem.getLastUpdated());
 
+        // make list of PR'd and nonPR'd to fix false Automerge not-peer-reviewed warnings
         List<String> allPrCommitShas = new ArrayList<>();
+        List<GitRequest> notPeerReviewed = new ArrayList<>();
+        List<GitRequest> peerReviewed = new ArrayList<>();
+
         pullRequests.stream().filter(pr -> "merged".equalsIgnoreCase(pr.getState())).forEach(pr -> {
-            auditPullRequest(repoItem, pr, inputCommits, allPrCommitShas, reviewAuditResponseV2);
+            Boolean isPeerReviewed = auditPullRequest(repoItem, pr, inputCommits, allPrCommitShas, reviewAuditResponseV2);
+            boolean isPRd = isPeerReviewed ? peerReviewed.add(pr) : notPeerReviewed.add(pr);
         });
+
+        // iterate though the gitRequests that failed the PR audit and check if the PR was auto merged
+        for(GitRequest noPR: notPeerReviewed){
+
+            // if for some reason the PR has no commit, ignore and move on
+            if (noPR.getCommits().isEmpty()){continue;}
+
+            // get the latest commit & filter out merge commit by checking non-matching scmNums
+            noPR.getCommits().sort(Comparator.comparing(Commit::getScmCommitTimestamp).reversed());
+            Commit lastCommit = noPR.getCommits().get(noPR.getCommits().size()-1);
+
+            // iterate through the peerReviewed and their commits to see if the failed PR's commit exists in there
+            for (GitRequest yesPR: peerReviewed) {
+                for (Commit commit: yesPR.getCommits()) {
+                    if (lastCommit.getScmRevisionNumber().equalsIgnoreCase(commit.getScmRevisionNumber())){
+
+                        // get the PR that has the Peer review fail
+                        CodeReviewAuditResponseV2.PullRequestAudit prAudit = reviewAuditResponseV2.getPullRequests()
+                                .stream().filter(pr -> pr.getPullRequest().equals(noPR)).findFirst().orElse(null);
+
+                        // Remove the old PR in the audit response
+                        reviewAuditResponseV2.getPullRequests().remove(prAudit);
+
+                        // get audit status, remove NOT_PEER_REVIEWED, set audit status for PR
+                        Set<CodeReviewAuditStatus> auditStatuses = prAudit.getAuditStatuses();
+                        auditStatuses.remove(CodeReviewAuditStatus.PULLREQ_NOT_PEER_REVIEWED);
+                        auditStatuses.add(CodeReviewAuditStatus.PULLREQ_REVIEWED_BY_PEER);
+                        prAudit.setAuditStatus(auditStatuses);
+
+                        // add PR audit back to the auditResponse
+                        reviewAuditResponseV2.addPullRequest(prAudit);
+
+                        break;      // exit loop because the commit was verified in another PR
+                    }
+                }
+            }
+        }
 
         //check any commits not directly tied to pr
         commits.stream().filter(commit -> !allPrCommitShas.contains(commit.getScmRevisionNumber()) && StringUtils.isEmpty(commit.getPullNumber()) && commit.getType() == CommitType.New).forEach(reviewAuditResponseV2::addDirectCommit);
@@ -300,7 +343,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         return !repoItem.isPushed() && StringUtils.isEmpty(commit.getPullNumber());
     }
 
-    protected void auditPullRequest(CollectorItem repoItem, GitRequest pr, List<Commit> commits,
+    protected Boolean auditPullRequest(CollectorItem repoItem, GitRequest pr, List<Commit> commits,
                                     List<String> allPrCommitShas, CodeReviewAuditResponseV2 reviewAuditResponseV2) {
         Commit mergeCommit = Optional.ofNullable(commits)
                                 .orElseGet(Collections::emptyList).stream()
@@ -341,6 +384,8 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         auditCommitAfterPrMerge(reviewAuditResponseV2, pullRequestAudit, pr, commitsRelatedToPr);
         auditCommitsAfterReviews(reviewAuditResponseV2, pullRequestAudit, pr);
         reviewAuditResponseV2.addPullRequest(pullRequestAudit);
+
+        return peerReviewed ?  Boolean.TRUE:  Boolean.FALSE;    // to track which PR's need further examining
     }
 
     /**
