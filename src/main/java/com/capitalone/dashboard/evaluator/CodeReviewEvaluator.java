@@ -201,13 +201,12 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         reviewAuditResponseV2.setLastPRMergeTime(CollectionUtils.isEmpty(pullRequests)? 0 : pullRequests.get(0).getMergedAt());
         reviewAuditResponseV2.setLastUpdated(repoItem.getLastUpdated());
 
-        // create 2 list non reviewed and reviewed if one has non reviewed go through reviewed commits and find common revision num
+        // make list of PR'd and nonPR'd to fix false Automerge not-peer-reviewed warnings
         List<String> allPrCommitShas = new ArrayList<>();
         List<GitRequest> notPeerReviewed = new ArrayList<>();
         List<GitRequest> peerReviewed = new ArrayList<>();
 
-        pullRequests.stream().filter(pr -> "merged".equalsIgnoreCase(pr.getState()))
-                .filter(pr -> !Boolean.TRUE.equals(pr.getAutoMerge())).forEach(pr -> {
+        pullRequests.stream().filter(pr -> "merged".equalsIgnoreCase(pr.getState())).forEach(pr -> {
             Boolean isPeerReviewed = auditPullRequest(repoItem, pr, inputCommits, allPrCommitShas, reviewAuditResponseV2);
             boolean isPRd = isPeerReviewed ? peerReviewed.add(pr) : notPeerReviewed.add(pr);
         });
@@ -215,7 +214,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
         // iterate though the gitRequests that failed the PR audit and check if the PR was auto merged
         for(GitRequest noPR: notPeerReviewed){
 
-            // if this PR has no commits then we can delete it? or just continue with the auto merge checking
+            // if for some reason the PR has no commit, ignore and move on
             if (noPR.getCommits().isEmpty()){continue;}
 
             // get the latest commit & filter out merge commit by checking non-matching scmNums
@@ -242,11 +241,6 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
 
                         // add PR audit back to the auditResponse
                         reviewAuditResponseV2.addPullRequest(prAudit);
-
-                        // change to auto merge, add auto merge property to gitRequest
-                         noPR.setAutoMerge(true);
-                         gitRequestRepository.save(noPR);
-                         LOGGER.info(String.format("Upadating GitReqeust:%s with isAutoMerge=true", noPR.getId().toString()));
 
                         break;      // exit loop because the commit was verified in another PR
                     }

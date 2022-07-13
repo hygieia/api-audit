@@ -27,6 +27,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -504,6 +506,26 @@ public class CodeReviewEvaluatorTest {
         Assert.assertTrue(filteredCommits.get(0).getScmRevisionNumber().equalsIgnoreCase("scmrev1111"));
         Assert.assertTrue(filteredCommits.get(1).getScmRevisionNumber().equalsIgnoreCase("scmrev2222")
                 && filteredCommits.get(1).getPullNumber().equalsIgnoreCase("22"));
+    }
+
+    @Test
+    public void autoMergePRAuditTest(){
+        CollectorItem collectorItem = new CollectorItem();
+        Map<String,Object> options = new HashMap<String, Object>(){{
+            put("type", "SOURCE"); put("branch", "master"); put("url", "www.test.com");
+        }};
+        collectorItem.setOptions(options);
+        collectorItem.setLastUpdated(412378943210978L);
+        List<GitRequest> prList = makePullRequests(true);
+        prList.add(makePullRequests(false).get(0));
+        prList.forEach(pr -> pr.setState("merged"));
+        prList.get(1).setReviews(new ArrayList<Review>()); // to avoid null pointer exception
+
+        when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(prList);
+        when(serviceAccountRepository.findAll()).thenReturn(Stream.of(makeServiceAccount()).collect(Collectors.toList()));
+        CodeReviewAuditResponseV2 res = codeReviewEvaluator.evaluate(collectorItem, 0L, System.currentTimeMillis(), null);
+        res.getPullRequests().forEach(pr -> Assert.assertTrue(pr.getAuditStatuses().contains(CodeReviewAuditStatus.PULLREQ_REVIEWED_BY_PEER)));
+
     }
 
     private List<GitRequest> makePullRequests(boolean withApprovedReview) {
