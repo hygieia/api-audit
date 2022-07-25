@@ -244,7 +244,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
                         // Remove the old PR in the audit response
                         reviewAuditResponseV2.getPullRequests().remove(prAudit);
 
-                        // get audit status, remove NOT_PEER_REVIEWED, set audit status for PRq
+                        // get audit status, remove NOT_PEER_REVIEWED, set audit status for PR
                         Set<CodeReviewAuditStatus> auditStatuses = prAudit.getAuditStatuses();
                         auditStatuses.remove(CodeReviewAuditStatus.PULLREQ_NOT_PEER_REVIEWED);
                         auditStatuses.add(CodeReviewAuditStatus.PULLREQ_REVIEWED_BY_PEER);
