@@ -177,8 +177,11 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
             double totalTestCaseCount = testCapabilities.stream().mapToDouble(testCapability ->
                     testCapability.getTestSuites().parallelStream().mapToDouble(TestSuite::getTotalTestCaseCount).sum()
             ).sum();
+            double testCaseSkipCount = testCapabilities.stream().mapToDouble(testCapability ->
+                    testCapability.getTestSuites().parallelStream().mapToDouble(TestSuite::getSkippedTestCaseCount).sum()
+            ).sum();
 
-            return (testCaseSuccessCount/totalTestCaseCount) * 100;
+            return ((testCaseSuccessCount + testCaseSkipCount)/totalTestCaseCount) * 100;
         }catch(Exception e){
             LOGGER.error("Could not get 'testCasePassPercent', setting to 0.0%");
             return 0.0;
