@@ -227,11 +227,16 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
             if (noPR.getCommits().isEmpty()){continue;}
 
             // get the latest commit & filter out merge commit by checking non-matching scmNums
-            noPR.getCommits().sort(Comparator.comparing(Commit::getScmCommitTimestamp).reversed());
+            noPR.getCommits().sort(Comparator.comparing(Commit::getScmCommitTimestamp));
             Commit lastCommit = noPR.getCommits().get(noPR.getCommits().size()-1);
 
+            // refine list of PRs to search through (created after PR and merged before the merge of the noPR)
+            List<GitRequest> refinedPRList = peerReviewed.stream().filter(
+                    pr -> pr.getCreatedAt() >= noPR.getCreatedAt()).filter(
+                    pr -> pr.getMergedAt() <= noPR.getMergedAt()).collect(Collectors.toList());
+
             // iterate through the peerReviewed and their commits to see if the failed PR's commit exists in there
-            for (GitRequest yesPR: peerReviewed.stream().filter(pr -> pr.getCreatedAt() >= noPR.getCreatedAt()).collect(Collectors.toList())) {
+            for (GitRequest yesPR: refinedPRList) {
                 for (Commit commit: yesPR.getCommits()) {
                     if (lastCommit.getScmRevisionNumber().equalsIgnoreCase(commit.getScmRevisionNumber())){
 
