@@ -227,7 +227,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
             if (noPR.getCommits().isEmpty()){continue;}
 
             // get the latest commit & filter out merge commit by checking non-matching scmNums
-            noPR.getCommits().sort(Comparator.comparing(Commit::getScmCommitTimestamp).reversed());
+            noPR.getCommits().sort(Comparator.comparing(Commit::getScmCommitTimestamp));
             Commit lastCommit = noPR.getCommits().get(noPR.getCommits().size()-1);
 
             // iterate through the peerReviewed and their commits to see if the failed PR's commit exists in there
