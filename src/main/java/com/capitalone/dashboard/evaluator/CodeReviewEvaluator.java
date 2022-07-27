@@ -221,18 +221,21 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
 
         // iterate though the gitRequests that failed the PR audit and check if the PR was auto merged
         for(GitRequest noPR: notPeerReviewed){
+            boolean foundCommit = false;
 
             // if for some reason the PR has no commit, ignore and move on
             if (noPR.getCommits().isEmpty()){continue;}
 
             // get the latest commit & filter out merge commit by checking non-matching scmNums
-            noPR.getCommits().sort(Comparator.comparing(Commit::getScmCommitTimestamp).reversed());
+            noPR.getCommits().sort(Comparator.comparing(Commit::getScmCommitTimestamp));
             Commit lastCommit = noPR.getCommits().get(noPR.getCommits().size()-1);
 
             // iterate through the peerReviewed and their commits to see if the failed PR's commit exists in there
-            for (GitRequest yesPR: peerReviewed) {
+            for (GitRequest yesPR: peerReviewed.stream().filter(pr -> pr.getCreatedAt() >= noPR.getCreatedAt()).collect(Collectors.toList())) {
                 for (Commit commit: yesPR.getCommits()) {
                     if (lastCommit.getScmRevisionNumber().equalsIgnoreCase(commit.getScmRevisionNumber())){
+
+                        foundCommit = true;
 
                         // get the PR that has the Peer review fail
                         CodeReviewAuditResponseV2.PullRequestAudit prAudit = reviewAuditResponseV2.getPullRequests()
@@ -253,6 +256,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
                         break;      // exit loop because the commit was verified in another PR
                     }
                 }
+                if(foundCommit){break;}     // stop iterating through PRs if commit was verified
             }
         }
 
