@@ -192,6 +192,7 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
             }
 
             return (testCaseSuccessCount/(totalTestCaseCount - testCaseSkipCount - testCaseUnkownCount)) * 100;
+
         }catch(Exception e){
             LOGGER.error("Could not get 'testCasePassPercent', setting to 0.0%");
             return 0.0;
