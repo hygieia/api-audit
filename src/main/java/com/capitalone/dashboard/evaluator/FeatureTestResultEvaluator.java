@@ -47,7 +47,9 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
     private static final String TEST_CASE_SUCCESS_COUNT = "successTestCaseCount";
     private static final String TEST_CASE_FAILURE_COUNT = "failureTestCaseCount";
     private static final String TEST_CASE_SKIPPED_COUNT = "skippedTestCaseCount";
+    private static final String TEST_CASE_UNKNOWN_COUNT = "unknownStatusTestCaseCount";
     private static final String TEST_CASE_TOTAL_COUNT = "totalTestCaseCount";
+
     private static final String PRIORITY_HIGH = "High";
 
 
@@ -153,6 +155,7 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
         }
 
         double testCasePassPercent = this.getTestCasePassPercent(testCapabilities);
+
         if (testCasePassPercent < threshold) {
             testResultsAuditResponse.addAuditStatus(TestResultAuditStatus.TEST_RESULT_AUDIT_FAIL);
         } else {
@@ -180,12 +183,15 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
             double testCaseSkipCount = testCapabilities.stream().mapToDouble(testCapability ->
                     testCapability.getTestSuites().parallelStream().mapToDouble(TestSuite::getSkippedTestCaseCount).sum()
             ).sum();
+            double testCaseUnkownCount = testCapabilities.stream().mapToDouble(testCapability ->
+                    testCapability.getTestSuites().parallelStream().mapToDouble(TestSuite::getUnknownStatusCount).sum()
+            ).sum();
 
-            if(totalTestCaseCount == 0 || testCaseSkipCount == totalTestCaseCount){
+            if(totalTestCaseCount == 0 || (testCaseSkipCount + testCaseUnkownCount) == totalTestCaseCount){
                 return 100.0;
             }
 
-            return (testCaseSuccessCount/(totalTestCaseCount - testCaseSkipCount)) * 100;
+            return (testCaseSuccessCount/(totalTestCaseCount - testCaseSkipCount - testCaseUnkownCount)) * 100;
         }catch(Exception e){
             LOGGER.error("Could not get 'testCasePassPercent', setting to 0.0%");
             return 0.0;
@@ -214,11 +220,15 @@ public class FeatureTestResultEvaluator extends Evaluator<TestResultsAuditRespon
                     testCapability.getTestSuites().parallelStream().mapToInt(TestSuite::getFailedTestCaseCount).sum()).sum();
             int testCaseSkippedCount = testCapabilities.stream().mapToInt(testCapability ->
                     testCapability.getTestSuites().parallelStream().mapToInt(TestSuite::getSkippedTestCaseCount).sum()).sum();
+            int testCaseUnknownCount = testCapabilities.stream().mapToInt(testCapability ->
+                    testCapability.getTestSuites().parallelStream().mapToInt(TestSuite::getUnknownStatusCount).sum()).sum();
 
             featureTestResultMap.put(TEST_CASE_TOTAL_COUNT, totalTestCaseCount);
             featureTestResultMap.put(TEST_CASE_SUCCESS_COUNT, testCaseSuccessCount);
             featureTestResultMap.put(TEST_CASE_FAILURE_COUNT, testCaseFailureCount);
             featureTestResultMap.put(TEST_CASE_SKIPPED_COUNT, testCaseSkippedCount);
+            featureTestResultMap.put(TEST_CASE_UNKNOWN_COUNT, testCaseUnknownCount);
+
         }catch(Exception e){
             LOGGER.error("Exception occurred while processing testResult " + testResult.getDescription(), e);
         }
