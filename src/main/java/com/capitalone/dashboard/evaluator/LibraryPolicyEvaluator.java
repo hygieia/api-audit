@@ -85,6 +85,7 @@ public class LibraryPolicyEvaluator extends Evaluator<LibraryPolicyAuditResponse
             //threats by type
             Set<LibraryPolicyResult.Threat> securityThreats = !MapUtils.isEmpty(returnPolicyResult.getThreats()) ? returnPolicyResult.getThreats().get(LibraryPolicyType.Security) : SetUtils.EMPTY_SET;
             Set<LibraryPolicyResult.Threat> licenseThreats = !MapUtils.isEmpty(returnPolicyResult.getThreats()) ? returnPolicyResult.getThreats().get(LibraryPolicyType.License) : SetUtils.EMPTY_SET;
+            Set<LibraryPolicyResult.Threat> securityCVSS3Threats = !MapUtils.isEmpty(returnPolicyResult.getThreats()) ? returnPolicyResult.getThreats().get(LibraryPolicyType.Security_cvss3) : SetUtils.EMPTY_SET;
 
 
             boolean isOk = true;
