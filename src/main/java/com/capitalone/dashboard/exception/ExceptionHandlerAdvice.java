@@ -40,6 +40,7 @@ public class ExceptionHandlerAdvice {
                 + ", response_status_message=" + responseStatusMessage
                 + ", response_status=failed"
                 + ", client_ip=" + request.getRemoteAddr()
+                + ", x-forwarded-for=" + request.getHeader("x-forwarded-for")
                 + (StringUtils.equalsIgnoreCase(request.getMethod(), "GET") ? ", " + parameters : StringUtils.EMPTY));
         return ResponseEntity
                 .status(httpStatus)
