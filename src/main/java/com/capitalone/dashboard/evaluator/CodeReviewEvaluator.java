@@ -222,7 +222,7 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
 
         Long startTime = System.currentTimeMillis();
         // iterate though the gitRequests that failed the PR audit and check if the PR was auto merged
-        LOGGER.info(String.format("AutoMerge Check :: Reviewing %d Pull Requests with no peer review", notPeerReviewed.size()));
+        LOGGER.info(String.format("AutoMerge Check :: Reviewing %d Pull Request(s) with no peer review", notPeerReviewed.size()));
         for(GitRequest noPR: notPeerReviewed){
             boolean foundCommit = false;
 
