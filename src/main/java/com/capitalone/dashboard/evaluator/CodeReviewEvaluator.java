@@ -221,8 +221,11 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
 
 
         Long startTime = System.currentTimeMillis();
+        if(notPeerReviewed.size() > 0) {
+            LOGGER.info(String.format("AutoMerge Check :: Reviewing %d Pull Request(s) with no peer review", notPeerReviewed.size()));
+        }
+
         // iterate though the gitRequests that failed the PR audit and check if the PR was auto merged
-        LOGGER.info(String.format("AutoMerge Check :: Reviewing %d Pull Request(s) with no peer review", notPeerReviewed.size()));
         for(GitRequest noPR: notPeerReviewed){
             boolean foundCommit = false;
 
@@ -264,8 +267,10 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
                 if(foundCommit){break;}     // stop iterating through PRs if commit was verified
             }
         }
-        LOGGER.info(String.format("AutoMerge Check :: Completed in %d ms", System.currentTimeMillis()-startTime));
 
+        if(notPeerReviewed.size() > 0) {
+            LOGGER.info(String.format("AutoMerge Check :: Completed in %d ms", System.currentTimeMillis() - startTime));
+        }
         //check any commits not directly tied to pr
         commits.stream().filter(commit -> !allPrCommitShas.contains(commit.getScmRevisionNumber()) && StringUtils.isEmpty(commit.getPullNumber()) && commit.getType() == CommitType.New).forEach(reviewAuditResponseV2::addDirectCommit);
 
