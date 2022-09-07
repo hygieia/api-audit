@@ -105,6 +105,7 @@ public class LoggingFilter implements Filter {
                     + ", response_status=" + (success ? "success" : "failed")
                     + ", response_code=" + httpServletResponse.getStatus()
                     + ", client_ip=" + httpServletRequest.getRemoteAddr()
+                    + ", x-forwarded-for=" + httpServletRequest.getHeader("x-forwarded-for")
                     + (StringUtils.equalsIgnoreCase(httpServletRequest.getMethod(), "GET") ? ", " + parameters : StringUtils.EMPTY));
             return;
         }
