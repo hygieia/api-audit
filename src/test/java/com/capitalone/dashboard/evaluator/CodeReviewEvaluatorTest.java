@@ -519,6 +519,7 @@ public class CodeReviewEvaluatorTest {
         List<GitRequest> prList = makePullRequests(true);
         prList.add(makePullRequests(false).get(0));
         prList.forEach(pr -> pr.setState("merged"));
+        prList.forEach(pr -> pr.setId(new ObjectId()));
         prList.get(1).setReviews(new ArrayList<Review>()); // to avoid null pointer exception
 
         when(gitRequestRepository.findByCollectorItemIdAndMergedAtIsBetween(any(ObjectId.class), any(Long.class), any(Long.class))).thenReturn(prList);
