@@ -293,27 +293,31 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
         String identifierVersion = dashboardAuditRequest.getIdentifierVersion();
         String identifierUrl = dashboardAuditRequest.getIdentifierUrl();
         AuditType auditType = dashboardAuditRequest.getAuditType().iterator().next();
-        Cmdb busServItem = cmdbRepository.findByConfigurationItemAndItemType(businessService, "app");
-        Cmdb busAppItem = cmdbRepository.findByConfigurationItemAndItemType(businessApplication, "component");
-
 
         AuditReport auditReport = auditReportRepository.findTop1ByBusinessApplicationAndBusinessServiceAndAuditTypeAndIdentifierNameAndIdentifierVersionAndIdentifierUrlOrderByTimestampDesc(
                 businessApplication, businessService, auditType, identifierName, identifierVersion, identifierUrl);
         if (Objects.nonNull(auditReport) && Objects.nonNull(auditReport.getAuditResponse())) {
             return (JSONObject) auditReport.getAuditResponse();
-        }else if(busServItem == null){
-            JSONObject invalidBAResponse = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_INVALID_BA);
-            return invalidBAResponse;
-        }else if(busAppItem == null){
-            JSONObject invalidComponentResponse = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_INVALID_COMPONENT);
-            return invalidComponentResponse;
-        }else if(!componentInfoMatch(busServItem, businessApplication)){
-            JSONObject componentBAMismatchResponse = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_COMPONENT_BA_MISMATCH);
-            return componentBAMismatchResponse;
         }else{
-            JSONObject noDataResponse = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_AUDIT_NO_DATA);
-            return noDataResponse;
+            Cmdb busServItem = cmdbRepository.findByConfigurationItemAndItemType(businessService, "app");
+            Cmdb busAppItem = cmdbRepository.findByConfigurationItemAndItemType(businessApplication, "component");
+
+            if(busServItem == null){
+                JSONObject invalidBAResponse = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_INVALID_BA);
+                return invalidBAResponse;
+            }else if(busAppItem == null){
+                JSONObject invalidComponentResponse = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_INVALID_COMPONENT);
+                return invalidComponentResponse;
+            }else if(!componentInfoMatch(busServItem, businessApplication)){
+                JSONObject componentBAMismatchResponse = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_COMPONENT_BA_MISMATCH);
+                return componentBAMismatchResponse;
+            }else{
+                JSONObject noDataResponse = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_AUDIT_NO_DATA);
+                return noDataResponse;
+            }
         }
+
+
     }
 
     private JSONObject createLookupResponseWhenEmpty(DashboardAuditStatus dashboardAuditStatus){
