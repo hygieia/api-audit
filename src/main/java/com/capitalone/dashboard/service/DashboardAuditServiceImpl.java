@@ -27,6 +27,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -296,7 +297,7 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
 
         AuditReport auditReport = auditReportRepository.findTop1ByBusinessApplicationAndBusinessServiceAndAuditTypeAndIdentifierNameAndIdentifierVersionAndIdentifierUrlOrderByTimestampDesc(
                 businessApplication, businessService, auditType, identifierName, identifierVersion, identifierUrl);
-        if (Objects.nonNull(auditReport) && Objects.nonNull(auditReport.getAuditResponse())) {
+        if (Objects.nonNull(auditReport) && !ObjectUtils.isEmpty(auditReport.getAuditResponse())) {
             return (JSONObject) auditReport.getAuditResponse();
         }else{
             Cmdb busServItem = cmdbRepository.findByConfigurationItemAndItemType(businessService, "app");
