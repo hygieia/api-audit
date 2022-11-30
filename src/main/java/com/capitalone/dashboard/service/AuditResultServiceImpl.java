@@ -22,7 +22,7 @@ public class AuditResultServiceImpl implements AuditResultService{
 
     @Override
     public AuditResult getAuditResult(ObjectId id){
-        return auditResultRepository.findById(id);
+        return auditResultRepository.findById(id).get();
     }
 
     @Override

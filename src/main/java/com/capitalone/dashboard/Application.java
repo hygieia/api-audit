@@ -6,8 +6,9 @@ import com.capitalone.dashboard.config.WebMVCConfig;
 import com.ulisesbocchio.jasyptspringboot.annotation.EnableEncryptableProperties;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.web.support.SpringBootServletInitializer;
+import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
+
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.service.ApiInfo;
@@ -28,7 +29,8 @@ import static springfox.documentation.builders.PathSelectors.regex;
 public class Application extends SpringBootServletInitializer {
     @Override
     protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
-        return application.sources(Application.class, RestApiAppConfig.class, WebMVCConfig.class, MongoConfig.class);
+        return application.sources(Application.class, RestApiAppConfig.class, WebMVCConfig.class,
+        		MongoConfig.class);
     }
     
     public static void main(String[] args) {
@@ -56,7 +58,7 @@ public class Application extends SpringBootServletInitializer {
                 .title("Hygieia Apiaudit")
                 .description("Apiaudit Documentation for Hygieia")
                 .version("2.0")
-                .contact(new Contact("Tapabrata Pal", "https://github.com/capitalone/Hygieia", "hygieia@capitalone.com"))
+                .contact(new Contact("Hygieia", "https://github.com/capitalone/Hygieia", "hygieia2@capitalone.com"))
                 .build();
     }
 }

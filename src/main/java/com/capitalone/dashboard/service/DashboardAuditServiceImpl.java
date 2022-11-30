@@ -2,6 +2,7 @@ package com.capitalone.dashboard.service;
 
 import com.capitalone.dashboard.ApiSettings;
 import com.capitalone.dashboard.evaluator.Evaluator;
+import com.capitalone.dashboard.logging.LoggingFilter;
 import com.capitalone.dashboard.model.AuditException;
 import com.capitalone.dashboard.model.AuditType;
 import com.capitalone.dashboard.model.AutoDiscoverAuditType;
@@ -30,6 +31,8 @@ import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -49,8 +52,7 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
     private final CollectorItemRepository collectorItemRepository;
     private final AuditReportRepository auditReportRepository;
 
-
-//    private static final Log LOGGER = LogFactory.getLog(DashboardAuditServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DashboardAuditServiceImpl.class);
 
     @Autowired
     public DashboardAuditServiceImpl(DashboardRepository dashboardRepository, CmdbRepository cmdbRepository, DashboardAuditModel auditModel,
@@ -293,32 +295,35 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
         String identifierName = dashboardAuditRequest.getIdentifierName();
         String identifierVersion = dashboardAuditRequest.getIdentifierVersion();
         String identifierUrl = dashboardAuditRequest.getIdentifierUrl();
-        AuditType auditType = dashboardAuditRequest.getAuditType().iterator().next();
+        AuditType auditType = Objects.isNull(dashboardAuditRequest.getAuditType()) ? null : dashboardAuditRequest.getAuditType().iterator().next();
 
         AuditReport auditReport = auditReportRepository.findTop1ByBusinessApplicationAndBusinessServiceAndAuditTypeAndIdentifierNameAndIdentifierVersionAndIdentifierUrlOrderByTimestampDesc(
                 businessApplication, businessService, auditType, identifierName, identifierVersion, identifierUrl);
+        if(ObjectUtils.isEmpty(auditReport)) {
+        	auditReport = auditReportRepository.findTop1ByAuditTypeAndIdentifierNameAndIdentifierVersionAndIdentifierUrlOrderByTimestampDesc(auditType, identifierName, 
+            		identifierVersion, identifierUrl);
+        }
         if (Objects.nonNull(auditReport) && !ObjectUtils.isEmpty(auditReport.getAuditResponse())) {
             return (JSONObject) auditReport.getAuditResponse();
         }else{
-            Cmdb busServItem = cmdbRepository.findByConfigurationItemAndItemType(businessService, "app");
-            Cmdb busAppItem = cmdbRepository.findByConfigurationItemAndItemType(businessApplication, "component");
-
-            if(busServItem == null){
-                JSONObject invalidBAResponse = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_INVALID_BA, businessApplication, businessService);
-                return invalidBAResponse;
-            }else if(busAppItem == null){
-                JSONObject invalidComponentResponse = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_INVALID_COMPONENT, businessApplication, businessService);
-                return invalidComponentResponse;
-            }else if(!componentInfoMatch(busServItem, businessApplication)){
-                JSONObject componentBAMismatchResponse = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_COMPONENT_BA_MISMATCH, businessApplication, businessService);
-                return componentBAMismatchResponse;
-            }else{
-                JSONObject noDataResponse = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_AUDIT_NO_DATA, businessApplication, businessService);
-                return noDataResponse;
+            JSONObject response;
+            if (StringUtils.isEmpty(businessService) || StringUtils.isEmpty(businessApplication)) {
+                response = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_AUDIT_NO_DATA, businessApplication, businessService);
+            } else {
+                Cmdb busServItem = cmdbRepository.findByConfigurationItemAndItemType(businessService, "app");
+                Cmdb busAppItem = cmdbRepository.findByConfigurationItemAndItemType(businessApplication, "component");
+                if(Objects.isNull(busServItem)){
+                    response = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_INVALID_BA, businessApplication, businessService);
+                } else if(Objects.isNull(busAppItem)){
+                    response= createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_INVALID_COMPONENT, businessApplication, businessService);
+                } else if(!componentInfoMatch(busServItem, businessApplication)){
+                    response = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_COMPONENT_BA_MISMATCH, businessApplication, businessService);
+                }else{
+                    response = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_AUDIT_NO_DATA, businessApplication, businessService);
+                }
             }
+            return response;
         }
-
-
     }
 
     private JSONObject createLookupResponseWhenEmpty(DashboardAuditStatus dashboardAuditStatus, String businessApplication, String businessService){

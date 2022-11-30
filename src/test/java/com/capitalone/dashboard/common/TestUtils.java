@@ -51,7 +51,7 @@ public class TestUtils {
         String json = IOUtils.toString(Resources.getResource("./collectors/coll.json"));
         // List<Collector> collector = gson.fromJson(json, Collector.class);
         List<Collector> collector = gson.fromJson(json, new TypeToken<List<Collector>>(){}.getType());
-        collectorRepository.save(collector);
+        collectorRepository.saveAll(collector);
     }
 
     public static void loadComponent(ComponentRepository componentRepository) throws IOException {
@@ -65,28 +65,28 @@ public class TestUtils {
         Gson gson = GsonUtil.getGson();
         String json = IOUtils.toString(Resources.getResource("./collector_items/items.json"));
         List<CollectorItem> collectorItem = gson.fromJson(json, new TypeToken<List<CollectorItem>>(){}.getType());
-        collectorItemRepository.save(collectorItem);
+        collectorItemRepository.saveAll(collectorItem);
     }
 
     public static void loadCommits(CommitRepository commitRepository) throws IOException {
         Gson gson = GsonUtil.getGson();
         String json = IOUtils.toString(Resources.getResource("./commits/commits.json"));
         List<Commit> commits = gson.fromJson(json, new TypeToken<List<Commit>>(){}.getType());
-        commitRepository.save(commits);
+        commitRepository.saveAll(commits);
     }
 
     public static void loadPullRequests(GitRequestRepository gitRequestRepository) throws IOException {
         Gson gson = GsonUtil.getGson();
         String json = IOUtils.toString(Resources.getResource("./gitrequests/prs.json"));
         List<GitRequest> prs = gson.fromJson(json, new TypeToken<List<GitRequest>>(){}.getType());
-        gitRequestRepository.save(prs);
+        gitRequestRepository.saveAll(prs);
     }
 
     public static void loadSSCRequests(CodeQualityRepository codeQualityRepository) throws IOException {
         Gson gson = GsonUtil.getGson();
         String json = IOUtils.toString(Resources.getResource("./securityscan/securityscan.json"));
         List<CodeQuality> ssa = gson.fromJson(json, new TypeToken<List<CodeQuality>>(){}.getType());
-        codeQualityRepository.save(ssa);
+        codeQualityRepository.saveAll(ssa);
     }
 
     public static void loadLibraryPolicy(LibraryPolicyResultsRepository libraryPolicyResultsRepository, String fileName) throws IOException {
@@ -94,20 +94,20 @@ public class TestUtils {
 //        String json = IOUtils.toString(Resources.getResource("./librarypolicy/librarypolicy.json"));
         String json = IOUtils.toString(Resources.getResource(fileName));
         List<LibraryPolicyResult> ssa = gson.fromJson(json, new TypeToken<List<LibraryPolicyResult>>() {}.getType());
-        libraryPolicyResultsRepository.save(ssa);
+        libraryPolicyResultsRepository.saveAll(ssa);
     }
     public static void loadTestResults(TestResultRepository testResultRepository) throws IOException {
         Gson gson = GsonUtil.getGson();
         String json = IOUtils.toString(Resources.getResource("./test_results/test_results.json"));
         List<TestResult> testResults = gson.fromJson(json, new TypeToken<List<TestResult>>(){}.getType());
-        testResultRepository.save(testResults);
+        testResultRepository.saveAll(testResults);
     }
 
     public static void loadCodeQuality(CodeQualityRepository codeQualityRepository) throws IOException {
         Gson gson = GsonUtil.getGson();
         String json = IOUtils.toString(Resources.getResource("./codequality/codequality.json"));
         List<CodeQuality> codeQuality = gson.fromJson(json, new TypeToken<List<CodeQuality>>(){}.getType());
-        codeQualityRepository.save(codeQuality);
+        codeQualityRepository.saveAll(codeQuality);
     }
 
 
@@ -115,7 +115,7 @@ public class TestUtils {
         Gson gson = GsonUtil.getGson();
         String json = IOUtils.toString(Resources.getResource("./feature/feature.json"));
         List<Feature> feature = gson.fromJson(json, new TypeToken<List<Feature>>(){}.getType());
-        featureRepository.save(feature);
+        featureRepository.saveAll(feature);
     }
 
     public static void loadArtifacts(BinaryArtifactRepository binaryArtifactRepository) throws IOException {

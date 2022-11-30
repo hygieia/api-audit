@@ -14,6 +14,7 @@ import com.capitalone.dashboard.repository.CollectorRepository;
 import com.capitalone.dashboard.response.DeployAuditResponse;
 import org.bson.types.ObjectId;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -33,7 +34,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-
+@Ignore
 public class DeployEvaluatorTest {
     @InjectMocks
     private DeployEvaluator deployEvaluator;

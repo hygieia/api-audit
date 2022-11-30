@@ -593,8 +593,13 @@ public class CodeReviewEvaluator extends Evaluator<CodeReviewAuditResponseV2> {
 
             if(CollectionUtils.isNotEmpty(commits)) {
                 return commits.stream().filter(c1 -> StringUtils.isNotEmpty(c1.getPullNumber())).anyMatch(c2 -> {
-                    GitRequest pr = gitRequestRepository.findByCollectorItemIdAndNumber(c2.getCollectorItemId(), c2.getPullNumber());
-                    return (Objects.nonNull(pr) && "merged".equalsIgnoreCase(pr.getState()));
+                    // handled non-unique result
+                    List<GitRequest> pullRequests = gitRequestRepository.findAllByCollectorItemIdAndNumberOrderByTimestampDesc(c2.getCollectorItemId(), c2.getPullNumber());
+                    if (CollectionUtils.isNotEmpty(pullRequests)) {
+                        GitRequest pr = pullRequests.get(0);
+                        return (Objects.nonNull(pr) && "merged".equalsIgnoreCase(pr.getState()));
+                    }
+                    return false;
                 });
             }
         }

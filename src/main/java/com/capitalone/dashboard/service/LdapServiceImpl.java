@@ -1,12 +1,14 @@
 package com.capitalone.dashboard.service;
 
 import com.capitalone.dashboard.ApiSettings;
+import com.capitalone.dashboard.logging.LoggingFilter;
 import com.capitalone.dashboard.model.AuthType;
 import com.capitalone.dashboard.model.UserEntitlements;
 import com.capitalone.dashboard.repository.UserEntitlementsRepository;
 import com.capitalone.dashboard.settings.AuthProperties;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +25,7 @@ import java.util.Properties;
 @Component
 public class LdapServiceImpl implements LdapService {
 
-    private static final Logger LOGGER = Logger.getLogger(LdapServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LdapServiceImpl.class);
 
     private final AuthProperties authProperties;
     private final ApiSettings apiSettings;

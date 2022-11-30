@@ -56,11 +56,11 @@ public abstract class Evaluator<T> {
      */
     List<CollectorItem> getCollectorItems(Dashboard dashboard, CollectorType collectorType ) {
         Optional<ObjectId> componentIdOpt = dashboard.getWidgets().stream().findFirst().map(Widget::getComponentId);
-        Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findOne(componentIdOpt.get())) : Optional.empty();
+        Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findById(componentIdOpt.get()).get()) : Optional.empty();
         // This collector items from component is stale. So, need the id's to look up current state of collector items.
         List<ObjectId> collectorItemIds = componentOpt.map(component ->
                 component.getCollectorItems(collectorType).stream().map(CollectorItem::getId).collect(Collectors.toList())).orElse(Collections.emptyList());
-        return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : Collections.emptyList();
+        return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAllById(collectorItemIds)) : Collections.emptyList();
     }
 
 
@@ -68,10 +68,10 @@ public abstract class Evaluator<T> {
 
         if(StringUtils.isNotEmpty(altIdentifier)) {
             Optional<ObjectId> componentIdOpt = dashboard.getWidgets().stream().findFirst().map(Widget::getComponentId);
-            Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findOne(componentIdOpt.get())) : Optional.empty();
+            Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findById(componentIdOpt.get()).get()) : Optional.empty();
             List<ObjectId> collectorItemIds = componentOpt.map(component ->
                     component.getCollectorItems(collectorType).stream().filter(c -> isEqualsAltIdentifier(c, altIdentifier)).map(CollectorItem::getId).collect(Collectors.toList())).orElse(Collections.emptyList());
-            return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : getCollectorItems(dashboard,collectorType);
+            return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAllById(collectorItemIds)) : getCollectorItems(dashboard,collectorType);
         }
         else{
             return getCollectorItems(dashboard,collectorType);
@@ -81,10 +81,10 @@ public abstract class Evaluator<T> {
     List<CollectorItem> getCollectorItemsByIdentifierName(Dashboard dashboard, CollectorType collectorType, String altIdentifier, String identifierName) {
         if (StringUtils.isNotEmpty(identifierName)) {
             Optional<ObjectId> componentIdOpt = dashboard.getWidgets().stream().findFirst().map(Widget::getComponentId);
-            Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findOne(componentIdOpt.get())) : Optional.empty();
+            Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findById(componentIdOpt.get()).get()) : Optional.empty();
             List<ObjectId> collectorItemIds = componentOpt.map(component ->
                     component.getCollectorItems(collectorType).stream().filter(c -> isEqualsIdentifierName(c, identifierName)).map(CollectorItem::getId).collect(Collectors.toList())).orElse(Collections.emptyList());
-            return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : getCollectorItemsByAltIdentifier(dashboard, collectorType, altIdentifier);
+            return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAllById(collectorItemIds)) : getCollectorItemsByAltIdentifier(dashboard, collectorType, altIdentifier);
         } else if (StringUtils.isNotEmpty(altIdentifier)) {
             return getCollectorItemsByAltIdentifier(dashboard, collectorType, altIdentifier);
         } else {
@@ -96,11 +96,11 @@ public abstract class Evaluator<T> {
 
     List<CollectorItem> getCollectorItems(Dashboard dashboard, CollectorType collectorType, String testType) {
         Optional<ObjectId> componentIdOpt = dashboard.getWidgets().stream().findFirst().map(Widget::getComponentId);
-        Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findOne(componentIdOpt.get())) : Optional.empty();
+        Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findById(componentIdOpt.get()).get()) : Optional.empty();
         // This collector items from component is stale. So, need the id's to look up current state of collector items.
         List<ObjectId> collectorItemIds = componentOpt.map(component ->
                 component.getCollectorItems(collectorType).stream().filter(c -> isEqualsTestType(c,testType)).map(CollectorItem::getId).collect(Collectors.toList())).orElse(Collections.emptyList());
-        return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : Collections.emptyList();
+        return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAllById(collectorItemIds)) : Collections.emptyList();
     }
 
     private boolean isEqualsTestType(CollectorItem c,String testType) {
@@ -127,11 +127,11 @@ public abstract class Evaluator<T> {
 
     List<CollectorItem> getCollectorItemsNextGen(Dashboard dashboard, CollectorType collectorType) {
         Optional<ObjectId> componentIdOpt = dashboard.getApplication().getComponents().stream().findFirst().map(Component::getId);
-        Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findOne(componentIdOpt.get())) : Optional.empty();
+        Optional<Component> componentOpt = componentIdOpt.isPresent() ? Optional.ofNullable(componentRepository.findById(componentIdOpt.get()).get()) : Optional.empty();
         // This collector items from component is stale. So, need the id's to look up current state of collector items.
         List<ObjectId> collectorItemIds = componentOpt.map(component ->
                 component.getCollectorItems(collectorType).stream().map(CollectorItem::getId).collect(Collectors.toList())).orElse(Collections.emptyList());
-        return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAll(collectorItemIds)) : Collections.emptyList();
+        return CollectionUtils.isNotEmpty(collectorItemIds) ? IterableUtils.toList(collectorItemRepository.findAllById(collectorItemIds)) : Collections.emptyList();
     }
 
 }

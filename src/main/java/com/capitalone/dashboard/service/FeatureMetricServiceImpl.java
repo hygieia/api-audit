@@ -688,7 +688,7 @@ public class FeatureMetricServiceImpl implements FeatureMetricsService {
 
         if (null == componentId) return null;
 
-        com.capitalone.dashboard.model.Component component = componentRepository.findOne(componentId);
+        com.capitalone.dashboard.model.Component component = componentRepository.findById(componentId).get();
 
         List<CollectorItem> listFromComponent = component.getCollectorItems().get(collectorType);
 

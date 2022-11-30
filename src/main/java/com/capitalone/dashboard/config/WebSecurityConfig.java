@@ -5,11 +5,13 @@ import com.capitalone.dashboard.auth.apitoken.ApiTokenAuthenticationProvider;
 import com.capitalone.dashboard.auth.apitoken.ApiTokenRequestFilter;
 import com.capitalone.dashboard.settings.AuthProperties;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.Http401AuthenticationEntryPoint;
+//import org.springframework.boot.autoconfigure.security.Http401AuthenticationEntryPoint;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.core.support.LdapContextSource;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -50,7 +52,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(apiTokenRequestFilter(), UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling().authenticationEntryPoint(new Http401AuthenticationEntryPoint("Authorization"));
+                .exceptionHandling()
+                .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
+                //.authenticationEntryPoint(new Http401AuthenticationEntryPoint("Authorization"));
     }
 
     @Override
