@@ -1,6 +1,6 @@
 package com.capitalone.dashboard.response;
 
-import com.capitalone.dashboard.model.AuditType;
+import com.capitalone.dashboard.model.;
 import com.capitalone.dashboard.status.DashboardAuditStatus;
 
 import java.util.Collection;
@@ -12,7 +12,7 @@ public class DashboardReviewResponse<T extends AuditReviewResponse> extends Audi
     private String businessService;
     private String businessApplication;
 
-    private Map<AuditType, Collection<T>> review = new HashMap<>();
+    private Map<, Collection<T>> review = new HashMap<>();
 
 
 	public String getBusinessService() {
@@ -39,12 +39,12 @@ public class DashboardReviewResponse<T extends AuditReviewResponse> extends Audi
         this.dashboardTitle = dashboardTitle;
     }
 
-	public Map<AuditType, Collection<T>> getReview() {
+	public Map<, Collection<T>> getReview() {
 		return review;
 	}
 
 
-	public void addReview(AuditType type, Collection<T> audit) {
+	public void addReview( type, Collection<T> audit) {
 		if (review.get(type) != null) {
 			review.get(type).addAll(audit);
 		} else {
@@ -52,7 +52,7 @@ public class DashboardReviewResponse<T extends AuditReviewResponse> extends Audi
 		}
 	}
 
-	public void setReview(Map<AuditType, Collection<T>> review) {
+	public void setReview(Map<, Collection<T>> review) {
 		this.review = review;
 	}
 }

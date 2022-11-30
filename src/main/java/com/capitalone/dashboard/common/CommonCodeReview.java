@@ -19,8 +19,8 @@ import com.capitalone.dashboard.response.CodeReviewAuditResponseV2;
 import com.capitalone.dashboard.status.CodeReviewAuditStatus;
 import com.capitalone.dashboard.util.GitHubParsedUrl;
 import com.google.common.collect.Sets;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.MapUtils;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -263,7 +263,11 @@ public class CommonCodeReview {
             //If not found in the list, it must be a commit in the PR from time beyond the evaluation time window.
             //In this case, look up from repository.
             if (cCommit == null) {
-                cCommit =  commitRepository.findByCollectorItemIdAndScmRevisionNumber(pr.getCollectorItemId(), prC.getScmRevisionNumber());
+                // handled non-unique result
+                List<Commit> cCommits = commitRepository.findAllByCollectorItemIdAndScmRevisionNumberOrderByTimestampDesc(pr.getCollectorItemId(), prC.getScmRevisionNumber());
+                if(CollectionUtils.isNotEmpty(cCommits)) {
+                    cCommit = cCommits.get(0);
+                }
             }
 
             if (cCommit != null

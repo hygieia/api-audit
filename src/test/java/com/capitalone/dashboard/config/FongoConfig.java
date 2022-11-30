@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Bean;
 
 public class FongoConfig extends MongoConfig {
 
-    @Override
+
     @Bean
     public MongoClient mongo()  {
         return new Fongo(getDatabaseName()).getMongo();

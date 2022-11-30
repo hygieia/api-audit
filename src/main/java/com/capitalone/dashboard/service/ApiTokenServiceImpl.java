@@ -1,5 +1,6 @@
 package com.capitalone.dashboard.service;
 
+import com.capitalone.dashboard.logging.LoggingFilter;
 import com.capitalone.dashboard.misc.HygieiaException;
 import com.capitalone.dashboard.model.ApiToken;
 import com.capitalone.dashboard.model.UserRole;
@@ -8,7 +9,8 @@ import com.capitalone.dashboard.util.Encryption;
 import com.capitalone.dashboard.util.EncryptionException;
 import com.capitalone.dashboard.util.UnsafeDeleteException;
 import com.google.common.collect.Sets;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -29,7 +31,7 @@ import java.util.Objects;
 @Component
 public class ApiTokenServiceImpl implements ApiTokenService {
 
-    private static final Logger LOGGER = Logger.getLogger(ApiTokenServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApiTokenServiceImpl.class);
 
     private ApiTokenRepository apiTokenRepository;
 
@@ -83,7 +85,7 @@ public class ApiTokenServiceImpl implements ApiTokenService {
     }
     @Override
     public void deleteToken(ObjectId id) {
-        ApiToken apiToken = apiTokenRepository.findOne(id);
+        ApiToken apiToken = apiTokenRepository.findById(id).get();
 
         if(apiToken == null) {
             throw new UnsafeDeleteException("Cannot delete token " + Objects.requireNonNull(apiToken).getApiUser());
@@ -93,7 +95,7 @@ public class ApiTokenServiceImpl implements ApiTokenService {
     }
     @Override
     public String updateToken(Long expirationDt, ObjectId id) throws HygieiaException{
-        ApiToken apiToken = apiTokenRepository.findOne(id);
+        ApiToken apiToken = apiTokenRepository.findById(id).get();
         if(apiToken == null) {
             throw new HygieiaException("Cannot find token for " + Objects.requireNonNull(apiToken).getApiUser(), HygieiaException.BAD_DATA);
         }else{
