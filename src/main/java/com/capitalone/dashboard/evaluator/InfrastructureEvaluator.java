@@ -71,6 +71,7 @@ public class InfrastructureEvaluator extends Evaluator<InfrastructureAuditRespon
         infrastructureAuditResponse.setAuditEntity(collectorItem.getOptions());
         infrastructureAuditResponse.setLastUpdated(collectorItem.getLastUpdated());
 
+
         List<InfrastructureScan> infrastructureScans = infrastructureScanRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(collectorItem.getId(), beginDate - 1, endDate + 1);
         List<InfrastructureScan> filteredForBAP = StringUtils.isEmpty(businessComponent) ? Collections.EMPTY_LIST :
                 infrastructureScans.stream().filter(infrastructureScan -> infrastructureScan.getBusinessApplication().equalsIgnoreCase(businessComponent)).collect(Collectors.toList());
