@@ -73,8 +73,11 @@ public class InfrastructureEvaluator extends Evaluator<InfrastructureAuditRespon
 
 
         List<InfrastructureScan> infrastructureScans = infrastructureScanRepository.findByCollectorItemIdAndTimestampIsBetweenOrderByTimestampDesc(collectorItem.getId(), beginDate - 1, endDate + 1);
+
         List<InfrastructureScan> filteredForBAP = StringUtils.isEmpty(businessComponent) ? Collections.EMPTY_LIST :
-                infrastructureScans.stream().filter(infrastructureScan -> infrastructureScan.getBusinessApplication().equalsIgnoreCase(businessComponent)).collect(Collectors.toList());
+                infrastructureScans.stream().filter(infrastructureScan ->
+                        businessComponent.equalsIgnoreCase(infrastructureScan.getBusinessApplication())).collect(Collectors.toList()
+                );
 
         if (CollectionUtils.isNotEmpty(filteredForBAP)) {
             List<InfrastructureScan> sortedDistinctForBAP = getSortedAndDistinctByInstanceId(filteredForBAP);
@@ -82,8 +85,10 @@ public class InfrastructureEvaluator extends Evaluator<InfrastructureAuditRespon
             infrastructureAuditResponse.setInfrastructureScans(sortedDistinctForBAP);
         } else {
             infrastructureAuditResponse.addAuditStatus(InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_COMP_NOT_FOUND);
+
             List<InfrastructureScan> filteredForASV = StringUtils.isEmpty(businessService) ? Collections.EMPTY_LIST :
-                    infrastructureScans.stream().filter(infrastructureScan -> infrastructureScan.getBusinessService().equalsIgnoreCase(businessService)).collect(Collectors.toList());
+                    infrastructureScans.stream().filter(infrastructureScan -> businessService.equalsIgnoreCase(infrastructureScan.getBusinessService())).collect(Collectors.toList());
+
             if (CollectionUtils.isNotEmpty(filteredForASV)) {
                 List<InfrastructureScan> sortedDistinctForASV = getSortedAndDistinctByInstanceId(filteredForASV);
                 setInfraAudit(infrastructureAuditResponse, sortedDistinctForASV, InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_CRITICAL, InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_HIGH, InfrastructureAuditStatus.INFRA_SEC_SCAN_BUSS_APP_OK);

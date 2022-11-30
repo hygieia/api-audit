@@ -27,6 +27,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -296,10 +297,51 @@ public class DashboardAuditServiceImpl implements DashboardAuditService {
 
         AuditReport auditReport = auditReportRepository.findTop1ByBusinessApplicationAndBusinessServiceAndAuditTypeAndIdentifierNameAndIdentifierVersionAndIdentifierUrlOrderByTimestampDesc(
                 businessApplication, businessService, auditType, identifierName, identifierVersion, identifierUrl);
-        if (Objects.nonNull(auditReport) && Objects.nonNull(auditReport.getAuditResponse())) {
+        if (Objects.nonNull(auditReport) && !ObjectUtils.isEmpty(auditReport.getAuditResponse())) {
             return (JSONObject) auditReport.getAuditResponse();
+        }else{
+            Cmdb busServItem = cmdbRepository.findByConfigurationItemAndItemType(businessService, "app");
+            Cmdb busAppItem = cmdbRepository.findByConfigurationItemAndItemType(businessApplication, "component");
+
+            if(busServItem == null){
+                JSONObject invalidBAResponse = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_INVALID_BA, businessApplication, businessService);
+                return invalidBAResponse;
+            }else if(busAppItem == null){
+                JSONObject invalidComponentResponse = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_INVALID_COMPONENT, businessApplication, businessService);
+                return invalidComponentResponse;
+            }else if(!componentInfoMatch(busServItem, businessApplication)){
+                JSONObject componentBAMismatchResponse = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_COMPONENT_BA_MISMATCH, businessApplication, businessService);
+                return componentBAMismatchResponse;
+            }else{
+                JSONObject noDataResponse = createLookupResponseWhenEmpty(DashboardAuditStatus.DASHBOARD_AUDIT_NO_DATA, businessApplication, businessService);
+                return noDataResponse;
+            }
         }
-        return new JSONObject();
+
+
+    }
+
+    private JSONObject createLookupResponseWhenEmpty(DashboardAuditStatus dashboardAuditStatus, String businessApplication, String businessService){
+        JSONObject auditResponse = new JSONObject();
+        auditResponse.put("businessApplication", businessApplication);
+        auditResponse.put("businessService", businessService);
+        auditResponse.put("auditStatuses", Collections.singleton(dashboardAuditStatus));
+        auditResponse.put("lastUpdated", 0);
+        auditResponse.put("auditEntity", new JSONObject());
+        auditResponse.put("review", new JSONObject());
+        return auditResponse;
+    }
+
+    private boolean componentInfoMatch(Cmdb businessApplication, String businessService){
+        if(businessApplication.getComponents() == null){
+            return false;
+        }
+
+        if(businessApplication.getComponents().contains(businessService)){
+            return true;
+        }
+
+        return false;
     }
 
     private void validateParameters(String dashboardTitle, DashboardType dashboardType, String businessService, String businessApp, long beginDate, long endDate) throws AuditException{
